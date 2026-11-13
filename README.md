@@ -1,8 +1,8 @@
-# Ví Sinh Viên — Ứng dụng quản lý chi tiêu và thu nhập cá nhân
+# Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân
 
 > **"Tiền đi đâu — Bạn biết đó!"**
 
-Dự án dự thi **Cuộc thi Ý tưởng Khởi nghiệp Sáng tạo KGC năm 2026** — Trường Cao đẳng Kiên Giang.
+Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam.
 
 ---
 
@@ -168,39 +168,39 @@ Tài liệu trong `docs/`:
 
 ## Trạng thái dự án
 
-**Giai đoạn: hình thành ý tưởng, chưa có mã nguồn.**
+**Giai đoạn: đặc tả sản phẩm hoàn tất, bắt đầu thiết kế hệ thống.**
 
 Đã hoàn thành:
-- [x] Thuyết minh ý tưởng dự thi
+- [x] Thuyết minh ý tưởng và kế hoạch kinh doanh
 - [x] Đặc tả sản phẩm và chức năng chi tiết
 - [x] Chiến lược giữ chân người dùng
 - [x] Mô hình chi phí AI
 - [x] Kiến trúc kỹ thuật đề xuất
 
 Chưa làm:
-- [ ] Thiết kế hệ thống (schema, API, luồng dữ liệu)
+- [ ] Thiết kế hệ thống (schema, API, luồng dữ liệu) — **đang thực hiện**
 - [ ] Khảo sát người dùng thực tế
 - [ ] Bảng tài chính 3 năm
 - [ ] Phân tích đối thủ chi tiết
 - [ ] Mã nguồn MVP
-- [ ] Bộ nhận diện thương hiệu (logo, màu sắc)
+- [ ] Bộ nhận diện thương hiệu (logo, màu sắc, typography)
 
 ---
 
 ## Đội ngũ
 
-| Họ tên | Năm sinh | Chuyên ngành | Vai trò |
-|---|---|---|---|
-| Nguyễn Huyền Diệu | 2008 | Kế toán K20 | Trưởng nhóm, quản lý dự án, phát triển ý tưởng |
-| Lê Thị Quỳnh Mai | 2008 | Kế toán K20 | Quản lý tài chính, kế hoạch tài chính |
-| Nguyễn Công Danh | 2006 | Kế toán K20 | Thuyết trình, thu thập thông tin |
-| Lê Thanh Bình | 2006 | Thiết kế Đồ họa K19 | Lập trình, UI/UX, cơ sở dữ liệu, hạ tầng, bảo mật |
-| Hà Văn Thương | 2004 | Kế toán K20 | *(chưa phân công)* |
-
-**Đơn vị:** Trường Cao đẳng Kiên Giang — An Giang, tháng 11 năm 2026
+| Họ tên | Vai trò |
+|---|---|
+| Nguyễn Huyền Diệu | Trưởng nhóm, quản lý dự án, phát triển ý tưởng |
+| Lê Thị Quỳnh Mai | Tài chính, kế hoạch tài chính |
+| Nguyễn Công Danh | Thuyết trình, nghiên cứu thị trường |
+| Lê Thanh Bình | Kỹ thuật, UI/UX, cơ sở dữ liệu, hạ tầng, bảo mật |
+| Hà Văn Thương | Nghiên cứu thị trường, hậu cần |
 
 ---
 
-## Giấy phép
+## Bản quyền
 
-Dự án học thuật, dự thi cấp trường. Mọi đóng góp vui lòng mở issue trước khi tạo pull request.
+© 2026 Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân. Bảo lưu mọi quyền.
+
+Mã nguồn, tài liệu thiết kế và bộ nhận diện thương hiệu thuộc quyền sở hữu của nhóm phát triển. Mọi hình thức sao chép, phân phối lại hoặc sử dụng thương mại cần có văn bản đồng ý.
