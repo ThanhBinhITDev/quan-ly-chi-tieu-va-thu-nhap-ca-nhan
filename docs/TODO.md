@@ -4,15 +4,17 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 
 ## P0 — Phải làm trước khi nộp bài
 
-| # | Việc | Vì sao | Ai làm | Thời gian |
-|---|---|---|---|---|
-| 1 | Khảo sát 150–200 sinh viên về thói quen chi tiêu | Bài hiện không có một dữ liệu thực tế nào chứng minh nhu cầu | Cả nhóm | 1 tuần |
-| 2 | Bảng tài chính 3 năm có con số cụ thể | Hội đồng chắc chắn hỏi; hiện chỉ có tỷ trọng % | Lê Thị Quỳnh Mai | 3 ngày |
-| 3 | Trừ hoa hồng Google/Apple (15–30%) khỏi mọi bảng doanh thu | Gói 29.000đ thực nhận chỉ 20.300–24.650đ. Số hiện tại đang sai | Lê Thị Quỳnh Mai | 0,5 ngày |
-| 4 | Điền tên người hướng dẫn | Mục này đang trống trong file gốc, nhiều cuộc thi trừ điểm nặng | Nguyễn Huyền Diệu | — |
-| 5 | Phân công vai trò cho Hà Văn Thương | Đang để trống phần "kinh nghiệm/sở trường" | Nguyễn Huyền Diệu | — |
-| 6 | Phân tích đối thủ cụ thể (Money Lover, Misa, Spendee, app ngân hàng) | Bài chỉ nói chung chung, không chứng minh được lợi thế | Nguyễn Công Danh | 3 ngày |
-| 7 | Rà lỗi chính tả file thuyết minh gốc | "qạn học sinh", "ngồn tiền", "thù quản lý", "Bán giải pháp ." | Cả nhóm | 1 giờ |
+| # | Việc | Vì sao | Ước lượng công |
+|---|---|---|---|
+| 1 | Khảo sát 150–200 sinh viên về thói quen chi tiêu | Bài hiện không có một dữ liệu thực tế nào chứng minh nhu cầu | 1 tuần |
+| 2 | Bảng tài chính 3 năm có con số cụ thể | Hội đồng chắc chắn hỏi; hiện chỉ có tỷ trọng % | 3 ngày |
+| 3 | Trừ hoa hồng Google/Apple (15–30%) khỏi mọi bảng doanh thu | Gói 29.000đ thực nhận chỉ 20.300–24.650đ. Số hiện tại đang sai | 0,5 ngày |
+| 4 | Điền tên người hướng dẫn | Mục này đang trống trong file gốc, nhiều cuộc thi trừ điểm nặng | — |
+| 5 | Xác định vai trò của Hà Văn Thương | Đang để trống phần "kinh nghiệm/sở trường" | — |
+| 6 | Phân tích đối thủ cụ thể (Money Lover, Misa, Spendee, app ngân hàng) | Bài chỉ nói chung chung, không chứng minh được lợi thế | 3 ngày |
+| 7 | Rà lỗi chính tả file thuyết minh gốc | "qạn học sinh", "ngồn tiền", "thù quản lý", "Bán giải pháp ." | 1 giờ |
+
+> Việc phân công người phụ trách do nhóm trưởng quyết định — tài liệu này chỉ liệt kê đầu việc và khối lượng ước tính.
 
 ## P1 — Cần cho tính khả thi
 

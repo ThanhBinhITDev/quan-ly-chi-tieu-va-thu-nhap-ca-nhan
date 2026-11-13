@@ -217,7 +217,9 @@ Chưa làm:
 | Lê Thị Quỳnh Mai | Tài chính, kế hoạch tài chính |
 | Nguyễn Công Danh | Thuyết trình, nghiên cứu thị trường |
 | Lê Thanh Bình | Kỹ thuật, UI/UX, cơ sở dữ liệu, hạ tầng, bảo mật |
-| Hà Văn Thương | Nghiên cứu thị trường, hậu cần |
+| Hà Văn Thương | Chưa xác định |
+
+> Vai trò của Hà Văn Thương chưa được chốt trong tài liệu gốc — chờ nhóm trưởng xác nhận.
 
 ---
 
