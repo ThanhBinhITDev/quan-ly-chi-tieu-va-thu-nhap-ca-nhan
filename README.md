@@ -211,13 +211,13 @@ Chưa làm:
 
 ## Đội ngũ
 
-| Họ tên | Vai trò |
-|---|---|
-| Nguyễn Huyền Diệu | Trưởng nhóm, quản lý dự án, phát triển ý tưởng |
-| Lê Thị Quỳnh Mai | Tài chính, kế hoạch tài chính |
-| Nguyễn Công Danh | Thuyết trình, nghiên cứu thị trường |
-| Lê Thanh Bình | Kỹ thuật, UI/UX, cơ sở dữ liệu, hạ tầng, bảo mật |
-| Hà Văn Thương | Chưa xác định |
+| Họ tên | Chuyên ngành | Vai trò |
+|---|---|---|
+| Nguyễn Huyền Diệu | Kế toán K20 | Trưởng nhóm, quản lý dự án, phát triển ý tưởng |
+| Lê Thị Quỳnh Mai | Kế toán K20 | Tài chính, kế hoạch tài chính |
+| Nguyễn Công Danh | Kế toán K20 | Thuyết trình, nghiên cứu thị trường |
+| Lê Thanh Bình | Thiết kế Đồ họa K19 | Kỹ thuật, UI/UX, cơ sở dữ liệu, hạ tầng, bảo mật |
+| Hà Văn Thương | Kế toán K20 | Chưa xác định |
 
 > Vai trò của Hà Văn Thương chưa được chốt trong tài liệu gốc — chờ nhóm trưởng xác nhận.
 
