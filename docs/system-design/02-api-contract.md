@@ -9,7 +9,7 @@ Base URL: `https://<project-ref>.supabase.co`
 ## 1. Nguyên tắc
 
 | Nguyên tắc | Nội dung |
-|---|---|
+|:---:|:---:|
 | Xác thực | JWT của Supabase trong header `Authorization: Bearer <token>` |
 | Định dạng | JSON, `Content-Type: application/json` |
 | Mã thời gian | ISO 8601 UTC: `2026-11-13T05:30:00Z` |
@@ -37,7 +37,7 @@ Base URL: `https://<project-ref>.supabase.co`
 ### Bảng mã lỗi
 
 | HTTP | code | Khi nào | App xử lý thế nào |
-|---|---|---|---|
+|:---:|:---:|:---:|:---:|
 | 400 | `VALIDATION_FAILED` | Thiếu trường, sai kiểu | Hiện lỗi tại ô nhập, `field` cho biết ô nào |
 | 401 | `UNAUTHENTICATED` | Thiếu hoặc hết hạn token | Điều hướng về đăng nhập |
 | 403 | `FORBIDDEN` | Truy cập dữ liệu người khác | Không nên xảy ra; log và báo lỗi chung |
@@ -209,7 +209,7 @@ POST /rest/v1/transactions
 **Mã lỗi đặc thù:**
 
 | code | Nguyên nhân |
-|---|---|
+|:---:|:---:|
 | `RULE_VIOLATION` | `type=transfer` mà thiếu `to_wallet_id`, hoặc `to_wallet_id` trùng `wallet_id` |
 | `NOT_FOUND` | `wallet_id` hoặc `category_id` không tồn tại hoặc không thuộc user |
 
@@ -405,7 +405,7 @@ POST /functions/v1/sync-push
 **Quy tắc: server thắng, nhưng không mất dữ liệu người dùng.**
 
 | Tình huống | Xử lý |
-|---|---|
+|:---:|:---:|
 | `rev` client = `rev` server + 1 | Áp dụng bình thường |
 | `rev` client ≤ `rev` server | Trả `conflict` kèm dữ liệu server |
 | Hai thiết bị cùng sửa | Thiết bị gửi sau nhận `conflict`, app hiện hộp thoại "Bản ghi này đã được sửa trên thiết bị khác" kèm 2 phiên bản để chọn |
@@ -506,7 +506,7 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 ## 10. Job định kỳ (server)
 
 | Job | Tần suất | Việc |
-|---|---|---|
+|:---:|:---:|:---:|
 | Kiểm tra gói Pro hết hạn | Mỗi giờ | `plan_expires_at < now()` → chuyển về `free` |
 | Reset quota AI | Không cần job | Quota lưu theo key tháng trong JSONB, đọc key hiện tại |
 | Dọn token push lỗi | Mỗi ngày | Xóa device có `push_token` bị FCM báo invalid |
@@ -517,7 +517,7 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 ## 11. Giới hạn tải
 
 | Endpoint | Giới hạn | Cách tính |
-|---|---|---|
+|:---:|:---:|:---:|
 | Đăng nhập | 5 lần/phút/IP | Chống dò mật khẩu |
 | `POST /transactions` | 120 lần/phút/user | Người dùng thật hiếm khi vượt |
 | `sync-push` | 10 lần/phút/device | |
@@ -529,7 +529,7 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 ## 12. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
-|---|---|---|---|
+|:---:|:---:|:---:|:---:|
 | 1 | Dùng PostgREST trực tiếp hay viết API riêng | PostgREST cho CRUD đơn giản, Edge Function cho tổng hợp/sync/AI | Viết toàn bộ bằng Edge Function, kiểm soát hơn nhưng tốn công |
 | 2 | Cursor phân trang hay offset | Cursor theo `occurred_at` | Offset đơn giản hơn nhưng sai khi có bản ghi mới chèn vào |
 | 3 | `daily_limit` tính server hay client | Server khi online, client khi offline, dùng chung công thức | Chỉ client, đơn giản hơn nhưng dễ lệch |

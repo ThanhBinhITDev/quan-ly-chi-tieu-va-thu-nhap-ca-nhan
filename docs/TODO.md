@@ -5,7 +5,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 ## P0 — Phải làm trước khi nộp bài
 
 | # | Việc | Vì sao | Ước lượng công |
-|---|---|---|---|
+|:---:|:---:|:---:|:---:|
 | 1 | Khảo sát 150–200 sinh viên về thói quen chi tiêu | Bài hiện không có một dữ liệu thực tế nào chứng minh nhu cầu | 1 tuần |
 | 2 | Bảng tài chính 3 năm có con số cụ thể | Hội đồng chắc chắn hỏi; hiện chỉ có tỷ trọng % | 3 ngày |
 | 3 | Trừ hoa hồng Google/Apple (15–30%) khỏi mọi bảng doanh thu | Gói 29.000đ thực nhận chỉ 20.300–24.650đ. Số hiện tại đang sai | 0,5 ngày |
@@ -19,7 +19,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 ## P1 — Cần cho tính khả thi
 
 | # | Việc | Vì sao |
-|---|---|---|
+|:---:|:---:|:---:|
 | 8 | Thiết kế hệ thống: schema DB, API contract, luồng sync, màn hình, cấu trúc Flutter | Xong bản nháp 1.0 — xem [`system-design/`](system-design/README.md), chờ duyệt |
 | 9 | Wireframe chi tiết 5 màn hình chính | Hiện chỉ có mô tả bằng chữ |
 | 10 | Bộ nhận diện thương hiệu: logo, màu sắc, font | Bài thi có logo nhưng repo chưa có file gốc |
@@ -31,7 +31,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 ## P2 — Nên có
 
 | # | Việc | Ghi chú |
-|---|---|---|
+|:---:|:---:|:---:|
 | 15 | Kịch bản demo 5 phút cho hội đồng | Chuẩn bị sẵn, không nghĩ tại chỗ |
 | 16 | Bộ câu hỏi hội đồng có thể hỏi + câu trả lời | Đã có 7 câu trong trao đổi, chưa đưa vào file |
 | 17 | Kế hoạch marketing 3 tháng đầu | Bài có kênh nhưng chưa có lịch và ngân sách |
@@ -40,7 +40,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 ## Điểm mâu thuẫn trong tài liệu gốc (đã sửa trong file đặc tả, cần sửa cả file thuyết minh)
 
 | Vấn đề | Hiện trạng | Đề xuất |
-|---|---|---|
+|:---:|:---:|:---:|
 | Chi phí "API AI (30–35%)" | Gộp chung với hạ tầng, tính như chi phí cố định | Tách: hạ tầng 8–10%, AI 3–5% (biến đổi theo user) |
 | Gói Pro "không giới hạn lượt quét AI" | Không giới hạn = chi phí vô hạn | 300 lượt/tháng |
 | AI không có chức năng nào được mô tả | Chỉ xuất hiện ở 2 dòng chi phí/doanh thu | Đã bổ sung 4 chức năng AI-1 đến AI-4 |
@@ -50,7 +50,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 ## Rủi ro chưa có đối sách trong tài liệu
 
 | Rủi ro | Mức độ | Ghi chú |
-|---|---|---|
+|:---:|:---:|:---:|
 | Chỉ 1 người làm kỹ thuật (4/5 thành viên học Kế toán) | Cao | Nếu người này bận, dự án dừng |
 | Người dùng bỏ app sau 2 tuần | Cao | Đã có tài liệu riêng về chiến lược giữ chân |
 | App ngân hàng đã làm miễn phí | Cao | Đối thủ thật, không phải Money Lover |

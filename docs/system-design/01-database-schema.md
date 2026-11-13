@@ -9,7 +9,7 @@ Mục tiêu: đủ cho MVP, mở rộng được sang AI và đồng bộ đa th
 ## 1. Quy ước chung
 
 | Quy ước | Giá trị | Lý do |
-|---|---|---|
+|:---:|:---:|:---:|
 | Kiểu khóa chính | `UUID v4` sinh **trên thiết bị** | Cho phép ghi offline rồi đồng bộ, không đụng độ |
 | Đơn vị tiền | `BIGINT`, lưu **đồng** (VND), không dùng số thực | Tránh sai số dấu phẩy động |
 | Số tiền | Luôn **dương**. Loại giao dịch quyết định dấu | Không có amount âm, tránh lỗi cộng trừ |
@@ -141,7 +141,7 @@ CREATE UNIQUE INDEX uq_cat_user_name
 **Danh mục mặc định** (seed sẵn, `user_id = NULL`):
 
 | Loại | Danh mục |
-|---|---|
+|:---:|:---:|
 | Chi | Ăn uống, Đi lại, Mua sắm, Học tập, Giải trí, Sức khỏe, Nhà ở, Hóa đơn, Khác |
 | Thu | Tiền gia đình, Học bổng, Lương làm thêm, Thu nhập khác |
 
@@ -443,7 +443,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 ## 13. Dung lượng ước tính
 
 | Bảng | 1 user/năm | 10.000 user/năm |
-|---|---|---|
+|:---:|:---:|:---:|
 | transactions | ~1.200 dòng × 250 B = 300 KB | ~3 GB |
 | wallets | 5 × 200 B = 1 KB | 10 MB |
 | categories | 15 × 150 B = 2 KB | 20 MB |
@@ -459,7 +459,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 ## 14. Những điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất của tôi | Phương án khác |
-|---|---|---|---|
+|:---:|:---:|:---:|:---:|
 | 1 | Danh mục con (`parent_id`) | Giữ cột nhưng **không dùng ở MVP** | Bỏ hẳn, thêm sau bằng migration |
 | 2 | Mục tiêu tiết kiệm có gắn với ví không | Không, `saved_amount` nhập tay | Gắn với ví loại `savings` |
 | 3 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có |
