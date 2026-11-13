@@ -9,7 +9,7 @@ Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam.
 ## Phân khúc khách hàng
 
 | Phân khúc | Vai trò |
-|:---:|:---:|
+|---|---|
 | Sinh viên cao đẳng, đại học | **Khách hàng chính** — đặc biệt nhóm có thu nhập hạn chế từ gia đình, học bổng hoặc làm thêm |
 | Học sinh THPT có nhu cầu quản lý tiền cá nhân | Phân khúc mở rộng |
 | Người có thu nhập hạn chế, muốn kiểm soát chi tiêu và tiết kiệm | Phân khúc mở rộng |
@@ -25,7 +25,7 @@ Sinh viên thường hết tiền trước cuối tháng nhưng không biết ti
 Ba nguyên nhân gốc rễ:
 
 | Nguyên nhân | Biểu hiện |
-|:---:|:---:|
+|---|---|
 | **Thiếu công cụ** | App hiện có yêu cầu quá nhiều thao tác để ghi một khoản chi |
 | **Thiếu kiến thức** | Sinh viên không được trang bị kỹ năng quản lý tài chính |
 | **Sai đối tượng** | Money Lover, Misa, Spendee thiết kế cho người đi làm — quá phức tạp với sinh viên |
@@ -47,7 +47,7 @@ Ba nguyên nhân gốc rễ:
 ### Tính năng cốt lõi
 
 | Nhóm | Chức năng chính |
-|:---:|:---:|
+|---|---|
 | **A. Ghi nhận** | Ghi thu/chi, đa ví (tiền mặt, Momo, ngân hàng), nhập nhanh cú pháp, hoạt động offline |
 | **B. Phân tích** | Biểu đồ cơ cấu, xu hướng theo ngày, so sánh kỳ trước, lọc và tìm kiếm |
 | **C. Kiểm soát** | Chỉ số "hôm nay được tiêu", ngân sách theo danh mục, cảnh báo nhiều mức, mục tiêu tiết kiệm |
@@ -74,7 +74,7 @@ AI là **lớp hỗ trợ, không phải nguồn dữ liệu gốc**. Nguyên t�
 > **Mọi con số tài chính do database tính bằng công thức xác định. Mô hình ngôn ngữ tuyệt đối không sinh ra con số.**
 
 | Mã | Chức năng | Chạy ở đâu | Chi phí/lượt |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | AI-1 | Đọc hóa đơn | ML Kit (máy) + mô hình đọc hiểu | ~8đ |
 | AI-2 | Phân loại giao dịch | Trên máy, miễn phí | 0đ |
 | AI-3 | Trợ lý hỏi đáp | Máy chủ | ~13đ |
@@ -93,7 +93,7 @@ Rủi ro lớn nhất của thể loại app này: **người dùng bỏ sau 2 t
 Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gửi thông báo nhắc nhở.
 
 | Cơ chế | Nội dung |
-|:---:|:---:|
+|---|---|
 | Onboarding 3 bước | Không bắt đăng ký, nạp sẵn dữ liệu mẫu, thấy giá trị ngay phút đầu |
 | Chỉ số hôm nay + widget | Con số hiển thị ngoài màn hình chính, không cần mở app |
 | Thông báo có số liệu | 1 tin/ngày, luôn chứa thông tin, không nhắc suông |
@@ -109,7 +109,7 @@ Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gử
 **Freemium** — bản miễn phí đủ dùng, gói Pro mở khóa tính năng sâu.
 
 | Gói | Giá | Quyền lợi chính |
-|:---:|:---:|:---:|
+|---|---|---|
 | Miễn phí | 0đ | Toàn bộ nhóm A, B, C. 10 lượt AI/tháng. Có quảng cáo |
 | Pro tháng | 29.000đ/tháng | Toàn bộ nhóm D. 300 lượt AI/tháng. Không quảng cáo |
 | Pro năm | 249.000đ/năm | Tiết kiệm ~28% |
@@ -120,7 +120,7 @@ Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gử
 ### Cơ cấu chi phí (đề xuất điều chỉnh)
 
 | Nhóm | Tỷ trọng | Tính chất |
-|:---:|:---:|:---:|
+|---|---|---|
 | Hạ tầng cố định | 8–10% | Server, domain, tài khoản store |
 | Dịch vụ AI | 3–5% (tối đa 25% doanh thu) | Biến đổi theo số user |
 | Nhân sự | 25–30% | Cố định theo tháng |
@@ -132,7 +132,7 @@ Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gử
 ## Kiến trúc kỹ thuật
 
 | Thành phần | Công nghệ | Lý do |
-|:---:|:---:|:---:|
+|---|---|---|
 | Mobile | **Flutter** | 1 codebase cho iOS + Android |
 | Local DB | SQLite (drift) | Offline-first, query thống kê nhanh |
 | Backend | **Supabase** | Postgres + Auth + Storage, free tier đủ MVP |
@@ -150,7 +150,7 @@ Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gử
 ## Lộ trình
 
 | Giai đoạn | Nội dung |
-|:---:|:---:|
+|---|---|
 | **MVP (tuần 1–6)** | Ghi thu/chi, danh mục, ví, chỉ số hôm nay, ngân sách, biểu đồ, offline, auth |
 | **Tuần 7–8** | AI-1 đọc hóa đơn, AI-2 phân loại, cổng hạn mức |
 | **Tuần 9–10** | AI-3 hỏi đáp, đo chi phí thật, test với 20–30 sinh viên |
@@ -212,7 +212,7 @@ Chưa làm:
 ## Đội ngũ
 
 | Họ tên | Chuyên ngành | Vai trò |
-|:---:|:---:|:---:|
+|---|---|---|
 | Nguyễn Huyền Diệu | Kế toán K20 | Trưởng nhóm, quản lý dự án, phát triển ý tưởng |
 | Lê Thị Quỳnh Mai | Kế toán K20 | Tài chính, kế hoạch tài chính |
 | Nguyễn Công Danh | Kế toán K20 | Thuyết trình, nghiên cứu thị trường |

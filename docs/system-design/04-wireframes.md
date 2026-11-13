@@ -9,7 +9,7 @@ Mô tả bằng khối và trạng thái. Không dùng công cụ thiết kế �
 ## 1. Nguyên tắc giao diện
 
 | Nguyên tắc | Cụ thể |
-|:---:|:---:|
+|---|---|
 | Một màn hình, một câu hỏi | Mỗi màn trả lời đúng một câu hỏi của người dùng |
 | Số quan trọng nhất ở trên cùng, cỡ lớn | Không cần cuộn để thấy chỉ số hôm nay |
 | Màu chỉ dùng để báo trạng thái | Xanh = an toàn, vàng = chú ý, đỏ = vượt |
@@ -167,7 +167,7 @@ Chỉ dùng 3 màu trạng thái cho thanh tiến độ và số dư. Không dù
 ### Trạng thái màu của số "Hôm nay được tiêu"
 
 | Điều kiện | Màu | Số hiển thị |
-|:---:|:---:|:---:|
+|---|---|---|
 | `daily_limit > 0` và ngân sách dùng < 70% | `#2E7D32` | `63.888 đ` |
 | Ngân sách dùng 70–89% | `#F57C00` | `42.300 đ` |
 | Ngân sách dùng 90–99% | `#F57C00` đậm hơn + biểu tượng ⚠ | `12.500 đ` |
@@ -225,7 +225,7 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 ### Thao tác trên một dòng
 
 | Thao tác | Kết quả |
-|:---:|:---:|
+|---|---|
 | Chạm | Mở màn sửa giao dịch |
 | Vuốt sang trái | Hiện nút Xóa (đỏ) |
 | Vuốt sang phải | Hiện nút Sửa (xanh) |
@@ -481,7 +481,7 @@ Nút 📷 ở góc trên. Chụp → gọi `/ai/ocr` → hiện màn xác nhận
 ## 9. Thông báo đẩy — mẫu câu
 
 | Loại | Tiêu đề | Nội dung | Nút |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | Nhắc cuối ngày | Còn 18 ngày | 1.150.000đ → 63.888đ/ngày. Hôm nay bạn tiêu bao nhiêu? | Ghi nhanh |
 | Cảnh báo 70% | Ăn uống đã dùng 70% | 1.050.000 / 1.500.000đ hạn mức tháng | Xem |
 | Cảnh báo 90% | Sắp hết hạn mức Ăn uống | Còn 150.000đ cho 18 ngày = 8.333đ/ngày | Xem |
@@ -498,7 +498,7 @@ Nút 📷 ở góc trên. Chụp → gọi `/ai/ocr` → hiện màn xác nhận
 ## 10. Thành phần dùng chung
 
 | Thành phần | Mô tả |
-|:---:|:---:|
+|---|---|
 | `MoneyText` | Hiển thị số tiền: định dạng `1.234.567 đ`, chữ số tabular để không nhảy khi thay đổi |
 | `ProgressBar` | Thanh tiến độ, tự đổi màu theo ngưỡng (xanh/cam/đỏ) |
 | `CategoryIcon` | Icon danh mục, nền tròn màu nhạt |
@@ -509,7 +509,7 @@ Nút 📷 ở góc trên. Chụp → gọi `/ai/ocr` → hiện màn xác nhận
 ### Số tiền hiển thị
 
 | Giá trị | Hiển thị |
-|:---:|:---:|
+|---|---|
 | 35000 | `35.000` |
 | 1500000 | `1.500.000` |
 | 15000000 | `15.000.000` |
@@ -541,7 +541,7 @@ Thanh tab dưới: 5 mục. Nút `+` nổi chỉ ở tab Trang chủ và Giao d�
 ## 12. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | 1 | 5 tab hay 4 tab (gộp Báo cáo vào Trang chủ) | 5 tab | 4 tab, gọn hơn nhưng Trang chủ dài |
 | 2 | Số tiền tabular (chữ số đều nhau) | Có | Không, đẹp hơn nhưng số nhảy khi cập nhật |
 | 3 | Chế độ tối | Có, theo hệ thống | Chỉ sáng, đơn giản hơn |

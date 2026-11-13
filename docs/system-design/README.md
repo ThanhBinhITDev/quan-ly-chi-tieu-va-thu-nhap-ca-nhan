@@ -3,7 +3,7 @@
 Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân.
 
 | # | Tài liệu | Nội dung |
-|:---:|:---:|:---:|
+|---|---|---|
 | 01 | [Cơ sở dữ liệu](01-database-schema.md) | Bảng, quan hệ, index, quy ước, RLS, truy vấn then chốt, dung lượng |
 | 02 | [Hợp đồng API](02-api-contract.md) | Endpoint, request/response, mã lỗi, giới hạn tải, công thức dùng chung |
 | 03 | [Đồng bộ dữ liệu](03-sync-strategy.md) | Local-first, hàng đợi, chống trùng, xử lý xung đột, toàn vẹn |
@@ -19,7 +19,7 @@ Thiết kế phục vụ **MVP**: ghi chi tiêu, đa ví, chỉ số hôm nay, n
 ## Ba quyết định nền tảng
 
 | Quyết định | Chọn |
-|:---:|:---:|
+|---|---|
 | Nguồn dữ liệu chính | SQLite trên máy, đồng bộ lên Supabase |
 | Khóa chính | UUID sinh trên thiết bị |
 | Công thức "hôm nay được tiêu" | Một công thức duy nhất, dùng chung Dart và SQL, có test đối chiếu |
@@ -27,7 +27,7 @@ Thiết kế phục vụ **MVP**: ghi chi tiêu, đa ví, chỉ số hôm nay, n
 ## Công nghệ
 
 | Lớp | Công nghệ |
-|:---:|:---:|
+|---|---|
 | Ứng dụng | Flutter 3.24+, Riverpod 2, go_router, drift |
 | Backend | Supabase (PostgreSQL, Auth, Storage, Realtime) |
 | Biểu đồ | fl_chart |
@@ -39,7 +39,7 @@ Thiết kế phục vụ **MVP**: ghi chi tiêu, đa ví, chỉ số hôm nay, n
 Ba quyết định dưới đây đã được duyệt ngày 2026-11-13, áp dụng cho toàn bộ thiết kế:
 
 | # | Quyết định | Hệ quả |
-|:---:|:---:|:---:|
+|---|---|---|
 | Q1 | Không lưu `balance` trong bảng `wallets` — số dư luôn tính từ giao dịch | Bảng `transactions` là nguồn sự thật duy nhất |
 | Q2 | Mục tiêu tiết kiệm tách khỏi ví — `goals.saved_amount` nhập tay | `goals` không có khóa ngoại tới `wallets` |
 | Q3 | Chuyển ví không tính vào tổng chi | Mọi truy vấn tổng chi phải có `AND type = 'expense'` |

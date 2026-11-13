@@ -9,7 +9,7 @@ Mục tiêu: ghi được khi không có mạng, không mất dữ liệu, khôn
 ## 1. Ba quyết định nền tảng
 
 | Quyết định | Chọn | Vì sao không chọn phương án khác |
-|:---:|:---:|:---:|
+|---|---|---|
 | Nguồn dữ liệu chính | **SQLite trên máy** | Ứng dụng phải dùng được khi mất mạng (sinh viên dùng 3G yếu, trong lớp không có wifi) |
 | Khóa chính | **UUID sinh trên máy** | Nếu để server sinh ID, mọi bản ghi offline phải chờ có mạng mới có ID → không thể hiển thị ngay |
 | Giải quyết xung đột | **`rev` tăng dần + server thắng** | CRDT quá phức tạp cho quy mô này; last-write-wins đủ dùng với 1 người dùng/1 thiết bị |
@@ -27,7 +27,7 @@ server_rev  INT
 ```
 
 | Trạng thái | Ý nghĩa | Hiển thị cho người dùng |
-|:---:|:---:|:---:|
+|---|---|---|
 | `synced` | Đã lên server | Không hiện gì |
 | `pending` | Đã ghi local, chưa lên server | Chấm vàng nhỏ cạnh bản ghi |
 | `deleted_pending` | Đã xóa local, chưa báo server | Không hiện (đã ẩn) |
@@ -162,7 +162,7 @@ ON CONFLICT (id) DO NOTHING  →  không tạo bản ghi thứ 2  ✓
 ## 6. Xóa và khôi phục
 
 | Hành động người dùng | Local | Queue | Server |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | Xóa giao dịch | `deleted_at = now()`, `sync_status = 'deleted_pending'` | `op = 'delete'` | `deleted_at` được set |
 | Hoàn tác xóa (5 giây) | `deleted_at = NULL`, `sync_status = 'pending'` | Ghi đè thành `op = 'update'` | `deleted_at = NULL` |
 
@@ -222,7 +222,7 @@ Nếu người dùng chọn "Giữ bản của tôi" → client gửi `rev = ser
 Chạy mỗi lần app khởi động (nền, không chặn UI):
 
 | Kiểm tra | Phát hiện | Xử lý |
-|:---:|:---:|:---:|
+|---|---|---|
 | Giao dịch trỏ tới ví không tồn tại | `wallet_id` mồ côi | Gán vào ví mặc định, ghi log |
 | Giao dịch trỏ tới danh mục đã xóa | `category_id` mồ côi | Đổi thành "Khác", ghi log |
 | `amount <= 0` | Dữ liệu hỏng | Bỏ qua, ghi log, không đồng bộ |
@@ -236,7 +236,7 @@ Không tự sửa âm thầm mà không ghi log — nếu có lỗi hệ thống
 ## 10. Chỉ số cần theo dõi
 
 | Chỉ số | Mục tiêu | Ý nghĩa |
-|:---:|:---:|:---:|
+|---|---|---|
 | Tỷ lệ push thành công lần đầu | > 95% | Chất lượng mạng + API |
 | Thời gian trung bình để queue rỗng | < 5 giây | Trải nghiệm đồng bộ |
 | Số bản ghi `pending` trung bình/user | < 2 | Nếu cao, người dùng đang dùng offline nhiều |
@@ -248,7 +248,7 @@ Không tự sửa âm thầm mà không ghi log — nếu có lỗi hệ thống
 ## 11. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | 1 | Có hiện chấm vàng "chưa đồng bộ" không | Chỉ hiện khi offline > 24 giờ | Hiện luôn, minh bạch hơn nhưng gây lo |
 | 2 | Xung đột: hỏi người dùng hay tự chọn | Hỏi | Tự chọn theo thời gian, đơn giản hơn nhưng rủi ro |
 | 3 | Kéo toàn bộ khi đăng nhập máy mới | Có, có thanh tiến trình | Chỉ kéo 90 ngày gần nhất, nhanh hơn nhưng thiếu lịch sử |

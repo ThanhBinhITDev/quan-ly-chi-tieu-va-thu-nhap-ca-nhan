@@ -9,7 +9,7 @@ Mục tiêu: chia lớp rõ ràng để ba người cùng làm không giẫm ch�
 ## 1. Chọn công nghệ
 
 | Thành phần | Chọn | Lý do | Phương án bị loại |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | Quản lý trạng thái | **Riverpod 2** | Không cần `BuildContext`, test được không cần widget, hỗ trợ `AsyncValue` sẵn cho trạng thái loading/lỗi | BLoC: nhiều mã lặp; Provider: khó test hơn; setState: không scale |
 | Điều hướng | **go_router** | Khai báo tập trung, deep link cho thông báo đẩy | Navigator 1.0: khó quản lý |
 | CSDL local | **drift** | Sinh mã từ SQL, type-safe, hỗ trợ reactive stream, có migration | sqflite: viết SQL thủ công, dễ sai; Isar: ít người dùng hơn |
@@ -194,7 +194,7 @@ presentation  →  domain  →  data
 **Cấm:**
 
 | Cấm | Vì sao |
-|:---:|:---:|
+|---|---|
 | `domain` import `flutter/material.dart` | Logic phải test được bằng `dart test`, không cần Flutter |
 | `presentation` gọi thẳng `data/remote` | Bỏ qua cache và đồng bộ → dữ liệu không nhất quán |
 | `data` import `presentation` | Vòng phụ thuộc |
@@ -232,7 +232,7 @@ class DailyLimitCalculator {
 **Ba cạm bẫy phải có test:**
 
 | Cạm bẫy | Sai | Đúng |
-|:---:|:---:|:---:|
+|---|---|---|
 | Làm tròn | `(1150000 / 18).round()` = 63889, tổng 18 ngày = 1.150.002 → vượt 2 đồng | `1150000 ~/ 18` = 63888, tổng 1.149.984, an toàn |
 | `daysLeft` không tính hôm nay | Ngày 30/11 với kỳ hết 30/11 → `daysLeft = 0` → chia cho 0 | `daysLeft = 1` |
 | `remaining` âm mà vẫn chia | `-120000 / 5` = -24000 → hiện "được tiêu 24.000" sai dấu | Trả `-120000`, UI hiện "đã vượt 120.000" |
@@ -340,7 +340,7 @@ Dài dòng, nhưng **đúng**: khi ghi giao dịch → `monthSpentProvider` phá
 ### Quy ước đặt tên
 
 | Hậu tố | Loại | Ví dụ |
-|:---:|:---:|:---:|
+|---|---|---|
 | `*Provider` | Provider thường | `dbProvider` |
 | `*StreamProvider` | Stream | `recentTransactionsProvider` |
 | `*NotifierProvider` | Có state thay đổi | `addTransactionNotifierProvider` |
@@ -441,7 +441,7 @@ Câu của `NetworkException` rất quan trọng: phải nói **"dữ liệu đ�
 ## 8. Kiểm thử
 
 | Loại | Phạm vi | Số lượng mục tiêu | Công cụ |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | Đơn vị | `DailyLimitCalculator`, `QuickInputParser`, `DateHelper` | ≥ 40 test | `flutter_test` |
 | Đơn vị | Repository với DAO giả | ≥ 25 | `mocktail` |
 | Widget | Màn thêm giao dịch, thẻ chỉ số hôm nay | ≥ 15 | `flutter_test` |
@@ -496,7 +496,7 @@ jobs:
 ## 10. Quy ước viết mã
 
 | Quy ước | Nội dung |
-|:---:|:---:|
+|---|---|
 | Ngôn ngữ đặt tên | Tiếng Anh cho mã, tiếng Việt cho chuỗi hiển thị |
 | Chuỗi hiển thị | Tập trung trong `strings_vi.dart`, không hardcode trong widget |
 | Số tiền | Luôn `int` (đồng). Không dùng `double` ở bất kỳ đâu |
@@ -512,7 +512,7 @@ jobs:
 ## 11. Thứ tự triển khai
 
 | Tuần | Việc | Đầu ra kiểm chứng được |
-|:---:|:---:|:---:|
+|---|---|---|
 | 1 | `core`, `data/local` (drift), seed danh mục | Mở app, thấy danh mục mặc định |
 | 2 | Onboarding 3 bước + màn thêm giao dịch | Ghi được giao dịch, thấy trong danh sách |
 | 3 | `DailyLimitCalculator` + Trang chủ + test | Chỉ số hôm nay đúng, 40 test xanh |
@@ -529,7 +529,7 @@ jobs:
 ## 12. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
-|:---:|:---:|:---:|:---:|
+|---|---|---|---|
 | 1 | Riverpod hay BLoC | Riverpod | BLoC nếu đội đã quen |
 | 2 | drift hay sqflite | drift | sqflite nếu muốn ít thư viện |
 | 3 | Có dùng `freezed` không | Chỉ cho model có union | Dùng toàn bộ, an toàn hơn nhưng build chậm |
