@@ -163,11 +163,19 @@ Chiến lược: **kéo giá trị về ngày đầu tiên**, không phải gử
 ## Cấu trúc repository
 
 ```
-quan-ly-chi-tieu-sinh-vien/
+quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── README.md
 ├── docs/
 │   ├── Mo_ta_ung_dung_Quan_ly_chi_tieu_va_thu_nhap.docx
-│   └── Chien_luoc_giu_chan_nguoi_dung.docx
+│   ├── Chien_luoc_giu_chan_nguoi_dung.docx
+│   ├── TODO.md
+│   └── system-design/
+│       ├── README.md
+│       ├── 01-database-schema.md
+│       ├── 02-api-contract.md
+│       ├── 03-sync-strategy.md
+│       ├── 04-wireframes.md
+│       └── 05-flutter-structure.md
 └── .gitignore
 ```
 
@@ -175,12 +183,14 @@ Tài liệu trong `docs/`:
 
 - **Mo_ta_ung_dung...docx** — đặc tả sản phẩm 12 chương, 34 bảng: định vị, 38 chức năng, luồng sử dụng, mô hình dữ liệu, kiến trúc kỹ thuật, bảo mật, Chương 4 riêng về AI, lộ trình, KPI
 - **Chien_luoc_giu_chan_nguoi_dung.docx** — chiến lược retention 11 chương, 10 bảng: 4 mốc rơi rụng, 6 cơ chế giữ chân, đo lường cohort, thứ tự triển khai
+- **TODO.md** — danh sách việc còn lại, phân mức ưu tiên
+- **system-design/** — thiết kế kỹ thuật: schema DB, hợp đồng API, luồng đồng bộ, màn hình, cấu trúc mã Flutter
 
 ---
 
 ## Trạng thái dự án
 
-**Giai đoạn: đặc tả sản phẩm hoàn tất, bắt đầu thiết kế hệ thống.**
+**Giai đoạn: thiết kế hệ thống hoàn tất bản nháp, chờ duyệt trước khi lập trình.**
 
 Đã hoàn thành:
 - [x] Thuyết minh ý tưởng và kế hoạch kinh doanh
@@ -188,9 +198,9 @@ Tài liệu trong `docs/`:
 - [x] Chiến lược giữ chân người dùng
 - [x] Mô hình chi phí AI
 - [x] Kiến trúc kỹ thuật đề xuất
+- [x] Thiết kế hệ thống: schema DB, hợp đồng API, luồng đồng bộ, màn hình, cấu trúc mã Flutter
 
 Chưa làm:
-- [ ] Thiết kế hệ thống (schema, API, luồng dữ liệu) — **đang thực hiện**
 - [ ] Khảo sát người dùng thực tế
 - [ ] Bảng tài chính 3 năm
 - [ ] Phân tích đối thủ chi tiết

@@ -18,7 +18,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 
 | # | Việc | Vì sao |
 |---|---|---|
-| 8 | Thiết kế hệ thống: schema DB cuối cùng, API contract, luồng dữ liệu sync | Bước tiếp theo, chưa bắt đầu |
+| 8 | Thiết kế hệ thống: schema DB, API contract, luồng sync, màn hình, cấu trúc Flutter | Xong bản nháp 1.0 — xem [`system-design/`](system-design/README.md), chờ duyệt |
 | 9 | Wireframe chi tiết 5 màn hình chính | Hiện chỉ có mô tả bằng chữ |
 | 10 | Bộ nhận diện thương hiệu: logo, màu sắc, font | Bài thi có logo nhưng repo chưa có file gốc |
 | 11 | Viết chính sách quyền riêng tư + điều khoản sử dụng | Google Play và App Store từ chối app nếu thiếu |
