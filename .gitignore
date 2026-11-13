@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Office lock files
+~$*.docx
+~$*.xlsx
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+*.iml
+*.lock.bak
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Env & secrets
+.env
+.env.*
+*.keystore
+*.jks
+key.properties
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
