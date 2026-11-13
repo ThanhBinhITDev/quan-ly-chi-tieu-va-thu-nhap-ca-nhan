@@ -6,6 +6,18 @@ Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam.
 
 ---
 
+## Phân khúc khách hàng
+
+| Phân khúc | Vai trò |
+|---|---|
+| Sinh viên cao đẳng, đại học | **Khách hàng chính** — đặc biệt nhóm có thu nhập hạn chế từ gia đình, học bổng hoặc làm thêm |
+| Học sinh THPT có nhu cầu quản lý tiền cá nhân | Phân khúc mở rộng |
+| Người có thu nhập hạn chế, muốn kiểm soát chi tiêu và tiết kiệm | Phân khúc mở rộng |
+
+Đối tượng khách hàng quan trọng nhất: sinh viên có thu nhập hạn chế. Sau khi hoạt động ổn định, dự án mở rộng đến học sinh THPT, người mới đi làm và các cá nhân có nhu cầu quản lý tài chính cá nhân.
+
+---
+
 ## Vấn đề
 
 Sinh viên thường hết tiền trước cuối tháng nhưng không biết tiền đã đi đâu. Các khoản chi nhỏ hàng ngày (ăn uống, trà sữa, đi lại) không được ghi lại nên không thể kiểm soát. Khi nhận ra vấn đề thì đã quá muộn để điều chỉnh.
