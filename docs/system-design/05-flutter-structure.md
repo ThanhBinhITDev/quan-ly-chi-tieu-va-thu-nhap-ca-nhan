@@ -1,6 +1,6 @@
 # 05 — Cấu trúc mã nguồn Flutter
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-11-13 · **Trạng thái:** chờ duyệt
+**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
 
 Mục tiêu: chia lớp rõ ràng để ba người cùng làm không giẫm chân nhau, và để thay backend/AI sau này không phải sửa UI.
 
@@ -212,9 +212,10 @@ Có thể kiểm tra tự động bằng `dart_code_metrics` trong CI. Nếu vi 
 class DailyLimitCalculator {
   /// Trả về số tiền được tiêu hôm nay.
   /// remaining <= 0 → trả về chính remaining (số âm), KHÔNG chia.
+  /// Quyết định Q3: chỉ cộng giao dịch type = 'expense', bỏ qua 'transfer'.
   static int calculate({
     required int budget,        // ngân sách tổng kỳ này, 0 nếu chưa đặt
-    required int spent,         // đã chi từ đầu kỳ đến hết hôm nay
+    required int spent,         // đã chi từ đầu kỳ đến hết hôm nay, CHỈ expense
     required int daysLeft,      // số ngày còn lại, TÍNH CẢ HÔM NAY
   }) {
     if (budget <= 0) return 0;
@@ -264,6 +265,16 @@ test('chia không hết thì không được vượt ngân sách', () {
   final d = DailyLimitCalculator.calculate(
     budget: budget, spent: spent, daysLeft: days);
   expect(d * days, lessThanOrEqualTo(budget));  // 33333 * 3 = 99.999 ✓
+});
+
+test('chuyển ví không được tính vào spent (Q3)', () {
+  // 1 expense 100.000 + 1 transfer 200.000
+  // spent phải là 100.000, không phải 300.000
+  const spent = 100000;
+  const budget = 1000000;
+  final d = DailyLimitCalculator.calculate(
+    budget: budget, spent: spent, daysLeft: 10);
+  expect(d, 90000);  // (1.000.000 - 100.000) / 10
 });
 ```
 

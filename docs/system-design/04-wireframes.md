@@ -1,6 +1,6 @@
 # 04 — Cấu trúc màn hình
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-11-13 · **Trạng thái:** chờ duyệt
+**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
 
 Mô tả bằng khối và trạng thái. Không dùng công cụ thiết kế — đủ để lập trình viên dựng trực tiếp.
 

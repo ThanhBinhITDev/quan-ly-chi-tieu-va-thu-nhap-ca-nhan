@@ -1,6 +1,6 @@
 # 02 — Hợp đồng API
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-11-13 · **Trạng thái:** chờ duyệt
+**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
 
 Base URL: `https://<project-ref>.supabase.co`
 
@@ -331,7 +331,7 @@ GET /functions/v1/budget-progress
 
 ```
 budget       = ngân sách tổng đang áp dụng (0 nếu chưa đặt)
-spent        = tổng chi từ đầu kỳ đến hết hôm nay
+spent        = tổng chi từ đầu kỳ đến hết hôm nay   ← CHỈ type = 'expense'
 remaining    = budget - spent
 days_left    = số ngày còn lại trong kỳ, tính cả hôm nay
 daily_limit  = remaining > 0 AND days_left > 0
@@ -344,6 +344,8 @@ daily_limit  = remaining > 0 AND days_left > 0
 1. Làm tròn **xuống** (`floor`), không làm tròn gần. Nếu làm tròn lên, tổng các ngày sẽ vượt ngân sách.
 2. `days_left` tính **cả hôm nay**. Ngày 30/11 thì `days_left = 1`, không phải 0.
 3. `remaining ≤ 0` thì `daily_limit = remaining` (số âm), **không chia**. Giao diện hiển thị "đã vượt X đồng".
+
+**Quy tắc thứ tư (đã chốt Q3):** `spent` chỉ cộng giao dịch `type = 'expense'`. Giao dịch `transfer` **không** được tính — nếu tính, chuyển tiền giữa hai ví sẽ làm giảm chỉ số hôm nay một cách vô lý.
 
 Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đối chiếu cùng kết quả với ít nhất 20 bộ số.
 

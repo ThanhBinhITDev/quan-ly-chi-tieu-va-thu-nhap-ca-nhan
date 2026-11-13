@@ -1,6 +1,6 @@
 # 03 — Luồng đồng bộ dữ liệu
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-11-13 · **Trạng thái:** chờ duyệt
+**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
 
 Mục tiêu: ghi được khi không có mạng, không mất dữ liệu, không tạo bản ghi trùng, và mở đường cho đa thiết bị mà không phải viết lại.
 

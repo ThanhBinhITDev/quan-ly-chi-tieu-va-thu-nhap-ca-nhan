@@ -34,6 +34,18 @@ Thiết kế phục vụ **MVP**: ghi chi tiêu, đa ví, chỉ số hôm nay, n
 | Thông báo | Firebase Cloud Messaging |
 | Thanh toán | Google Play Billing / StoreKit |
 
+## Quyết định đã chốt
+
+Ba quyết định dưới đây đã được duyệt ngày 2026-11-13, áp dụng cho toàn bộ thiết kế:
+
+| # | Quyết định | Hệ quả |
+|:---:|:---:|:---:|
+| Q1 | Không lưu `balance` trong bảng `wallets` — số dư luôn tính từ giao dịch | Bảng `transactions` là nguồn sự thật duy nhất |
+| Q2 | Mục tiêu tiết kiệm tách khỏi ví — `goals.saved_amount` nhập tay | `goals` không có khóa ngoại tới `wallets` |
+| Q3 | Chuyển ví không tính vào tổng chi | Mọi truy vấn tổng chi phải có `AND type = 'expense'` |
+
+Chi tiết và điều cần kiểm tra khi viết mã: xem [mục 15 của tài liệu cơ sở dữ liệu](01-database-schema.md#15-quyết-định-đã-chốt).
+
 ## Trạng thái
 
-Bản nháp 1.0 — chờ duyệt. Mỗi tài liệu có mục "Điểm cần bạn quyết" ở cuối, liệt kê các điểm chưa chốt kèm đề xuất.
+Bản nháp 1.1 — đã chốt 3 quyết định nền tảng, còn các điểm khác chờ duyệt. Mỗi tài liệu có mục "Điểm cần bạn quyết" ở cuối, liệt kê các điểm chưa chốt kèm đề xuất.

@@ -1,6 +1,6 @@
 # 01 — Thiết kế cơ sở dữ liệu
 
-**Phiên bản:** 1.0 · **Ngày:** 2026-11-13 · **Trạng thái:** chờ duyệt
+**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
 
 Mục tiêu: đủ cho MVP, mở rộng được sang AI và đồng bộ đa thiết bị mà không phải migrate lại.
 
@@ -458,12 +458,41 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ## 14. Những điểm cần bạn quyết
 
-| # | Vấn đề | Đề xuất của tôi | Phương án khác |
-|:---:|:---:|:---:|:---:|
-| 1 | Danh mục con (`parent_id`) | Giữ cột nhưng **không dùng ở MVP** | Bỏ hẳn, thêm sau bằng migration |
-| 2 | Mục tiêu tiết kiệm có gắn với ví không | Không, `saved_amount` nhập tay | Gắn với ví loại `savings` |
-| 3 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có |
-| 4 | `occurred_on` là generated column hay app tính | Generated column | App tính, linh hoạt hơn |
-| 5 | Có lưu ảnh hóa đơn ở MVP | Không | Có, dùng Supabase Storage |
+| # | Vấn đề | Đề xuất của tôi | Phương án khác | Trạng thái |
+|:---:|:---:|:---:|:---:|:---:|
+| 1 | Danh mục con (`parent_id`) | Giữ cột nhưng **không dùng ở MVP** | Bỏ hẳn, thêm sau bằng migration | Chờ quyết |
+| 2 | Mục tiêu tiết kiệm có gắn với ví không | Không, `saved_amount` nhập tay | Gắn với ví loại `savings` | **Đã chốt** |
+| 3 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có | **Đã chốt** |
+| 4 | `occurred_on` là generated column hay app tính | Generated column | App tính, linh hoạt hơn | Chờ quyết |
+| 5 | Có lưu ảnh hóa đơn ở MVP | Không | Có, dùng Supabase Storage | Chờ quyết |
 
 Riêng điểm 3: nếu tính chuyển ví vào tổng chi thì tổng chi bị thổi phồng mà không có ý nghĩa. Đề xuất chắc chắn: **không tính**.
+
+---
+
+## 15. Quyết định đã chốt
+
+Ba quyết định dưới đây đã được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới.
+
+| # | Quyết định | Nội dung | Hệ quả lên thiết kế |
+|:---:|:---:|:---:|:---:|
+| Q1 | **Không lưu `balance` trong `wallets`** | Số dư luôn tính từ `initial_balance` + tổng giao dịch | Chỉ một nguồn sự thật là bảng `transactions`. Không có cột `balance`, không có trigger cập nhật, không có nguy cơ lệch |
+| Q2 | **Mục tiêu tiết kiệm tách khỏi ví** | `goals.saved_amount` là số người dùng tự nhập, không gắn với `wallet_id` | Bảng `goals` không có khóa ngoại tới `wallets`. Giai đoạn 2 mới xét thêm ví loại `savings` |
+| Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
+
+### Điều cần kiểm tra khi viết mã
+
+Q3 dễ bị vi phạm nhất vì chỉ thiếu một điều kiện `WHERE` là số liệu sai ngay:
+
+```sql
+-- SAI: quên lọc type, transfer bị tính vào chi
+SELECT SUM(amount) FROM transactions
+WHERE user_id = :uid AND occurred_on BETWEEN :a AND :b AND deleted_at IS NULL;
+
+-- ĐÚNG
+SELECT SUM(amount) FROM transactions
+WHERE user_id = :uid AND type = 'expense'
+  AND occurred_on BETWEEN :a AND :b AND deleted_at IS NULL;
+```
+
+Phải có test khẳng định: tạo 1 giao dịch `expense` 100.000đ + 1 `transfer` 200.000đ → tổng chi = 100.000đ, không phải 300.000đ.
