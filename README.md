@@ -99,10 +99,18 @@ Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).
 ```
 quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── README.md
-├── apps/                      # (chưa tạo) ios/, flutter/
-├── services/                  # (chưa tạo) api/, worker/
-├── packages/                  # (chưa tạo) shared-types/
-├── infra/                     # (chưa tạo) docker-compose, migrations
+├── apps/
+│   ├── ios/                        # (tuần 1) SwiftUI
+│   ├── android/                    # (tuần 1) Flutter — app shell mỏng
+│   └── web/                        # (tuần 1) Flutter Web — app shell mỏng
+├── packages/
+│   ├── flutter_core/               # (tuần 1) Dart dùng chung Android + Web
+│   └── shared-types/               # (tuần 1) DTO + OpenAPI
+├── services/
+│   ├── api/                        # (tuần 1) NestJS — HTTP
+│   └── worker/                     # (tuần 1) NestJS — cron + queue
+├── infra/
+│   └── docker-compose.yml          # (tuần 1)
 ├── docs/
 │   ├── 01-tong-quan.md
 │   ├── 02-san-pham.md
@@ -113,7 +121,6 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   ├── Chien_luoc_giu_chan_nguoi_dung.docx
 │   ├── TODO.md
 │   └── system-design/
-│       ├── README.md
 │       ├── 00-architecture.md
 │       ├── 01-database-schema.md
 │       ├── 02-api-contract.md
@@ -125,7 +132,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 └── .gitignore
 ```
 
-Thư mục `apps/`, `services/`, `packages/`, `infra/` chưa tồn tại — sẽ tạo ở tuần 1 của lộ trình.
+Mỗi thư mục trên có sẵn `README.md` mô tả nội dung và quy tắc; mã nguồn tạo ở tuần 1 của lộ trình.
 
 ---
 

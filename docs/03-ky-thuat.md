@@ -45,17 +45,15 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 ```
 quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── apps/
-│   ├── ios/                        # SwiftUI, Xcode project
-│   ├── flutter/                    # Android + Web
-│   │   ├── lib/
-│   │   ├── android/
-│   │   └── web/
-│   └── web-admin/                  # (giai đoạn 3, chưa làm)
+│   ├── ios/                        # SwiftUI native
+│   ├── android/                    # Flutter — app shell mỏng
+│   └── web/                        # Flutter Web — app shell mỏng
+├── packages/
+│   ├── flutter_core/               # ~95% mã Dart dùng chung Android + Web
+│   └── shared-types/               # DTO + openapi.yaml, sinh client Dart/Swift
 ├── services/
 │   ├── api/                        # NestJS — HTTP
 │   └── worker/                     # NestJS — cron + queue
-├── packages/
-│   └── shared-types/               # DTO dùng chung api ↔ web
 ├── infra/
 │   ├── docker-compose.yml
 │   └── migrations/

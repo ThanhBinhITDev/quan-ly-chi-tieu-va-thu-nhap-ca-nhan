@@ -195,29 +195,44 @@ graph TB
 ```
 quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── README.md                        # giới thiệu ngắn, dẫn vào docs/
-├── apps/
+│
+├── apps/                            # BA nền tảng, ba thư mục
 │   ├── ios/                         # SwiftUI — native, Liquid Glass thật
 │   │   ├── TienDiDau.xcodeproj
 │   │   ├── TienDiDau/
 │   │   │   ├── App/                 # entry, AppRootView, điều hướng
-│   │   │   ├── Core/                # theme, formatter, network, storage
+│   │   │   ├── Core/                # theme, formatter, limit, storage
 │   │   │   ├── Data/                # SwiftData model, repository, sync
 │   │   │   ├── Domain/              # entity, usecase — không import SwiftUI
 │   │   │   └── Features/            # Home, Transactions, Budget, Report, Account
 │   │   └── TienDiDauTests/
-│   ├── android/                     # Flutter — Android
-│   │   ├── lib/
-│   │   │   ├── core/                # theme (Material 3), router, network, storage
-│   │   │   ├── data/                # drift, remote api, repository
-│   │   │   ├── domain/              # entity, usecase — không import Flutter
-│   │   │   └── presentation/        # màn hình, widget, state (Riverpod)
-│   │   ├── android/
-│   │   └── test/
-│   └── web/                         # Flutter Web — dùng chung lib/ với android
-│       └── web/
+│   ├── android/                     # Flutter — app shell mỏng
+│   │   ├── lib/main.dart            # chỉ runApp(core)
+│   │   ├── android/                 # Gradle, manifest, icon, splash
+│   │   └── test/                    # test riêng của shell (rất ít)
+│   └── web/                         # Flutter Web — app shell mỏng
+│       ├── lib/main.dart            # chỉ runApp(core)
+│       ├── web/                     # index.html, manifest, icon PWA
+│       └── test/
+│
+├── packages/
+│   ├── flutter_core/                # ~95% mã Dart dùng chung Android + Web
+│   │   └── lib/
+│   │       ├── core/                # theme, router, money_formatter, progress_bar
+│   │       ├── data/
+│   │       │   ├── local/           # drift: tables/, daos/, seed/
+│   │       │   ├── remote/          # dio, api_client, *_api.dart
+│   │       │   ├── models/          # DTO có fromJson/toJson
+│   │       │   └── repositories/
+│   │       ├── domain/
+│   │       │   ├── entities/
+│   │       │   └── usecases/
+│   │       └── presentation/        # màn hình, widget, provider Riverpod
+│   ├── shared-types/                # DTO + openapi.yaml, sinh client Dart và Swift
+│   └── config/                      # eslint, tsconfig, prettier dùng chung (sẽ có)
 │
 ├── services/
-│   ├── api/                         # NestJS — backend chính
+│   ├── api/                         # NestJS — backend chính (HTTP)
 │   │   └── src/
 │   │       ├── modules/
 │   │       │   ├── auth/            # guard, strategy, token
@@ -228,29 +243,19 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   │       │   ├── reports/         # tổng hợp, so sánh kỳ
 │   │       │   ├── sync/            # push, pull, giải quyết xung đột
 │   │       │   ├── devices/
-│   │       │   ├── receipts/        # signed URL, upload
 │   │       │   └── ai/              # hạn mức, cache, cầu dao chi phí
 │   │       ├── common/              # filter, interceptor, pipe, decorator
 │   │       ├── config/
 │   │       └── main.ts
-│   └── worker/                      # cron + hàng đợi
+│   └── worker/                      # cron + hàng đợi (không HTTP)
 │       └── src/
 │           ├── jobs/                # 12 job ở mục 9
 │           ├── queues/              # định nghĩa hàng đợi BullMQ
 │           └── main.ts
 │
-├── packages/
-│   ├── contract/                    # openapi.yaml — nguồn sinh type
-│   ├── tokens/                      # design token xuất JSON, dùng cho cả ba client
-│   └── config/                      # eslint, tsconfig, prettier dùng chung
-│
-├── db/
-│   ├── migrations/                  # SQL có thứ tự, chạy được nhiều lần
-│   ├── policies/                    # RLS
-│   └── seed/                        # danh mục mặc định, dữ liệu mẫu
-│
 ├── infra/
-│   ├── docker-compose.yml           # postgres, redis, api, worker cho máy cá nhân
+│   ├── docker-compose.yml           # postgres, redis, api, worker cho máy dev
+│   ├── migrations/                  # SQL có thứ tự, chạy được nhiều lần
 │   └── github-actions/              # CI: lint, test, build
 │
 └── docs/
@@ -264,6 +269,22 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
     ├── 05-lo-trinh.md
     └── system-design/               # bộ tài liệu kỹ thuật này
 ```
+
+### Vì sao Android và Web là hai thư mục nhưng không nhân đôi mã
+
+`apps/android` và `apps/web` là **app shell mỏng**: chỉ `lib/main.dart`, cấu hình nền tảng, theme riêng nếu cần. Toàn bộ logic, widget, repository, model nằm trong `packages/flutter_core/`.
+
+```
+apps/android/  ──┐
+                 ├──► packages/flutter_core/   (~95% mã Dart dùng chung)
+apps/web/      ──┘
+```
+
+Sửa một màn hình trong `flutter_core` → cả hai nền nhận ngay. Vẫn giữ ba thư mục riêng nhưng chỉ sửa một lần.
+
+**Quy tắc bắt buộc:** `flutter_core` không được import từ `apps/android` hay `apps/web` (chiều phụ thuộc chỉ một hướng). Nếu cần hành vi riêng theo nền, dùng tham số hoặc interface — không rải `if (Platform.isAndroid)` trong core.
+
+Quản lý workspace Dart: **melos** (`melos.yaml`, sẽ tạo ở tuần 1).
 
 ### Quy tắc phụ thuộc — áp dụng cho cả hai codebase client
 
