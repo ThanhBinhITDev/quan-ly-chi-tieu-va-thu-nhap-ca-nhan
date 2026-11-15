@@ -1,8 +1,10 @@
-# 05 — Cấu trúc mã nguồn Flutter
+# 06 — Cấu trúc mã nguồn Flutter (Android + Web)
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
+**Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** phạm vi thu về Android + Web (Q4). iOS dùng SwiftUI, xem [05](05-ios-structure.md).
 
 Mục tiêu: chia lớp rõ ràng để ba người cùng làm không giẫm chân nhau, và để thay backend/AI sau này không phải sửa UI.
+
+> **Phạm vi 2.0:** file này **chỉ còn Android và Web**. iOS tách riêng sang [05 — Cấu trúc iOS](05-ios-structure.md) vì dùng SwiftUI native (Liquid Glass). Mọi thứ dưới đây là Flutter.
 
 ---
 
@@ -56,7 +58,6 @@ lib/
 │   │   │   ├── wallets_table.dart
 │   │   │   ├── categories_table.dart
 │   │   │   ├── budgets_table.dart
-│   │   │   ├── goals_table.dart
 │   │   │   └── sync_queue_table.dart
 │   │   ├── daos/
 │   │   │   ├── transaction_dao.dart
@@ -81,7 +82,6 @@ lib/
 │   │   ├── wallet.dart
 │   │   ├── category.dart
 │   │   ├── budget.dart
-│   │   ├── goal.dart
 │   │   ├── month_summary.dart
 │   │   └── sync_change.dart
 │   │
@@ -90,7 +90,6 @@ lib/
 │       ├── wallet_repository.dart
 │       ├── category_repository.dart
 │       ├── budget_repository.dart
-│       ├── goal_repository.dart
 │       ├── summary_repository.dart
 │       └── sync_repository.dart
 │

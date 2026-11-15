@@ -1,6 +1,6 @@
 # Danh sách việc còn thiếu
 
-Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp theo mức độ ảnh hưởng đến điểm thi và tính khả thi.
+Tổng hợp các khoảng trống của dự án tính đến 2026-11-16. Sắp theo mức độ ảnh hưởng đến điểm thi và tính khả thi.
 
 ## P0 — Phải làm trước khi nộp bài
 
@@ -20,13 +20,15 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-13. Sắp
 
 | # | Việc | Vì sao |
 |---|---|---|
-| 8 | Thiết kế hệ thống: schema DB, API contract, luồng sync, màn hình, cấu trúc Flutter | Xong bản nháp 1.0 — xem [`system-design/`](system-design/README.md), chờ duyệt |
+| 8 | Thiết kế hệ thống: kiến trúc, schema DB, API contract, luồng sync, màn hình, cấu trúc iOS, cấu trúc Flutter, 12 job định kỳ | Xong bản nháp 2.0 — xem [`system-design/`](system-design/README.md), chờ duyệt |
 | 9 | Wireframe chi tiết 5 màn hình chính | Hiện chỉ có mô tả bằng chữ |
 | 10 | Bộ nhận diện thương hiệu: logo, màu sắc, font | Bài thi có logo nhưng repo chưa có file gốc |
 | 11 | Viết chính sách quyền riêng tư + điều khoản sử dụng | Google Play và App Store từ chối app nếu thiếu |
 | 12 | Xác định tuổi tối thiểu người dùng | Nhắm học sinh THPT đồng nghĩa xử lý dữ liệu người <16 tuổi, cần đồng ý phụ huynh theo NĐ 13/2023 |
 | 13 | Đăng ký tài khoản Google Play developer (25 USD) | Cần thời gian, xem mục 14 |
 | 14 | Lên kế hoạch closed testing 12–20 tester trong 14 ngày | Google Play bắt buộc với tài khoản cá nhân mới — mốc thời gian cứng, phải bắt đầu trước ngày thi ít nhất 1 tháng |
+| 14b | Kiểm chứng 3 điểm trước khi cam kết đọc sao kê | (a) VCB/TPBank/MB có xuất CSV/Excel hay chỉ PDF, (b) MoMo share ra text hay ảnh, (c) có app Việt nào đang làm và còn sống trên Play Store |
+| 14c | Quyết 4 điểm D1–D4 trong [`system-design/00`](system-design/00-architecture.md) mục 16 | Chặn việc chốt lộ trình và môi trường chạy thật |
 
 ## P2 — Nên có
 

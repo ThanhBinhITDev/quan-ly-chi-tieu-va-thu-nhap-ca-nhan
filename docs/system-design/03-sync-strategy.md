@@ -1,6 +1,6 @@
 # 03 — Luồng đồng bộ dữ liệu
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
+**Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** endpoint chuyển từ Edge Functions sang NestJS (Q5)
 
 Mục tiêu: ghi được khi không có mạng, không mất dữ liệu, không tạo bản ghi trùng, và mở đường cho đa thiết bị mà không phải viết lại.
 
@@ -91,7 +91,7 @@ Phát hiện có mạng (connectivity_plus) hoặc app vào foreground
    ↓
 1. Gộp hàng đợi theo (table, id)
 2. Cắt lô tối đa 100 thay đổi
-3. POST /functions/v1/sync-push
+3. POST /v1/sync/push
    ↓
    ├─ Thành công  → đổi sync_status = 'synced', xóa khỏi queue, lưu server_rev
    ├─ Conflict    → đổi sync_status = 'conflict', lưu server_data
@@ -112,7 +112,7 @@ Kích hoạt khi:
   • Kéo xuống để làm mới (pull-to-refresh)
    ↓
 1. Đọc sync_state.last_pull_at (mặc định: 30 ngày trước)
-2. GET /functions/v1/sync-pull?since=<last_pull_at>&limit=500
+2. GET /v1/sync/pull?since=<last_pull_at>&limit=500
 3. Với mỗi bản ghi:
    ├─ Không có local           → insert, sync_status = 'synced'
    ├─ Có local, server rev cao → ghi đè nếu local đang 'synced'
@@ -176,7 +176,7 @@ Không có xóa vĩnh viễn ở client. Nếu người dùng muốn xóa thật
 
 ```
 1. Đăng nhập
-2. GET /functions/v1/sync-pull?since=1970-01-01&limit=500   ← toàn bộ dữ liệu
+2. GET /v1/sync/pull?since=1970-01-01&limit=500   ← toàn bộ dữ liệu
 3. Lặp đến khi has_more = false
 4. Ghi tất cả vào SQLite với sync_status = 'synced'
 5. Hiện thanh tiến trình: "Đang tải 1.240 giao dịch..."

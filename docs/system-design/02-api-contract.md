@@ -1,8 +1,11 @@
 # 02 — Hợp đồng API
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
+**Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** backend chuyển từ PostgREST sang NestJS (Q5)
 
-Base URL: `https://<project-ref>.supabase.co`
+Base URL: `https://api.<tenant>.com` (NestJS, sau API Gateway)
+
+> API do NestJS tự viết — không dùng PostgREST. Mỗi module là một controller.
+> Supabase chỉ cung cấp Postgres, Auth và Storage; logic nằm trong NestJS.
 
 ---
 
@@ -106,7 +109,7 @@ POST /auth/v1/token?grant_type=refresh_token
 ### 4.1. Lấy danh sách ví
 
 ```http
-GET /rest/v1/wallets?select=id,name,type,initial_balance,color,icon,is_archived&deleted_at=is.null&order=sort_order.asc
+GET /v1/wallets
 ```
 
 **Trả về 200:**
@@ -125,7 +128,7 @@ GET /rest/v1/wallets?select=id,name,type,initial_balance,color,icon,is_archived&
 ### 4.2. Tạo ví
 
 ```http
-POST /rest/v1/wallets
+POST /v1/wallets
 ```
 
 ```json
@@ -152,7 +155,7 @@ POST /rest/v1/wallets
 ### 4.3. Sửa ví
 
 ```http
-PATCH /rest/v1/wallets?id=eq.<wallet_id>
+PATCH /v1/wallets/<wallet_id>
 ```
 
 ```json
@@ -168,7 +171,7 @@ PATCH /rest/v1/wallets?id=eq.<wallet_id>
 ### 5.1. Lấy danh sách (phân trang cursor)
 
 ```http
-GET /rest/v1/transactions?select=id,wallet_id,category_id,type,amount,note,occurred_at,source&deleted_at=is.null&order=occurred_at.desc&limit=50&occurred_at=lt.2026-11-13T05:00:00Z
+GET /v1/transactions?limit=50&before=<occurred_at>&type=<expense|income|transfer>
 ```
 
 Tham số `occurred_at=lt.<mốc>` là cursor: lấy 50 bản ghi trước mốc đó.
@@ -186,7 +189,7 @@ Tham số `occurred_at=lt.<mốc>` là cursor: lấy 50 bản ghi trước mốc
 ### 5.2. Tạo giao dịch
 
 ```http
-POST /rest/v1/transactions
+POST /v1/transactions
 ```
 
 ```json
@@ -216,23 +219,23 @@ POST /rest/v1/transactions
 ### 5.3. Sửa giao dịch
 
 ```http
-PATCH /rest/v1/transactions?id=eq.<tx_id>
+PATCH /v1/transactions/<tx_id>
 { "amount": 40000, "rev": 2 }
 ```
 
 ### 5.4. Xóa giao dịch
 
 ```http
-PATCH /rest/v1/transactions?id=eq.<tx_id>
+PATCH /v1/transactions/<tx_id>
 { "deleted_at": "2026-11-13T05:00:00Z", "rev": 2 }
 ```
 
 Xóa mềm. Không có `DELETE` thật, để đồng bộ được giữa các thiết bị.
 
-### 5.5. Tổng hợp tháng (endpoint riêng, không dùng PostgREST)
+### 5.5. Tổng hợp tháng (module reports)
 
 ```http
-GET /functions/v1/month-summary?year=2026&month=11
+GET /v1/reports/month-summary?year=2026&month=11
 ```
 
 **Trả về 200:**
@@ -273,13 +276,13 @@ Ngoại lệ: khi offline, client dùng chính công thức đó tính từ dữ
 ### 6.1. Lấy ngân sách đang áp dụng
 
 ```http
-GET /rest/v1/budgets?select=*&deleted_at=is.null&end_date=is.null
+GET /v1/budgets?active=true
 ```
 
 ### 6.2. Đặt ngân sách
 
 ```http
-POST /rest/v1/budgets
+POST /v1/budgets
 ```
 
 ```json
@@ -297,7 +300,7 @@ POST /rest/v1/budgets
 ### 6.3. Tiến độ ngân sách
 
 ```http
-GET /functions/v1/budget-progress
+GET /v1/budgets/progress
 ```
 
 **Trả về 200:**
@@ -368,7 +371,7 @@ Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đ�
 ### 8.2. Đẩy thay đổi
 
 ```http
-POST /functions/v1/sync-push
+POST /v1/sync/push
 ```
 
 ```json
@@ -417,7 +420,7 @@ Với MVP dùng 1 thiết bị, xung đột gần như không xảy ra. Nhưng *
 ### 8.4. Kéo thay đổi
 
 ```http
-GET /functions/v1/sync-pull?since=2026-11-13T04:00:00Z&limit=500
+GET /v1/sync/pull?since=2026-11-13T04:00:00Z&limit=500
 ```
 
 **Trả về 200:**
@@ -444,7 +447,7 @@ GET /functions/v1/sync-pull?since=2026-11-13T04:00:00Z&limit=500
 ### 9.1. Đọc hóa đơn
 
 ```http
-POST /functions/v1/ai/ocr
+POST /v1/ai/ocr
 Content-Type: multipart/form-data
 
 file: <ảnh jpeg, tối đa 5 MB>
@@ -471,7 +474,7 @@ Lý do: nếu OCR tự tạo giao dịch, một lần nhận diện sai sẽ là
 ### 9.2. Trợ lý hỏi đáp
 
 ```http
-POST /functions/v1/ai/chat
+POST /v1/ai/chat
 ```
 
 ```json
@@ -507,12 +510,20 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 
 ## 10. Job định kỳ (server)
 
-| Job | Tần suất | Việc |
-|---|---|---|
-| Kiểm tra gói Pro hết hạn | Mỗi giờ | `plan_expires_at < now()` → chuyển về `free` |
-| Reset quota AI | Không cần job | Quota lưu theo key tháng trong JSONB, đọc key hiện tại |
-| Dọn token push lỗi | Mỗi ngày | Xóa device có `push_token` bị FCM báo invalid |
-| Xóa ảnh hóa đơn quá 90 ngày | Mỗi ngày | Chỉ với gói free, tiết kiệm Storage |
+Đầy đủ **12 job** — lịch chạy, khoá idempotent, xử lý lỗi, giám sát — ở [07 — Công việc định kỳ](07-cron-jobs.md). Không lặp lại ở đây để tránh lệch.
+
+Tóm tắt nhóm:
+
+| Nhóm | Job |
+|---|---|
+| Dữ liệu định kỳ | `recurring-generate`, `soft-delete-purge` |
+| Ngân sách | `budget-close`, `budget-alert` |
+| Tổng hợp | `aggregate-refresh` |
+| Người dùng | `daily-reminder`, `winback`, `fcm-token-cleanup` |
+| AI | `ai-monthly-review`, `ai-quota-reset`, `ai-cost-breaker` |
+| Chất lượng | `integrity-check` |
+
+Mọi job chạy trong **Worker NestJS + BullMQ**, không dùng `pg_cron`, không dùng Edge Functions.
 
 ---
 
@@ -532,10 +543,10 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 
 | # | Vấn đề | Đề xuất | Phương án khác |
 |---|---|---|---|
-| 1 | Dùng PostgREST trực tiếp hay viết API riêng | PostgREST cho CRUD đơn giản, Edge Function cho tổng hợp/sync/AI | Viết toàn bộ bằng Edge Function, kiểm soát hơn nhưng tốn công |
+| 1 | ~~Dùng PostgREST trực tiếp hay viết API riêng~~ | **Đã chốt Q5:** NestJS viết toàn bộ, không dùng PostgREST | — |
 | 2 | Cursor phân trang hay offset | Cursor theo `occurred_at` | Offset đơn giản hơn nhưng sai khi có bản ghi mới chèn vào |
 | 3 | `daily_limit` tính server hay client | Server khi online, client khi offline, dùng chung công thức | Chỉ client, đơn giản hơn nhưng dễ lệch |
-| 4 | Có endpoint `sync-pull` riêng hay dùng PostgREST với `updated_at` | Endpoint riêng | PostgREST đơn giản hơn nhưng khó trả nhiều bảng một lúc |
+| 4 | Có endpoint `sync-pull` riêng hay dùng PostgREST với `updated_at` | **Đã chốt:** endpoint riêng trong module sync, vì cần trả nhiều bảng trong một request | — |
 | 5 | AI OCR nhận ảnh hay chỉ nhận text đã trích xuất | Nhận ảnh, ML Kit chạy server-side | Client trích xuất rồi gửi text, rẻ hơn nhưng phụ thuộc thiết bị |
 
 Điểm 5 đáng cân nhắc: nếu client tự chạy ML Kit rồi chỉ gửi text, chi phí giảm nhưng chất lượng phụ thuộc camera và máy. Đề xuất MVP: **client trích xuất, gửi text**, và chỉ gửi ảnh khi text không đủ rõ (độ tin cậy < 0,6).

@@ -34,7 +34,6 @@ users
   ├──< wallets            (1 user có nhiều ví)
   ├──< categories         (danh mục mặc định user_id = NULL)
   ├──< budgets            (1 ngân sách thuộc 1 danh mục)
-  ├──< goals              (mục tiêu tiết kiệm)
   ├──< recurring_rules    (giao dịch định kỳ)
   ├──< devices            (thiết bị đăng nhập, push token)
   │
@@ -270,32 +269,7 @@ WHERE t.user_id = :uid
 
 ---
 
-## 8. Bảng `goals`
-
-```sql
-CREATE TABLE goals (
-  id             UUID PRIMARY KEY,
-  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name           TEXT NOT NULL,               -- "Mua laptop"
-  target_amount  BIGINT NOT NULL CHECK (target_amount > 0),
-  saved_amount   BIGINT NOT NULL DEFAULT 0,
-  deadline       DATE,
-  icon           TEXT,
-  is_completed   BOOLEAN NOT NULL DEFAULT false,
-  rev            INT NOT NULL DEFAULT 1,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  deleted_at     TIMESTAMPTZ
-);
-```
-
-`saved_amount` lưu trực tiếp (khác với wallet balance) vì mục tiêu tiết kiệm là con số người dùng tự khai, không gắn với giao dịch thật ở MVP.
-
-Giai đoạn 2 có thể liên kết `goals` với một ví riêng loại `savings`.
-
----
-
-## 9. Bảng `recurring_rules`
+## 8. Bảng `recurring_rules`
 
 ```sql
 CREATE TABLE recurring_rules (
@@ -325,7 +299,7 @@ CREATE INDEX idx_recurring_due ON recurring_rules(next_run_on)
 
 ---
 
-## 10. Bảng `devices`
+## 9. Bảng `devices`
 
 ```sql
 CREATE TABLE devices (
@@ -343,7 +317,7 @@ Dùng để gửi push và để phát hiện sync bất thường.
 
 ---
 
-## 11. Row Level Security (Supabase)
+## 10. Row Level Security (Supabase)
 
 Bắt buộc bật cho mọi bảng, nếu không dữ liệu tài chính của người này đọc được bởi người khác.
 
@@ -351,7 +325,6 @@ Bắt buộc bật cho mọi bảng, nếu không dữ liệu tài chính của 
 ALTER TABLE wallets      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE goals        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_rules ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY p_wallets_own ON wallets
@@ -374,7 +347,7 @@ CREATE POLICY p_categories_write ON categories
 
 ---
 
-## 12. Câu truy vấn then chốt
+## 11. Câu truy vấn then chốt
 
 ### 12.1. Chỉ số "Hôm nay được tiêu bao nhiêu"
 
@@ -440,7 +413,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 13. Dung lượng ước tính
+## 12. Dung lượng ước tính
 
 | Bảng | 1 user/năm | 10.000 user/năm |
 |---|---|---|
@@ -456,28 +429,29 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 14. Những điểm cần bạn quyết
+## 13. Những điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất của tôi | Phương án khác | Trạng thái |
 |---|---|---|---|---|
 | 1 | Danh mục con (`parent_id`) | Giữ cột nhưng **không dùng ở MVP** | Bỏ hẳn, thêm sau bằng migration | Chờ quyết |
-| 2 | Mục tiêu tiết kiệm có gắn với ví không | Không, `saved_amount` nhập tay | Gắn với ví loại `savings` | **Đã chốt** |
-| 3 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có | **Đã chốt** |
+| 2 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có | **Đã chốt (Q3)** |
 | 4 | `occurred_on` là generated column hay app tính | Generated column | App tính, linh hoạt hơn | Chờ quyết |
 | 5 | Có lưu ảnh hóa đơn ở MVP | Không | Có, dùng Supabase Storage | Chờ quyết |
 
-Riêng điểm 3: nếu tính chuyển ví vào tổng chi thì tổng chi bị thổi phồng mà không có ý nghĩa. Đề xuất chắc chắn: **không tính**.
+Riêng điểm 2: nếu tính chuyển ví vào tổng chi thì tổng chi bị thổi phồng mà không có ý nghĩa. Đề xuất chắc chắn: **không tính**.
+
+> Ghi chú 2026-11-16: tính năng mục tiêu tiết kiệm đã bị loại bỏ (Q7), bảng `goals` không được tạo. Các mục "mục tiêu tiết kiệm" trước đây trong tài liệu này đã được xoá.
 
 ---
 
-## 15. Quyết định đã chốt
+## 14. Quyết định đã chốt
 
-Ba quyết định dưới đây đã được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới.
+Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới. Quyết định Q7 ngày 2026-11-16 (loại bỏ mục tiêu tiết kiệm) đã huỷ Q2 cũ.
 
 | # | Quyết định | Nội dung | Hệ quả lên thiết kế |
 |---|---|---|---|
 | Q1 | **Không lưu `balance` trong `wallets`** | Số dư luôn tính từ `initial_balance` + tổng giao dịch | Chỉ một nguồn sự thật là bảng `transactions`. Không có cột `balance`, không có trigger cập nhật, không có nguy cơ lệch |
-| Q2 | **Mục tiêu tiết kiệm tách khỏi ví** | `goals.saved_amount` là số người dùng tự nhập, không gắn với `wallet_id` | Bảng `goals` không có khóa ngoại tới `wallets`. Giai đoạn 2 mới xét thêm ví loại `savings` |
+| Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
 | Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
 
 ### Điều cần kiểm tra khi viết mã

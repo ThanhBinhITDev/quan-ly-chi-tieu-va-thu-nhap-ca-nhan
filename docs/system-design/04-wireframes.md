@@ -285,17 +285,6 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 │     └─────────────────────────┘     │
 │     300.000 · vượt 20.000           │
 │                                     │
-├─────────────────────────────────────┤
-│  MỤC TIÊU TIẾT KIỆM                 │
-│                                     │
-│  💻 Mua laptop              8.000.000│
-│     ┌─────────────────────────┐     │
-│     │██████░░░░░░░░░░░░░░  30%│     │
-│     └─────────────────────────┘     │
-│     Đã có 2.400.000 · hạn 30/04/2027│
-│     Cần để dành ≈933.000đ/tháng     │
-│                                     │
-│  + Thêm mục tiêu                    │
 └─────────────────────────────────────┘
 ```
 
@@ -533,6 +522,8 @@ Trang chủ ────┬──── Giao dịch ──── Sửa giao dị
 ```
 
 Thanh tab dưới: 5 mục. Nút `+` nổi chỉ ở tab Trang chủ và Giao dịch.
+
+> **Khác biệt nền tảng (Q4):** nút `+` nổi là mẫu Material (Android). Trên **iOS dùng nút thêm ở thanh điều hướng trên** hoặc thanh dưới dạng `Toolbar` — không dùng FAB, vì iOS không có mẫu FAB và HIG không khuyến nghị. Các khối còn lại dùng chung.
 
 **Khi người dùng bấm thông báo:** mở thẳng màn hình liên quan, không qua trang chủ. VD bấm "Sắp hết hạn mức Ăn uống" → mở tab Ngân sách, cuộn đến danh mục Ăn uống.
 
