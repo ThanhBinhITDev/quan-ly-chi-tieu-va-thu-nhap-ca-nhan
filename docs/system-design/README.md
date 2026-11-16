@@ -6,7 +6,7 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 
 | # | Tài liệu | Nội dung | Trạng thái |
 |---|---|---|---|
-| 00 | [Kiến trúc hệ thống](00-architecture.md) | Mục tiêu, C4 hai mức, 3 nền tảng, luồng dữ liệu, 12 job cron, bảo mật, chi phí, ADR | 2.0 |
+| 00 | [Kiến trúc hệ thống](00-architecture.md) | Mục tiêu, C4 hai mức, 3 nền tảng, luồng dữ liệu, ERD, 12 job, bảo mật, ADR | 2.0 |
 | 01 | [Cơ sở dữ liệu](01-database-schema.md) | 7 bảng, quan hệ, index, RLS, truy vấn then chốt, dung lượng | 2.0 |
 | 02 | [Hợp đồng API](02-api-contract.md) | Endpoint, request/response, mã lỗi, giới hạn tải, công thức dùng chung | 2.0 |
 | 03 | [Đồng bộ dữ liệu](03-sync-strategy.md) | Local-first, hàng đợi, chống trùng, xử lý xung đột, toàn vẹn | 2.0 |
@@ -15,6 +15,7 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 | 06 | [Cấu trúc Android (Flutter)](06-flutter-structure.md) | Thư mục, phân lớp, Riverpod, drift, kiểm thử | 2.0 |
 | 07 | [Công việc định kỳ](07-cron-jobs.md) | 12 job, lịch chạy, khoá chống trùng, xử lý lỗi, giám sát | 2.0 |
 | 08 | [Nguyên tắc API cho ba nền](08-api-principles.md) | REST JSON thuần, Bearer JWT thống nhất, định dạng lỗi | 2.0 (mới) |
+| 09 | [Chi tiết kỹ thuật](09-chi-tiet-ky-thuat.md) | Phân tầng backend, yêu cầu phi chức năng, chi phí, rủi ro | 2.0 (mới) |
 
 ---
 
@@ -55,4 +56,4 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 
 ## Trạng thái
 
-Bản nháp 2.0 — đã chốt Q1, Q3–Q7; loại bỏ mục tiêu tiết kiệm. Bốn điểm còn chờ quyết ở [mục 10 của 00](00-architecture.md#10-điểm-cần-bạn-quyết).
+Bản nháp 2.0 — đã chốt Q1, Q3–Q7; loại bỏ mục tiêu tiết kiệm. Bốn điểm còn chờ quyết ở [mục 12 của 00](00-architecture.md#12-điểm-cần-bạn-quyết).

@@ -2,7 +2,7 @@
 
 **Phiên bản:** 1.0 · **Ngày:** 2026-11-16 · **Trạng thái:** bản nháp đầu
 
-Công việc chạy tự động trên Worker NestJS + BullMQ. Không dùng `pg_cron`, không dùng Edge Functions. Lý do: xem [09 mục 4.3](09-chi-tiet-ky-thuat.md#43-vì-sao-không-dùng-pg_cron).
+Công việc chạy tự động trên Worker NestJS + BullMQ. Không dùng `pg_cron`, không dùng Edge Functions. Lý do: xem [00 mục 8](00-architecture.md#8-quy-trình-tự-động).
 
 Toàn bộ chạy múi giờ `Asia/Ho_Chi_Minh` (UTC+7). Ngoại lệ ghi rõ ở từng job.
 

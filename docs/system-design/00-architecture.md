@@ -7,7 +7,6 @@ Phiên bản 2.0 — 2026-11-16. Thay thế bản 1.1 (một nền tảng Flutte
 ---
 
 ## 1. Mục tiêu và ràng buộc
-
 ### Mục tiêu kiến trúc
 
 | # | Mục tiêu | Cách đo |
@@ -36,7 +35,6 @@ Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứn
 ---
 
 ## 2. Quyết định nền tảng đã chốt
-
 | # | Quyết định | Ngày | Hệ quả |
 |---|---|---|---|
 | Q1 | Không lưu `balance` trong `wallets`; số dư luôn tính từ giao dịch | 2026-11-13 | `transactions` là nguồn sự thật duy nhất |
@@ -44,7 +42,9 @@ Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứn
 | Q4 | **Ba nền tảng, ba công nghệ riêng:** iOS SwiftUI native; Android Flutter; Web Next.js (React, TypeScript) | 2026-11-16 | Ba codebase, ba ngôn ngữ, một hợp đồng API (OpenAPI) |
 | Q5 | **Backend tách khỏi Supabase: NestJS tự viết, Supabase chỉ làm Postgres + Auth + Storage** | 2026-11-16 | Logic nghiệp vụ nằm ở nơi kiểm thử được |
 | Q6 | **Cron chạy trong worker NestJS + BullMQ, không dùng pg_cron hay Edge Functions** | 2026-11-16 | Có retry, có dead-letter, có log |
-| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Bảng `goals` không tạo |
+| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Bảng `goals` không tạo; Q2 cũ bị huỷ |
+
+> Q2 cũ ("mục tiêu tiết kiệm tách khỏi ví") không còn hiệu lực vì tính năng đã bị loại bỏ.
 
 ### Vì sao mỗi nền chọn một công nghệ
 
@@ -54,12 +54,11 @@ Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứn
 | Android | Flutter | Chiếm đa số người dùng; một codebase Dart, phù hợp đội 1 người làm kỹ thuật | Native Kotlin: tốn thời gian gấp đôi |
 | Web | Next.js (React, TypeScript) | SEO, tải trang nhanh (~150 KB so với 2–3 MB của Flutter Web), hệ sinh thái React, dùng chung TypeScript với backend | Flutter Web: nặng, SEO kém, canvas không được lập chỉ mục |
 
-**Chi phí của cách này:** mỗi thay đổi phải sửa, test và phát hành ba lần. Giảm bằng hợp đồng API chung ([08](08-api-principles.md)) và bộ số liệu test chung. Xem rủi ro ở [09 mục 7](09-chi-tiet-ky-thuat.md).
+**Đánh đổi phải nói rõ:** ba codebase = ba lần sửa lỗi, ba lần viết test, ba lần phát hành. Bù lại bằng hợp đồng API duy nhất ([08](08-api-principles.md)) và bộ số liệu test dùng chung cho công thức "hôm nay được tiêu". Nếu thời gian eo hẹp, cắt phạm vi Web xuống landing + đăng nhập, không cắt iOS.
 
 ---
 
 ## 3. Sơ đồ C4 — mức 1 (bối cảnh)
-
 Ai dùng hệ thống và hệ thống nói chuyện với những đâu.
 
 ```mermaid
@@ -111,7 +110,6 @@ graph TB
 ---
 
 ## 4. Sơ đồ C4 — mức 2 (container)
-
 ```mermaid
 graph TB
     subgraph CLIENT["Lớp ứng dụng"]
@@ -188,7 +186,6 @@ graph TB
 ---
 
 ## 5. Cấu trúc repository — ba nền tảng
-
 ```
 quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── apps/
@@ -234,14 +231,286 @@ Features / presentation  →  Domain  ←  Data
 
 ---
 
-## 6. Chi tiết kỹ thuật
+## 6. Luồng dữ liệu
+### 6.1 Ghi giao dịch khi có mạng
 
-Phân tầng backend, luồng dữ liệu, sơ đồ quan hệ, quy trình tự động, yêu cầu phi chức năng, chi phí và rủi ro được tách sang [09-chi-tiet-ky-thuat.md](09-chi-tiet-ky-thuat.md). Tài liệu này chỉ giữ hình dạng hệ thống.
+```mermaid
+sequenceDiagram
+    participant U as Người dùng
+    participant C as App
+    participant L as SQLite / SwiftData
+    participant Q as Hàng đợi đồng bộ
+    participant A as API
+    participant P as Postgres
+
+    U->>C: Bấm Lưu (35.000đ, Ăn uống)
+    C->>C: Sinh UUID trên máy
+    C->>L: Ghi ngay (trạng thái pending)
+    L-->>C: Xong, giao diện cập nhật
+    C-->>U: Hiện trong danh sách (chưa có dấu tick)
+    C->>Q: Đưa vào hàng đợi
+    Q->>A: POST /v1/transactions (kèm id)
+    A->>P: INSERT ... ON CONFLICT (id) DO NOTHING
+    P-->>A: Đã ghi
+    A-->>Q: 201 Created
+    Q->>L: Đánh dấu synced
+    L-->>C: Bỏ dấu "chờ đồng bộ"
+```
+
+**Điểm quan trọng:** người dùng thấy phản hồi trước khi mạng trả lời. Nếu mạng hỏng ở bước cuối, bản ghi vẫn còn trên máy và tự gửi lại.
+
+### 6.2 Ghi giao dịch khi không có mạng
+
+```mermaid
+sequenceDiagram
+    participant U as Người dùng
+    participant C as App
+    participant L as SQLite / SwiftData
+    participant Q as Hàng đợi
+
+    U->>C: Bấm Lưu
+    C->>L: Ghi (pending)
+    C->>Q: Đưa vào hàng đợi
+    Q->>Q: Không có mạng, giữ lại
+    C-->>U: Đã lưu. Sẽ đồng bộ khi có mạng.
+    Note over Q: Thử lại 1s, 5s, 25s, 2 phút, 10 phút<br/>Sau đó chuyển dead-letter, báo người dùng
+```
+
+### 6.3 Đồng bộ hai chiều và xử lý xung đột
+
+```mermaid
+sequenceDiagram
+    participant C as App
+    participant A as API
+    participant P as Postgres
+
+    C->>A: GET /v1/sync/pull?since=2026-11-01T00:00:00Z
+    A->>P: Lấy bản ghi updated_at > since
+    P-->>A: Danh sách
+    A-->>C: Bản ghi + con trỏ mới
+    C->>C: So từng bản ghi với bản local
+
+    alt Không có bản local
+        C->>C: Lưu mới
+    else Bản local đã synced
+        C->>C: Ghi đè
+    else Bản local còn pending
+        C->>C: Đánh dấu XUNG ĐỘT
+        C-->>C: Hỏi người dùng giữ bản nào
+        Note over C: Không tự chọn. Không ghi đè im lặng.
+    end
+```
+
+### 6.4 Đọc báo cáo
+
+```mermaid
+sequenceDiagram
+    participant C as App
+    participant A as API
+    participant R as Redis
+    participant P as Postgres
+
+    C->>A: GET /v1/reports/monthly?month=2026-11
+    A->>R: Lấy cache theo (user, month)
+    alt Có cache và còn hạn
+        R-->>A: Trả cache
+    else Không có
+        A->>P: Tổng hợp theo danh mục, ngày
+        P-->>A: Số liệu
+        A->>R: Ghi cache 5 phút
+    end
+    A-->>C: Tổng chi, cơ cấu, so sánh kỳ trước
+    Note over A: Mọi tổng chi đều lọc type = 'expense'
+```
+
+### 6.5 Gọi AI (giai đoạn 2)
+
+```mermaid
+sequenceDiagram
+    participant C as App
+    participant A as API
+    participant W as Worker
+    participant R as Redis
+    participant G as Gemini
+
+    C->>A: POST /v1/ai/ocr (ảnh đã upload)
+    A->>R: Kiểm hạn mức còn không
+    alt Hết hạn mức
+        A-->>C: 429 AI_QUOTA_EXCEEDED
+    else Còn
+        A->>R: Kiểm cache theo hash ảnh
+        alt Có cache
+            R-->>A: Kết quả cũ
+            A-->>C: Trả ngay, không tính lượt
+        else Không
+            A->>W: Đưa job vào hàng đợi
+            A-->>C: 202 Accepted, kèm jobId
+            W->>G: Gọi mô hình
+            G-->>W: JSON (số tiền, ngày, tên quán)
+            W->>W: Kiểm hợp lệ, không tin số mô hình trả
+            W->>C: Đẩy kết quả qua kênh đồng bộ
+            C-->>C: Hiện form đã điền, người dùng sửa nếu cần
+        end
+    end
+```
+
+**Nguyên tắc bất di bất dịch:** mô hình AI không sinh ra con số tài chính. AI chỉ trích xuất từ ảnh; mọi tổng hợp do Postgres tính bằng công thức xác định.
 
 ---
 
-## 7. Bảo mật
+## 7. Sơ đồ quan hệ dữ liệu
+```mermaid
+erDiagram
+    users ||--o{ wallets : "sở hữu"
+    users ||--o{ categories : "tuỳ biến"
+    users ||--o{ transactions : "ghi"
+    users ||--o{ budgets : "đặt"
+    users ||--o{ recurring_rules : "tạo"
+    users ||--o{ devices : "đăng ký"
 
+    wallets ||--o{ transactions : "chứa"
+    wallets ||--o{ transactions : "nhận chuyển"
+    categories ||--o{ transactions : "phân loại"
+    categories ||--o{ budgets : "giới hạn"
+    wallets ||--o{ recurring_rules : "sinh vào"
+
+    users {
+        uuid id PK
+        text email
+        text display_name
+        text locale
+        text timezone
+        text plan
+        int  ai_quota_used
+        timestamptz created_at
+    }
+    wallets {
+        uuid id PK
+        uuid user_id FK
+        text name
+        text type
+        bigint initial_balance
+        text color
+        text icon
+        timestamptz deleted_at
+    }
+    categories {
+        uuid id PK
+        uuid user_id FK
+        text name
+        text type
+        text icon
+        text color
+        boolean is_default
+    }
+    transactions {
+        uuid id PK
+        uuid user_id FK
+        uuid wallet_id FK
+        uuid to_wallet_id FK
+        uuid category_id FK
+        text type
+        bigint amount
+        text note
+        text receipt_url
+        timestamptz occurred_at
+        date occurred_on
+        timestamptz deleted_at
+    }
+    budgets {
+        uuid id PK
+        uuid user_id FK
+        uuid category_id FK
+        text month
+        bigint limit_amount
+    }
+    recurring_rules {
+        uuid id PK
+        uuid user_id FK
+        uuid wallet_id FK
+        uuid category_id FK
+        text type
+        bigint amount
+        text frequency
+        date next_run_on
+        timestamptz last_run_at
+    }
+    devices {
+        uuid id PK
+        uuid user_id FK
+        text platform
+        text fcm_token
+        timestamptz last_seen_at
+    }
+```
+
+Chi tiết cột, kiểu, index, ràng buộc: xem [01-database-schema.md](01-database-schema.md).
+
+**Ghi chú ERD:** bảng `goals` đã bị loại bỏ. Bảng `transactions` có hai khoá ngoại tới `wallets` — `wallet_id` (ví nguồn) và `to_wallet_id` (chỉ dùng khi `type = 'transfer'`).
+
+---
+
+## 8. Quy trình tự động
+Toàn bộ chạy trên Worker NestJS + BullMQ, múi giờ `Asia/Ho_Chi_Minh`.
+Mỗi job phải **chạy lại được** mà không tạo dữ liệu trùng.
+
+### 8.1 Mười hai job định kỳ
+
+| # | Job | Lịch | Việc làm | Khoá chống trùng | Khi lỗi |
+|---|---|---|---|---|---|
+| 1 | `recurring-generate` | `05 0 * * *` | Sinh giao dịch từ `recurring_rules` tới hạn, cập nhật `next_run_on` | `(rule_id, occurrence_date)` unique | Thử lại 3 lần, cách 5 phút |
+| 2 | `budget-close` | `10 0 1 * *` | Chốt tổng tháng trước, tạo khung ngân sách tháng mới cho user đã đặt | `(user_id, month)` unique | Thử lại 3 lần |
+| 3 | `aggregate-refresh` | `30 0 * * *` | Tính lại bảng tổng hợp tháng, ghi cache | Ghi đè theo `(user, month)` | Thử lại 3 lần |
+| 4 | `budget-alert` | `*/15 * * * *` | Quét ngưỡng 70/90/100%, gửi thông báo | `(user, category, month, level)` unique | Bỏ qua lần này, lần sau quét lại |
+| 5 | `daily-reminder` | `0 20 * * *` | Nhắc ghi chép, kèm số thật của ngày | 1 tin/người/ngày | Bỏ qua |
+| 6 | `winback` | `0 9 * * *` | Quét người vắng 7 ngày và 14 ngày | Tối đa 2 lần/người, ghi vào `notifications` | Bỏ qua |
+| 7 | `ai-monthly-review` | `0 6 1 * *` | Sinh nhận xét thói quen tháng trước | Chỉ user có ≥ 10 giao dịch | Thử lại 2 lần |
+| 8 | `ai-quota-reset` | `0 0 1 * *` | Đặt lại `ai_quota_used = 0` theo gói | Idempotent theo tháng | Thử lại 3 lần |
+| 9 | `ai-cost-breaker` | `0 * * * *` | Tổng chi phí AI giờ qua; vượt ngưỡng thì khoá tính năng tới đầu giờ sau | Khoá Redis có TTL | Gửi cảnh báo nếu chạy lỗi 2 lần |
+| 10 | `fcm-token-cleanup` | `0 3 * * 0` | Xoá token FCM không hợp lệ | Idempotent | Thử lại 1 lần |
+| 11 | `soft-delete-purge` | `30 3 * * *` | Xoá cứng bản ghi có `deleted_at` quá 30 ngày | Idempotent | Thử lại 3 lần |
+| 12 | `integrity-check` | `0 4 * * 0` | Tìm dòng mồ côi, `amount <= 0`, tổng lệch giữa các bảng | Chỉ đọc | Gửi báo cáo cho nhóm |
+
+### 8.2 Ba cơ chế không phải cron nhưng phải định nghĩa cùng lúc
+
+| Cơ chế | Nội dung | Khi nào chạy |
+|---|---|---|
+| **Hàng đợi đồng bộ** | Thử lại cách 1s, 5s, 25s, 2 phút, 10 phút; sau đó dead-letter và báo người dùng | Mỗi lần client đẩy giao dịch |
+| **Trigger toàn vẹn trong Postgres** | Cập nhật `updated_at`; chặn `amount <= 0`; chặn `type = 'transfer'` mà thiếu `to_wallet_id` | Mỗi lệnh ghi |
+| **Cảnh báo vận hành** | Job nào lỗi 2 lần liên tiếp thì gửi thông báo cho nhóm qua email và Telegram | Sau mỗi lần job lỗi |
+
+### 8.3 Vì sao không dùng pg_cron
+
+| Cần | pg_cron | Worker + BullMQ |
+|---|---|---|
+| Thử lại có backoff | Không | Có |
+| Dead-letter queue | Không | Có |
+| Gọi API ngoài (Gemini, FCM) | Không (chỉ SQL) | Có |
+| Chạy cục bộ để test | Không | Có |
+| Log có cấu trúc | Không | Có |
+| Tách theo múi giờ người dùng | Khó | Có |
+
+### 8.4 Trình tự chạy trong một đêm
+
+```mermaid
+gantt
+    title Các job ban đêm theo giờ Việt Nam
+    dateFormat HH:mm
+    axisFormat %H:%M
+    section Dữ liệu
+    recurring-generate   :00:05, 10m
+    budget-close         :00:10, 20m
+    aggregate-refresh    :00:30, 30m
+    section Dọn dẹp
+    soft-delete-purge    :03:30, 20m
+    fcm-token-cleanup    :03:00, 15m
+    section Định kỳ tuần
+    integrity-check      :04:00, 30m
+```
+
+---
+
+## 9. Bảo mật
 ### Luồng xác thực
 
 ```mermaid
@@ -282,8 +551,7 @@ sequenceDiagram
 
 ---
 
-## 8. Suy giảm và chịu lỗi
-
+## 10. Suy giảm và chịu lỗi
 | Khi X xảy ra | Hệ thống phản ứng | Người dùng thấy gì |
 |---|---|---|
 | Mất mạng | Ghi local; hàng đợi tự thử lại | Dấu "chờ đồng bộ" trên giao dịch |
@@ -297,8 +565,7 @@ sequenceDiagram
 
 ---
 
-## 9. Nhật ký quyết định kiến trúc
-
+## 11. Nhật ký quyết định kiến trúc
 | # | Quyết định | Bối cảnh | Đã chọn | Đã từ chối | Lý do chọn |
 |---|---|---|---|---|---|
 | A1 | Backend NestJS riêng | Muốn kiểm thử logic nghiệp vụ | NestJS + BullMQ | Edge Functions Supabase | Deno khó debug, thiếu hệ sinh thái |
@@ -313,19 +580,17 @@ sequenceDiagram
 
 ---
 
-## 10. Điểm cần bạn quyết
-
+## 12. Điểm cần bạn quyết
 | # | Điểm | Đề xuất hiện tại | Cần bạn chọn |
 |---|---|---|---|
 | D1 | Web cắt hẳn ở MVP hay giữ như tính năng phụ | Giữ như tính năng phụ, ưu tiên thấp hơn | Chấp nhận / Cắt |
-| D2 | Dùng Redis có trả phí không khi vượt free tier | Chưa mua; xem theo chi phí [09 mục 6](09-chi-tiet-ky-thuat.md#6-chi-phí-hạ-tầng-theo-quy-mô) | Xác nhận |
+| D2 | Dùng Redis có trả phí không khi vượt free tier | Chưa mua; xem theo chi phí [09 mục 3](09-chi-tiet-ky-thuat.md#3-chi-phí-hạ-tầng-theo-quy-mô) | Xác nhận |
 | D3 | Gói AI miễn phí 10 lượt có đủ demo không | Đủ nếu chỉ demo 1 người | Chốt con số |
 | D4 | Máy demo chạy bản nào (iOS hay Android) | Android (đúng phân khúc chính) | Chốt máy |
 
 ---
 
-## 11. Lộ trình theo ba nền tảng
-
+## 13. Lộ trình theo ba nền tảng
 Chi tiết tuần cho từng codebase: xem [docs/05-lo-trinh.md](../05-lo-trinh.md).
 
 ```
@@ -341,7 +606,12 @@ Tuần 10    Chạy thử, đo, sửa trước khi nộp
 
 ---
 
-## 12. Trạng thái
-
+## 14. Trạng thái
 Phiên bản 2.0, 2026-11-16. Bản gốc 1.x (một codebase Flutter cho cả hai nền) bị thay thế bởi Q4 và A3.
-Tài liệu dẫn về file này: `01`–`09`. Mọi thay đổi quyết định phải cập nhật mục 9 và 12 trước.
+Tài liệu dẫn về file này: `01`–`09`. Mọi thay đổi quyết định phải cập nhật mục 11 và 14 trước.
+
+## 15. Chi tiết kỹ thuật
+
+Các phần văn bản dài không phải sơ đồ được tách sang [09-chi-tiet-ky-thuat.md](09-chi-tiet-ky-thuat.md): phân tầng backend, yêu cầu phi chức năng, chi phí hạ tầng, rủi ro kỹ thuật.
+
+---
