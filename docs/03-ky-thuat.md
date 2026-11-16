@@ -10,12 +10,12 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 
 | Mã | Quyết định | Hệ quả |
 |---|---|---|
-| **Q4** | iOS dùng **SwiftUI native** (iOS 26, Liquid Glass); **Android + Web dùng chung một codebase Flutter** | 2 codebase, 2 lần sửa lỗi/test/phát hành. Đổi lại: iOS có giao diện Liquid Glass thật, Flutter chỉ giả được `BackdropFilter` |
+| **Q4** | **Ba nền, ba công nghệ:** iOS SwiftUI native; Android Flutter; Web Next.js (React, TypeScript) | 3 codebase, 3 lần sửa lỗi/test/phát hành. Đổi lại: iOS có Liquid Glass thật, Web có SEO và tải trang nhanh |
 | **Q5** | Backend **tự viết bằng NestJS**; Supabase chỉ còn Postgres + Auth + Storage | Không dùng Realtime, không dùng Edge Functions, không dùng PostgREST tự động |
 | **Q6** | Cron chạy trong **Worker NestJS + BullMQ + Redis** | Không dùng `pg_cron`; 12 job ở [system-design/07](system-design/07-cron-jobs.md) |
 | **Q7** | **Loại bỏ mục tiêu tiết kiệm** | Bảng `goals` không tạo; Q2 cũ bị huỷ |
 
-**Đánh đổi đã ghi rõ:** 2 codebase = gấp đôi công sửa lỗi và phát hành. Nếu thời gian eo hẹp, **cắt Web trước** — không cắt iOS, vì Liquid Glass là điểm khác biệt của bản demo.
+**Đánh đổi đã ghi rõ:** 3 codebase = gấp ba công sửa lỗi và phát hành. Bù lại bằng một hợp đồng API duy nhất ([08](system-design/08-api-principles.md)) và bộ số liệu test dùng chung cho công thức "hôm nay được tiêu". Nếu eo hẹp, **thu hẹp Web xuống landing + đăng ký** — không cắt iOS.
 
 ---
 
@@ -24,8 +24,9 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 | Thành phần | Công nghệ | Lý do |
 |---|---|---|
 | iOS | **SwiftUI + SwiftData + Swift Charts** | Liquid Glass thật, widget, App Intents |
-| Android + Web | **Flutter + Riverpod + drift** | 1 codebase cho 2 nền |
-| Backend API | **NestJS (TypeScript)** | Tách module rõ, test được, một ngôn ngữ với web |
+| Android | **Flutter + Riverpod + drift** | Chiếm đa số người dùng |
+| Web | **Next.js + React + TypeScript** | SEO, tải trang nhanh, chung TypeScript với backend |
+| Backend API | **NestJS (TypeScript)** | Tách module rõ, test được, chung ngôn ngữ với Web |
 | Backend Worker | **NestJS + BullMQ + Redis** | 12 job định kỳ + hàng đợi đồng bộ |
 | CSDL | **PostgreSQL 15** trên Supabase | 7 bảng, RLS bật |
 | Xác thực | **Supabase Auth** | JWT, refresh token, xác thực email |
@@ -47,9 +48,8 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── apps/
 │   ├── ios/                        # SwiftUI native
 │   ├── android/                    # Flutter — app shell mỏng
-│   └── web/                        # Flutter Web — app shell mỏng
+│   └── web/                        # Next.js, React, TypeScript
 ├── packages/
-│   ├── flutter_core/               # ~95% mã Dart dùng chung Android + Web
 │   └── shared-types/               # DTO + openapi.yaml, sinh client Dart/Swift
 ├── services/
 │   ├── api/                        # NestJS — HTTP

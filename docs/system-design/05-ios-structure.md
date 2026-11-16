@@ -2,7 +2,7 @@
 
 **Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** bản nháp đầu
 
-iOS làm **native SwiftUI** (Q4), không dùng Flutter cho iOS. Android + Web dùng chung một codebase Flutter — xem [06](06-flutter-structure.md).
+iOS làm **native SwiftUI** (Q4). Android dùng Flutter ([06](06-flutter-structure.md)); Web dùng Next.js ([apps/web](../../apps/web/README.md)). Ba nền không share mã.
 
 ---
 
@@ -125,7 +125,7 @@ iOS/
 
 ## 5. Công thức trung tâm — `DailyLimitCalculator`
 
-Giống hệt [06 mục 4](06-flutter-structure.md), khác ở cú pháp Swift:
+Giống hệt [06](06-flutter-structure.md) và công thức Web, khác ở cú pháp Swift:
 
 ```swift
 struct LimitInput: Equatable {
@@ -147,7 +147,7 @@ enum DailyLimitCalculator {
 
 **Bộ test bắt buộc** (như [06](06-flutter-structure.md)): đủ số, thiếu 1 ngày, ngân sách 0, đã chi vượt ngân sách, ngày 31, tháng 30/31 ngày, biên `daysLeft = 0`.
 
-**Riêng iOS:** bộ test này **chia sẻ nội dung** với bản Flutter — hai file test viết độc lập nhưng dùng cùng bộ số liệu, để phát hiện lệch giữa hai nền tảng. Ghi chú này quan trọng vì bug "iOS tính 96.000, Android tính 95.800" chỉ lộ khi so hai nền với nhau.
+**Riêng iOS:** bộ test này **dùng chung bộ số liệu** với bản Flutter và bản Web — ba file test viết độc lập nhưng đọc cùng một file số liệu, để phát hiện lệch giữa ba nền tảng. Ghi chú này quan trọng vì bug "iOS tính 96.000, Android tính 95.800" chỉ lộ khi so hai nền với nhau.
 
 ---
 
@@ -232,7 +232,7 @@ Nguyên tắc: App Intent chỉ **đọc kết quả đã tính sẵn** hoặc *
 | 5 | Biểu đồ (Swift Charts), báo cáo | Biểu đồ tròn + cột chạy thật |
 | 6 | Auth + đồng bộ + App Intents | Đăng nhập, 2 thiết bị không mất dữ liệu |
 
-Chạy **song song với [06](06-flutter-structure.md)**: tuần 1–2 hai nền cùng làm tầng `Core/` và local DB; từ tuần 3 tách hẳn (iOS làm widget + Liquid Glass, Flutter làm Android + Web).
+Chạy **song song với Android và Web**: tuần 1–2 cả ba nền cùng dựng khung; từ tuần 3 tách hẳn (iOS làm widget + Liquid Glass; Android làm nhập nhanh + ngân sách; Web làm báo cáo đọc).
 
 ---
 

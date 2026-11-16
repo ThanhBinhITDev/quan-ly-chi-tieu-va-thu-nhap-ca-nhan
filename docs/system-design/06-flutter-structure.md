@@ -1,10 +1,10 @@
-# 06 — Cấu trúc mã nguồn Flutter (Android + Web)
+# 06 — Cấu trúc mã nguồn Android (Flutter)
 
-**Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** phạm vi thu về Android + Web (Q4). iOS dùng SwiftUI, xem [05](05-ios-structure.md).
+**Phiên bản:** 2.0 · **Ngày:** 2026-11-16 · **Trạng thái:** chỉ Android (Q4). iOS xem [05](05-ios-structure.md); Web dùng Next.js, xem [apps/web](../../apps/web/README.md).
 
 Mục tiêu: chia lớp rõ ràng để ba người cùng làm không giẫm chân nhau, và để thay backend/AI sau này không phải sửa UI.
 
-> **Phạm vi 2.0:** file này **chỉ còn Android và Web**. iOS tách riêng sang [05 — Cấu trúc iOS](05-ios-structure.md) vì dùng SwiftUI native (Liquid Glass). Mọi thứ dưới đây là Flutter.
+> **Phạm vi 2.0:** file này **chỉ dành cho Android**. iOS dùng SwiftUI native ([05](05-ios-structure.md)); Web dùng Next.js và không dùng Flutter. Mọi thứ dưới đây là Flutter cho Android.
 
 ---
 

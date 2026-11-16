@@ -12,10 +12,9 @@ Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam. G
 quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── apps/                           # Ứng dụng cho người dùng cuối — 3 nền tảng
 │   ├── ios/                        # iPhone: SwiftUI native (chưa có mã)
-│   ├── android/                    # Android: vỏ Flutter mỏng, gọi packages/flutter_core
-│   └── web/                        # Web/PWA: vỏ Flutter mỏng, gọi packages/flutter_core
+│   ├── android/                    # Android: Flutter
+│   └── web/                        # Web: Next.js, React, TypeScript
 ├── packages/                       # Mã dùng chung
-│   ├── flutter_core/               # Toàn bộ Dart của Android + Web (~95% mã Flutter)
 │   └── shared-types/               # DTO + openapi.yaml, sinh client Dart và Swift
 ├── services/                       # Backend — chạy trên máy chủ, không có giao diện
 │   ├── api/                        # NestJS: nhận request HTTP từ app
@@ -34,9 +33,9 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 └── .gitignore
 ```
 
-**Trạng thái thư mục:** tất cả đều đã có khung và `README.md` mô tả. Mã nguồn thật sẽ tạo từ tuần 1 của lộ trình ([docs/05-lo-trinh.md](docs/05-lo-trinh.md)). Trước đó, các thư mục `apps/`, `packages/`, `services/`, `infra/` chỉ chứa README và thư mục rỗng.
+**Trạng thái:** các thư mục đã có khung và `README.md`. Mã nguồn bắt đầu từ tuần 1 ([lộ trình](docs/05-lo-trinh.md)).
 
-**Quy tắc phụ thuộc:** `apps/*` gọi `packages/*`; `packages/*` không gọi ngược lại; `services/*` không biết gì về giao diện.
+**Quy tắc:** ba app không import mã của nhau. Chia sẻ qua hợp đồng API trong `packages/shared-types/` và đặc tả [08-api-principles](docs/system-design/08-api-principles.md).
 
 ---
 
@@ -85,7 +84,8 @@ Ghi chú: 12 ngày còn lại tính cả hôm nay.
 | Thành phần | Công nghệ |
 |---|---|
 | iPhone (`apps/ios`) | SwiftUI native, SwiftData, Swift Charts. Hiệu ứng Liquid Glass trên iOS 26 |
-| Android + Web (`apps/android`, `apps/web`) | Flutter, Riverpod, drift — dùng chung `packages/flutter_core` |
+| Android (`apps/android`) | Flutter, Riverpod, drift |
+| Web (`apps/web`) | Next.js, React, TypeScript |
 | Backend (`services/`) | NestJS (API) + NestJS Worker, BullMQ, Redis |
 | CSDL, đăng nhập, lưu trữ file | PostgreSQL 15 trên Supabase (chỉ dùng Postgres + Auth + Storage) |
 | AI | ML Kit chạy trên máy + mô hình cỡ nhỏ qua lớp trừu tượng |
@@ -110,7 +110,7 @@ Chưa làm:
 - [ ] Khảo sát người dùng thực tế (150–200 sinh viên)
 - [ ] Bảng tài chính 3 năm có con số cụ thể
 - [ ] Phân tích đối thủ chi tiết
-- [ ] Mã nguồn (ios, android, web, flutter_core, api, worker)
+- [ ] Mã nguồn (ios, android, web, api, worker)
 - [ ] Bộ nhận diện thương hiệu (logo, màu sắc, typography)
 
 Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).

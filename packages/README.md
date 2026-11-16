@@ -1,7 +1,9 @@
-# packages/ — Mã dùng chung
+# packages/ — Hợp đồng dùng chung
 
-| Thư mục | Dùng cho | Nội dung |
+| Thư mục | Nội dung | Ai dùng |
 |---|---|---|
-| [shared-types/](shared-types/) | API, Flutter, iOS | DTO JSON + spec OpenAPI; Flutter sinh Dart bằng OpenAPI Generator, iOS sinh Swift bằng OpenAPI Generator |
+| [shared-types/](shared-types/) | `openapi.yaml` + DTO. Nguồn sự thật duy nhất về hình dạng dữ liệu | iOS, Android, Web, API |
 
-Nguyên tắc: **chỉ DTO, không có logic**. Logic nằm trong từng nền tảng.
+**Không có mã nguồn dùng chung** — ba nền tảng ba ngôn ngữ khác nhau. Chỉ chia sẻ **hợp đồng dữ liệu**, sinh client tự động.
+
+Xem [docs/system-design/08-api-principles.md](../docs/system-design/08-api-principles.md).

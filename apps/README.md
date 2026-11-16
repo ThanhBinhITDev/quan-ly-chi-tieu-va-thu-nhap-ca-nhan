@@ -1,29 +1,23 @@
-# apps/ — Ba nền tảng, ba thư mục
+# apps/ — Ba nền tảng, ba công nghệ riêng
 
-| Thư mục | Nền tảng | Công nghệ | Mã dùng chung |
+| Thư mục | Nền tảng | Công nghệ | Ngôn ngữ |
 |---|---|---|---|
-| [ios/](ios/) | iOS | **SwiftUI native** (SwiftData, Swift Charts) | Không share mã với Dart |
-| [android/](android/) | Android | Flutter, Riverpod, drift | `packages/flutter_core/` |
-| [web/](web/) | Web (PWA) | Flutter Web | `packages/flutter_core/` |
+| [ios/](ios/) | iPhone | SwiftUI native, SwiftData, Swift Charts | Swift |
+| [android/](android/) | Android | Flutter, Riverpod, drift | Dart |
+| [web/](web/) | Trình duyệt | Next.js (React), TypeScript | TypeScript |
 
-## Vì sao Android và Web là hai thư mục nhưng không nhân đôi mã
+Ba nền, ba ngôn ngữ, **không share mã nguồn**. Chia sẻ qua **hợp đồng API JSON** — chi tiết ở [docs/system-design/08-api-principles.md](../docs/system-design/08-api-principles.md).
 
-`apps/android` và `apps/web` là **hai app shell mỏng** — mỗi cái chỉ chứa `main.dart`, cấu hình nền tảng (`android/`, `web/`), và theme khác biệt nếu cần. Toàn bộ logic, widget, repository, model nằm trong **`packages/flutter_core/`** và cả hai cùng phụ thuộc vào nó.
+## Vì sao không share mã
 
-```
-apps/android/  ──┐
-                 ├──► packages/flutter_core/   (Dart dùng chung ~95% mã)
-apps/web/      ──┘
-```
+| Cặp | Có share được không | Lý do |
+|---|---|---|
+| iOS ↔ Android | Không | Swift và Dart khác ngôn ngữ hoàn toàn |
+| Android ↔ Web | Không chọn share | Web cần SEO, tải trang nhanh, thư viện web mạnh (React ecosystem). Flutter Web tải 2–3 MB trước khi hiện chữ, không phù hợp landing page và SEO |
+| iOS ↔ Web | Không | Swift và TypeScript khác ngôn ngữ |
 
-Hệ quả: sửa một màn hình ở `flutter_core` → cả Android và Web có ngay. Vẫn giữ được yêu cầu "ba thư mục riêng" mà không phải sửa hai lần.
+**Bù lại bằng ba thứ:**
 
-Quản lý workspace: **melos** (khai báo ở `melos.yaml`, chưa tạo).
-
-## iOS không share mã với Dart
-
-Swift ↔ Dart khác ngôn ngữ, không share được. Bù lại bằng ba cơ chế:
-
-1. **Cùng bộ số liệu test** cho `DailyLimitCalculator` — bộ test viết hai lần nhưng dùng chung file số liệu, để phát hiện lệch "iOS tính 96.000, Android tính 95.800"
-2. **Cùng DTO JSON** từ `packages/shared-types/openapi.yaml`, sinh client Dart và Swift bằng OpenAPI Generator
-3. **Cùng tài liệu thiết kế** — màn hình ở [04](../docs/system-design/04-wireframes.md), khác biệt nền tảng ghi rõ tại chỗ
+1. **Một hợp đồng API** — `packages/shared-types/openapi.yaml` là nguồn sự thật duy nhất. Sinh client cho Dart (OpenAPI Generator) và Swift (OpenAPI Generator Swift), còn TypeScript dùng trực tiếp.
+2. **Cùng bộ số liệu test** cho công thức "hôm nay được tiêu" — viết ba lần nhưng dùng chung file số liệu, CI chạy cả ba, để phát hiện lệch giữa ba nền.
+3. **Cùng tài liệu màn hình** — [04-wireframes.md](../docs/system-design/04-wireframes.md), ghi rõ chỗ nào khác theo nền tảng.

@@ -28,7 +28,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-16. Sắp
 | 13 | Đăng ký tài khoản Google Play developer (25 USD) | Cần thời gian, xem mục 14 |
 | 14 | Lên kế hoạch closed testing 12–20 tester trong 14 ngày | Google Play bắt buộc với tài khoản cá nhân mới — mốc thời gian cứng, phải bắt đầu trước ngày thi ít nhất 1 tháng |
 | 14b | Kiểm chứng 3 điểm trước khi cam kết đọc sao kê | (a) VCB/TPBank/MB có xuất CSV/Excel hay chỉ PDF, (b) MoMo share ra text hay ảnh, (c) có app Việt nào đang làm và còn sống trên Play Store |
-| 14c | Quyết 4 điểm D1–D4 trong [`system-design/00`](system-design/00-architecture.md) mục 16 | Chặn việc chốt lộ trình và môi trường chạy thật |
+| 14c | Quyết 4 điểm D1–D4 trong [`system-design/00`](system-design/00-architecture.md) mục 10 | Chặn việc chốt lộ trình và môi trường chạy thật |
 
 ## P2 — Nên có
 
