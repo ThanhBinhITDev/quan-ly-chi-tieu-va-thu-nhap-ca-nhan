@@ -6,22 +6,56 @@ Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam. G
 
 ---
 
+## Cấu trúc repository
+
+```
+quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
+├── apps/                           # Ứng dụng cho người dùng cuối — 3 nền tảng
+│   ├── ios/                        # iPhone: SwiftUI native (chưa có mã)
+│   ├── android/                    # Android: vỏ Flutter mỏng, gọi packages/flutter_core
+│   └── web/                        # Web/PWA: vỏ Flutter mỏng, gọi packages/flutter_core
+├── packages/                       # Mã dùng chung
+│   ├── flutter_core/               # Toàn bộ Dart của Android + Web (~95% mã Flutter)
+│   └── shared-types/               # DTO + openapi.yaml, sinh client Dart và Swift
+├── services/                       # Backend — chạy trên máy chủ, không có giao diện
+│   ├── api/                        # NestJS: nhận request HTTP từ app
+│   └── worker/                     # NestJS: 12 job định kỳ + hàng đợi đồng bộ
+├── infra/                          # Hạ tầng
+│   └── migrations/                 # SQL tạo 7 bảng (chưa có)
+├── docs/                           # Tài liệu
+│   ├── 01-tong-quan.md             # Định vị, vấn đề, giải pháp
+│   ├── 02-san-pham.md              # Tính năng, AI, giữ chân người dùng
+│   ├── 03-ky-thuat.md              # Kiến trúc, công nghệ, nguyên tắc
+│   ├── 04-kinh-doanh.md            # Gói giá, doanh thu thực nhận, chi phí
+│   ├── 05-lo-trinh.md              # Mốc thời gian, phạm vi MVP
+│   ├── TODO.md                     # Việc còn lại
+│   ├── *.docx                      # Thuyết minh gốc và chiến lược giữ chân
+│   └── system-design/              # Thiết kế kỹ thuật chi tiết, 8 tài liệu 00–07
+└── .gitignore
+```
+
+**Trạng thái thư mục:** tất cả đều đã có khung và `README.md` mô tả. Mã nguồn thật sẽ tạo từ tuần 1 của lộ trình ([docs/05-lo-trinh.md](docs/05-lo-trinh.md)). Trước đó, các thư mục `apps/`, `packages/`, `services/`, `infra/` chỉ chứa README và thư mục rỗng.
+
+**Quy tắc phụ thuộc:** `apps/*` gọi `packages/*`; `packages/*` không gọi ngược lại; `services/*` không biết gì về giao diện.
+
+---
+
 ## Đọc gì trước
 
-| File | Nội dung | Cho ai |
-|---|---|---|
-| [docs/01-tong-quan.md](docs/01-tong-quan.md) | Định vị, vấn đề, giải pháp, ranh giới sản phẩm | Mọi người |
-| [docs/02-san-pham.md](docs/02-san-pham.md) | Tính năng, AI, giữ chân người dùng | Nhóm sản phẩm |
-| [docs/03-ky-thuat.md](docs/03-ky-thuat.md) | Kiến trúc, công nghệ, cấu trúc repo | Nhóm kỹ thuật |
-| [docs/04-kinh-doanh.md](docs/04-kinh-doanh.md) | Gói giá, doanh thu thực nhận, chi phí | Nhóm tài chính |
-| [docs/05-lo-trinh.md](docs/05-lo-trinh.md) | Mốc thời gian, phạm vi MVP, thứ tự cắt | Nhóm trưởng |
-| [docs/system-design/](docs/system-design/README.md) | Thiết kế kỹ thuật chi tiết (8 tài liệu) | Nhóm kỹ thuật |
+| File | Nội dung |
+|---|---|
+| [docs/01-tong-quan.md](docs/01-tong-quan.md) | Định vị, vấn đề, giải pháp, ranh giới sản phẩm |
+| [docs/02-san-pham.md](docs/02-san-pham.md) | Tính năng, AI, giữ chân người dùng |
+| [docs/03-ky-thuat.md](docs/03-ky-thuat.md) | Kiến trúc, công nghệ, nguyên tắc kỹ thuật |
+| [docs/04-kinh-doanh.md](docs/04-kinh-doanh.md) | Gói giá, doanh thu thực nhận, chi phí |
+| [docs/05-lo-trinh.md](docs/05-lo-trinh.md) | Mốc thời gian, phạm vi MVP, thứ tự cắt |
+| [docs/system-design/00-architecture.md](docs/system-design/00-architecture.md) | Kiến trúc hệ thống đầy đủ — bắt đầu từ đây nếu là người kỹ thuật |
 
 ---
 
 ## Điểm khác biệt cốt lõi
 
-| | |
+| Điểm | Ý nghĩa |
 |---|---|
 | **Ma sát thấp** | Ghi một khoản chi dưới 5 giây — nhập nhanh `com 35k`, chụp hóa đơn, hoặc widget một chạm |
 | **Ngưỡng hiểu thấp** | Không thuật ngữ kế toán. Mọi con số hiển thị dạng "còn được tiêu bao nhiêu" |
@@ -36,6 +70,8 @@ Còn lại:           1.150.000 đ
 Còn 12 ngày   →   Hôm nay tối đa: 95.800 đ
 ```
 
+Ghi chú: 12 ngày còn lại tính cả hôm nay.
+
 ---
 
 ## Ranh giới sản phẩm
@@ -46,34 +82,35 @@ Còn 12 ngày   →   Hôm nay tối đa: 95.800 đ
 
 ## Công nghệ
 
-| Nền tảng | Công nghệ |
+| Thành phần | Công nghệ |
 |---|---|
-| iOS | **SwiftUI native** (iOS 26, Liquid Glass, SwiftData, Swift Charts) |
-| Android + Web | **Flutter** + Riverpod + drift |
-| Backend | **NestJS** (API) + **NestJS Worker** + BullMQ + Redis |
-| CSDL / Auth / Storage | **PostgreSQL 15 trên Supabase** |
-| AI | ML Kit on-device + mô hình cỡ nhỏ qua lớp trừu tượng |
+| iPhone (`apps/ios`) | SwiftUI native, SwiftData, Swift Charts. Hiệu ứng Liquid Glass trên iOS 26 |
+| Android + Web (`apps/android`, `apps/web`) | Flutter, Riverpod, drift — dùng chung `packages/flutter_core` |
+| Backend (`services/`) | NestJS (API) + NestJS Worker, BullMQ, Redis |
+| CSDL, đăng nhập, lưu trữ file | PostgreSQL 15 trên Supabase (chỉ dùng Postgres + Auth + Storage) |
+| AI | ML Kit chạy trên máy + mô hình cỡ nhỏ qua lớp trừu tượng |
 
-Chi tiết và lý do ở [docs/03-ky-thuat.md](docs/03-ky-thuat.md).
+Lý do chọn và đánh đổi: [docs/03-ky-thuat.md](docs/03-ky-thuat.md) và [docs/system-design/00-architecture.md](docs/system-design/00-architecture.md).
 
 ---
 
 ## Trạng thái
 
-**Thiết kế hệ thống hoàn tất bản nháp 2.0 — chờ duyệt trước khi lập trình.**
+**Thiết kế hệ thống đang ở bản nháp 2.0, chờ duyệt. Chưa viết mã nguồn.**
 
 Đã xong:
 - [x] Thuyết minh ý tưởng và kế hoạch kinh doanh
 - [x] Đặc tả sản phẩm và chức năng chi tiết
 - [x] Chiến lược giữ chân người dùng
 - [x] Mô hình chi phí AI
-- [x] Thiết kế hệ thống: kiến trúc, schema DB, hợp đồng API, đồng bộ, wireframe, cấu trúc iOS, cấu trúc Flutter, 12 job định kỳ
+- [x] Thiết kế hệ thống: kiến trúc, schema DB, hợp đồng API, đồng bộ, wireframe, cấu trúc iOS và Flutter, 12 job định kỳ
+- [x] Khung thư mục ba nền tảng và hai package dùng chung
 
 Chưa làm:
 - [ ] Khảo sát người dùng thực tế (150–200 sinh viên)
 - [ ] Bảng tài chính 3 năm có con số cụ thể
 - [ ] Phân tích đối thủ chi tiết
-- [ ] Mã nguồn MVP
+- [ ] Mã nguồn (ios, android, web, flutter_core, api, worker)
 - [ ] Bộ nhận diện thương hiệu (logo, màu sắc, typography)
 
 Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).
@@ -91,48 +128,6 @@ Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).
 | Hà Văn Thương | Kế toán K20 | Chưa xác định |
 
 > Vai trò của Hà Văn Thương chưa được chốt trong tài liệu gốc — chờ nhóm trưởng xác nhận.
-
----
-
-## Cấu trúc repository
-
-```
-quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
-├── README.md
-├── apps/
-│   ├── ios/                        # (tuần 1) SwiftUI
-│   ├── android/                    # (tuần 1) Flutter — app shell mỏng
-│   └── web/                        # (tuần 1) Flutter Web — app shell mỏng
-├── packages/
-│   ├── flutter_core/               # (tuần 1) Dart dùng chung Android + Web
-│   └── shared-types/               # (tuần 1) DTO + OpenAPI
-├── services/
-│   ├── api/                        # (tuần 1) NestJS — HTTP
-│   └── worker/                     # (tuần 1) NestJS — cron + queue
-├── infra/
-│   └── docker-compose.yml          # (tuần 1)
-├── docs/
-│   ├── 01-tong-quan.md
-│   ├── 02-san-pham.md
-│   ├── 03-ky-thuat.md
-│   ├── 04-kinh-doanh.md
-│   ├── 05-lo-trinh.md
-│   ├── Mo_ta_ung_dung_Quan_ly_chi_tieu_va_thu_nhap.docx
-│   ├── Chien_luoc_giu_chan_nguoi_dung.docx
-│   ├── TODO.md
-│   └── system-design/
-│       ├── 00-architecture.md
-│       ├── 01-database-schema.md
-│       ├── 02-api-contract.md
-│       ├── 03-sync-strategy.md
-│       ├── 04-wireframes.md
-│       ├── 05-ios-structure.md
-│       ├── 06-flutter-structure.md
-│       └── 07-cron-jobs.md
-└── .gitignore
-```
-
-Mỗi thư mục trên có sẵn `README.md` mô tả nội dung và quy tắc; mã nguồn tạo ở tuần 1 của lộ trình.
 
 ---
 
