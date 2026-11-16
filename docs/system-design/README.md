@@ -49,7 +49,6 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 | Nội dung | Lý do | Ngày |
 |---|---|---|
 | Tính năng mục tiêu tiết kiệm (bảng `goals`) | Con số người dùng tự gõ, không kiểm chứng được, không gắn với tiền thật | 2026-11-16 |
-| Q2 cũ ("mục tiêu tách khỏi ví") | Không còn đối tượng | 2026-11-16 |
 | Supabase Realtime | Local-first đã đủ; kết nối thường trực tốn pin, khó test | 2026-11-16 |
 | Supabase Edge Functions | Deno, khó debug, cold start | 2026-11-16 |
 | pg_cron | Không retry, không dead-letter, không gọi API ngoài | 2026-11-16 |

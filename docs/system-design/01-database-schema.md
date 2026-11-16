@@ -440,13 +440,11 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 Riêng điểm 2: nếu tính chuyển ví vào tổng chi thì tổng chi bị thổi phồng mà không có ý nghĩa. Đề xuất chắc chắn: **không tính**.
 
-> Ghi chú 2026-11-16: tính năng mục tiêu tiết kiệm đã bị loại bỏ (Q7), bảng `goals` không được tạo. Các mục "mục tiêu tiết kiệm" trước đây trong tài liệu này đã được xoá.
-
 ---
 
 ## 14. Quyết định đã chốt
 
-Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới. Quyết định Q7 ngày 2026-11-16 (loại bỏ mục tiêu tiết kiệm) đã huỷ Q2 cũ.
+Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới.
 
 | # | Quyết định | Nội dung | Hệ quả lên thiết kế |
 |---|---|---|---|

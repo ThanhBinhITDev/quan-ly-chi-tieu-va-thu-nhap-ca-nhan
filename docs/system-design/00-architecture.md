@@ -44,9 +44,7 @@ Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứn
 | Q4 | **Ba nền tảng, ba công nghệ riêng:** iOS SwiftUI native; Android Flutter; Web Next.js (React, TypeScript) | 2026-11-16 | Ba codebase, ba ngôn ngữ, một hợp đồng API (OpenAPI) |
 | Q5 | **Backend tách khỏi Supabase: NestJS tự viết, Supabase chỉ làm Postgres + Auth + Storage** | 2026-11-16 | Logic nghiệp vụ nằm ở nơi kiểm thử được |
 | Q6 | **Cron chạy trong worker NestJS + BullMQ, không dùng pg_cron hay Edge Functions** | 2026-11-16 | Có retry, có dead-letter, có log |
-| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Bảng `goals` không tạo; Q2 cũ bị huỷ |
-
-> Q2 cũ ("mục tiêu tiết kiệm tách khỏi ví") không còn hiệu lực vì tính năng đã bị loại bỏ.
+| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Bảng `goals` không tạo |
 
 ### Vì sao mỗi nền chọn một công nghệ
 
@@ -56,7 +54,7 @@ Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứn
 | Android | Flutter | Chiếm đa số người dùng; một codebase Dart, phù hợp đội 1 người làm kỹ thuật | Native Kotlin: tốn thời gian gấp đôi |
 | Web | Next.js (React, TypeScript) | SEO, tải trang nhanh (~150 KB so với 2–3 MB của Flutter Web), hệ sinh thái React, dùng chung TypeScript với backend | Flutter Web: nặng, SEO kém, canvas không được lập chỉ mục |
 
-**Đánh đổi phải nói rõ:** ba codebase = ba lần sửa lỗi, ba lần viết test, ba lần phát hành. Bù lại bằng hợp đồng API duy nhất ([08](08-api-principles.md)) và bộ số liệu test dùng chung cho công thức "hôm nay được tiêu". Nếu thời gian eo hẹp, cắt phạm vi Web xuống landing + đăng nhập, không cắt iOS.
+**Chi phí của cách này:** mỗi thay đổi phải sửa, test và phát hành ba lần. Giảm bằng hợp đồng API chung ([08](08-api-principles.md)) và bộ số liệu test chung. Xem rủi ro ở [09 mục 7](09-chi-tiet-ky-thuat.md).
 
 ---
 

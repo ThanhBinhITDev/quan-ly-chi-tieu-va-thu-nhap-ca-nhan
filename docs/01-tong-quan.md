@@ -71,8 +71,6 @@ Ranh giới này quan trọng: nó giữ app ngoài phạm vi quản lý của l
 | **D. AI & nâng cao** | Đọc hóa đơn, trợ lý hỏi đáp, nhận xét thói quen, đồng bộ đa thiết bị |
 | **E. Hỗ trợ** | Onboarding, trợ giúp trong app, kênh phản hồi |
 
-> **Đã loại bỏ (2026-11-16):** tính năng mục tiêu tiết kiệm. Lý do: không xác định được đúng tiến độ mục tiêu, dễ tạo số liệu ảo. Bảng `goals` không được tạo.
-
 ---
 
 ## 6. Chỉ số trung tâm
