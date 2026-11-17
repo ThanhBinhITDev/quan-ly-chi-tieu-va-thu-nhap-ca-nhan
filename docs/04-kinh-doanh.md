@@ -58,7 +58,7 @@ Bốn mốc, dùng free tier Supabase + VPS:
 
 **Chưa gồm:** hoa hồng store (tính riêng ở mục 2), chi phí AI (tính riêng theo lượt), nhân sự.
 
-**Điểm cần kiểm chứng:** khi vượt free tier Supabase, có mua Redis trả phí không (D2 trong [system-design/00](system-design/00-architecture.md) mục 10). BullMQ cần Redis; free tier 25MB thường đủ cho MVP nhưng không đủ khi có hàng chục nghìn người.
+**Điểm cần kiểm chứng:** khi vượt free tier Supabase, có mua Redis trả phí không (D2 trong [system-design/00](system-design/00-architecture.md) mục 12). BullMQ cần Redis; free tier 25MB thường đủ cho MVP nhưng không đủ khi có hàng chục nghìn người.
 
 ---
 

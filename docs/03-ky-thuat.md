@@ -29,7 +29,7 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 | Web | **Next.js + React + TypeScript** | SEO, tải trang nhanh, chung TypeScript với backend |
 | Backend API | **NestJS (TypeScript)** | Tách module rõ, test được, chung ngôn ngữ với Web |
 | Backend Worker | **NestJS + BullMQ + Redis** | 12 job định kỳ + hàng đợi đồng bộ |
-| CSDL | **PostgreSQL 15** trên Supabase | 11 bảng, RLS bật |
+| CSDL | **PostgreSQL 15** trên Supabase | 12 bảng, RLS bật |
 | Xác thực | **Supabase Auth** | JWT, refresh token, xác thực email |
 | Lưu trữ | **Supabase Storage** | Ảnh hóa đơn (giai đoạn sau MVP) |
 | OCR | **ML Kit (on-device)** | Giai đoạn sau. Miễn phí, không gửi ảnh lên server |
@@ -113,7 +113,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 | File | Nội dung |
 |---|---|
 | [system-design/00](system-design/00-architecture.md) | Kiến trúc đầy đủ, 18 mục, ADR, chi phí, rủi ro |
-| [system-design/01](system-design/01-database-schema.md) | 11 bảng, index, RLS |
+| [system-design/01](system-design/01-database-schema.md) | 12 bảng, index, RLS |
 | [system-design/02](system-design/02-api-contract.md) | Hợp đồng API NestJS |
 | [system-design/05](system-design/05-ios-structure.md) | Cấu trúc SwiftUI |
 | [system-design/06](system-design/06-flutter-structure.md) | Cấu trúc Flutter |

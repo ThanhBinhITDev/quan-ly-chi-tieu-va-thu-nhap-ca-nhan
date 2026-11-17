@@ -14,13 +14,14 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   ├── ios/                        # iPhone: SwiftUI native (chưa có mã)
 │   ├── android/                    # Android: Flutter
 │   └── web/                        # Web: Next.js, React, TypeScript
+├── assets/brand/                   # Logo gốc: SVG, PDF, PNG các kích thước
 ├── packages/                       # Mã dùng chung
 │   └── shared-types/               # DTO + openapi.yaml, sinh client Dart và Swift
 ├── services/                       # Backend — chạy trên máy chủ, không có giao diện
 │   ├── api/                        # NestJS: nhận request HTTP từ app
 │   └── worker/                     # NestJS: 12 job định kỳ + hàng đợi đồng bộ
 ├── infra/                          # Hạ tầng
-│   └── migrations/                 # SQL tạo 11 bảng (chưa có)
+│   └── migrations/                 # 2 migration đã áp dụng: 12 bảng, RLS, 25 index
 ├── docs/                           # Tài liệu
 │   ├── 01-tong-quan.md             # Định vị, vấn đề, giải pháp
 │   ├── 02-san-pham.md              # Tính năng, AI, giữ chân người dùng
@@ -29,11 +30,11 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   ├── 05-lo-trinh.md              # Mốc thời gian, phạm vi MVP
 │   ├── TODO.md                     # Việc còn lại
 │   ├── *.docx                      # Thuyết minh gốc và chiến lược giữ chân
-│   └── system-design/              # Thiết kế kỹ thuật chi tiết, 8 tài liệu 00–07
+│   └── system-design/              # Thiết kế kỹ thuật chi tiết, 11 tài liệu 00–10
 └── .gitignore
 ```
 
-**Trạng thái:** các thư mục đã có khung và `README.md`. Mã nguồn bắt đầu từ tuần 1 ([lộ trình](docs/05-lo-trinh.md)).
+**Trạng thái:** các thư mục đã có khung và `README.md`, đã có migration SQL khởi tạo schema. Mã nguồn ứng dụng bắt đầu từ tuần 1 ([lộ trình](docs/05-lo-trinh.md)).
 
 **Quy tắc:** ba app không import mã của nhau. Chia sẻ qua hợp đồng API trong `packages/shared-types/` và đặc tả [08-api-principles](docs/system-design/08-api-principles.md).
 
@@ -96,7 +97,7 @@ Lý do chọn và đánh đổi: [docs/03-ky-thuat.md](docs/03-ky-thuat.md) và 
 
 ## Trạng thái
 
-**Thiết kế hệ thống đang ở bản nháp 2.0, chờ duyệt. Chưa viết mã nguồn.**
+**Thiết kế hệ thống đang ở bản nháp 2.0, chờ duyệt. Chưa có mã nguồn ứng dụng; schema đã được áp dụng lên Supabase project `ebbqcnnwqeasozmcqigu`.**
 
 Đã xong:
 - [x] Thuyết minh ý tưởng và kế hoạch kinh doanh
@@ -105,13 +106,15 @@ Lý do chọn và đánh đổi: [docs/03-ky-thuat.md](docs/03-ky-thuat.md) và 
 - [x] Mô hình chi phí AI
 - [x] Thiết kế hệ thống: kiến trúc, schema DB, hợp đồng API, đồng bộ, wireframe, cấu trúc iOS và Flutter, 12 job định kỳ
 - [x] Khung thư mục ba nền tảng và hai package dùng chung
+- [x] Migration SQL khởi tạo 12 bảng + RLS (đã áp dụng và xác minh lên Supabase)
+- [x] File logo gốc và các bản export SVG, PDF, PNG, favicon, PWA icon
 
 Chưa làm:
 - [ ] Khảo sát người dùng thực tế (150–200 sinh viên)
 - [ ] Bảng tài chính 3 năm có con số cụ thể
 - [ ] Phân tích đối thủ chi tiết
 - [ ] Mã nguồn (ios, android, web, api, worker)
-- [ ] Bộ nhận diện thương hiệu (logo, màu sắc, typography)
+- [ ] Hoàn thiện bộ nhận diện thương hiệu: chữ trên logo còn ghi "SMARTFIN", cần quyết có đổi sang "Student Finance" không; chưa chốt typography
 
 Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).
 

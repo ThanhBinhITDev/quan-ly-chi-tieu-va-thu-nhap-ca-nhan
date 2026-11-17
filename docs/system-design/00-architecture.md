@@ -23,7 +23,7 @@ Phiên bản 2.0 — 2026-11-16. Thay thế bản 1.1 (một nền tảng Flutte
 | Loại | Ràng buộc | Hệ quả lên kiến trúc |
 |---|---|---|
 | Nhân lực | 1 người làm kỹ thuật, part-time | Không viết native cho nhiều nền tảng; không tự dựng backend từ đầu |
-| Thời gian | 10 tuần tới ngày nộp | MVP phải chạy được trước tuần 8 |
+| Thời gian | 10 tuần tới ngày nộp | MVP chạy được ở tuần 6 ([lộ trình](../05-lo-trinh.md)) |
 | Tiền | 0đ hạ tầng giai đoạn đầu | Chỉ dùng gói miễn phí; không thuê VPS riêng |
 | Pháp lý | Không có giấy phép trung gian thanh toán | App **không giữ tiền**, không nạp, không rút, không liên kết ngân hàng |
 | Thị trường | Người dùng chủ yếu Android tầm trung | Thiết kế trên 360dp trước, không thiết kế trên iPhone rồi thu nhỏ |
@@ -127,7 +127,7 @@ graph TB
     end
 
     subgraph DATA["Lớp dữ liệu"]
-        PG["PostgreSQL 15<br/>11 bảng, RLS bật"]
+        PG["PostgreSQL 15<br/>12 bảng, RLS bật"]
         OBJ["Object Storage<br/>ảnh hoá đơn, signed URL"]
     end
 
@@ -197,10 +197,10 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 ├── packages/
 │   └── shared-types/                # openapi.yaml — hợp đồng API duy nhất
 ├── services/
-│   ├── api/                         # NestJS — HTTP, 9 module
+│   ├── api/                         # NestJS — HTTP, 11 module
 │   └── worker/                      # NestJS — 12 job cron + hàng đợi
 ├── infra/
-│   └── migrations/                  # SQL tạo 11 bảng
+│   └── migrations/                  # SQL tạo 12 bảng
 └── docs/                            # tài liệu, system-design/ là bộ kỹ thuật
 ```
 
@@ -416,6 +416,8 @@ erDiagram
         uuid category_id FK
         text type
         bigint amount
+        uuid recurring_rule_id FK
+        date occurrence_date
         text note
         text receipt_url
         timestamptz occurred_at
@@ -426,19 +428,18 @@ erDiagram
         uuid id PK
         uuid user_id FK
         uuid category_id FK
-        text month
-        bigint limit_amount
+        bigint amount
+        text period
+        date start_date
+        date end_date
     }
     recurring_rules {
         uuid id PK
         uuid user_id FK
-        uuid wallet_id FK
-        uuid category_id FK
-        text type
-        bigint amount
+        jsonb template
         text frequency
         date next_run_on
-        timestamptz last_run_at
+        date last_run_on
     }
     goals {
         uuid id PK
@@ -504,7 +505,7 @@ Mỗi job phải **chạy lại được** mà không tạo dữ liệu trùng.
 | 5 | `daily-reminder` | `0 20 * * *` | Nhắc ghi chép, kèm số thật của ngày | 1 tin/người/ngày | Bỏ qua |
 | 6 | `winback` | `0 9 * * *` | Quét người vắng 7 ngày và 14 ngày | Tối đa 2 lần/người, ghi vào `notifications` | Bỏ qua |
 | 7 | `ai-monthly-review` | `0 6 1 * *` | Sinh nhận xét thói quen tháng trước | Chỉ user có ≥ 10 giao dịch | Thử lại 2 lần |
-| 8 | `ai-quota-reset` | `0 0 1 * *` | Đặt lại `ai_quota_used = 0` theo gói | Idempotent theo tháng | Thử lại 3 lần |
+| 8 | `ai-quota-reset` | `0 0 1 * *` | Xoá key tháng cũ trong `ai_quota_used`, giữ key tháng hiện tại | Idempotent theo tháng | Thử lại 3 lần |
 | 9 | `ai-cost-breaker` | `0 * * * *` | Tổng chi phí AI giờ qua; vượt ngưỡng thì khoá tính năng tới đầu giờ sau | Khoá Redis có TTL | Gửi cảnh báo nếu chạy lỗi 2 lần |
 | 10 | `fcm-token-cleanup` | `0 3 * * 0` | Xoá token FCM không hợp lệ | Idempotent | Thử lại 1 lần |
 | 11 | `soft-delete-purge` | `30 3 * * *` | Xoá cứng bản ghi có `deleted_at` quá 30 ngày | Idempotent | Thử lại 3 lần |
@@ -560,7 +561,7 @@ sequenceDiagram
     participant P as Postgres
 
     C->>AUTH: Đăng nhập email mật khẩu hoặc Google
-    AUTH-->>C: access token (15 phút) + refresh token (30 ngày)
+    AUTH-->>C: access token (1 giờ) + refresh token (30 ngày)
     C->>A: API request (nạp access token)
     A->>AUTH: Xác thực token
     AUTH-->>A: hợp lệ, kèm user_id
@@ -571,7 +572,7 @@ sequenceDiagram
 
 | Thành phần | Cách bảo vệ |
 |---|---|
-| Token | Access 15 phút, refresh 30 ngày, refresh một lần; hết hạn thì xoá cả cặp |
+| Token | Access 1 giờ, refresh 30 ngày, refresh một lần; hết hạn thì xoá cả cặp |
 | Dữ liệu | RLS bật trên mọi bảng; chính sách chỉ đọc/ghi khi `user_id` khớp token |
 | Ảnh hoá đơn | Signed URL 15 phút cho tải lên, 24 giờ cho tải về; không lưu công khai |
 | Dữ liệu nhạy cảm | Không lưu mật khẩu thanh toán, không lưu số tài khoản ngân hàng |
@@ -622,7 +623,7 @@ sequenceDiagram
 ## 12. Điểm cần bạn quyết
 | # | Điểm | Đề xuất hiện tại | Cần bạn chọn |
 |---|---|---|---|
-| D1 | Web cắt hẳn ở MVP hay giữ như tính năng phụ | Giữ như tính năng phụ, ưu tiên thấp hơn | Chấp nhận / Cắt |
+| D1 | ~~Web cắt hẳn ở MVP hay giữ như tính năng phụ~~ | **Đã chốt 2026-11-16:** Web tách khỏi Flutter, dùng Next.js; MVP chỉ landing + đăng ký + báo cáo đọc | — |
 | D2 | Dùng Redis có trả phí không khi vượt free tier | Chưa mua; xem theo chi phí [09 mục 3](09-chi-tiet-ky-thuat.md#3-chi-phí-hạ-tầng-theo-quy-mô) | Xác nhận |
 | D3 | Gói AI miễn phí 10 lượt có đủ demo không | Đủ nếu chỉ demo 1 người | Chốt con số |
 | D4 | Máy demo chạy bản nào (iOS hay Android) | Android (đúng phân khúc chính) | Chốt máy |
@@ -647,7 +648,7 @@ Tuần 10    Chạy thử, đo, sửa trước khi nộp
 
 ## 14. Trạng thái
 Phiên bản 2.0, 2026-11-16. Bản gốc 1.x (một codebase Flutter cho cả hai nền) bị thay thế bởi Q4 và A3.
-Tài liệu dẫn về file này: `01`–`09`. Mọi thay đổi quyết định phải cập nhật mục 11 và 14 trước.
+Tài liệu dẫn về file này: `01`–`10`. Mọi thay đổi quyết định phải cập nhật mục 11 và 14 trước.
 
 ## 15. Chi tiết kỹ thuật
 

@@ -1,6 +1,6 @@
 # 01 — Thiết kế cơ sở dữ liệu
 
-**Phiên bản:** 1.1 · **Ngày:** 2026-11-13 · **Trạng thái:** đã chốt Q1–Q3, các điểm khác chờ duyệt
+**Phiên bản:** 1.2 · **Ngày:** 2026-11-17 · **Trạng thái:** đã chốt Q1, Q3, Q8, Q9; các điểm khác chờ duyệt
 
 Mục tiêu: đủ cho MVP, mở rộng được sang AI và đồng bộ đa thiết bị mà không phải migrate lại.
 
@@ -74,7 +74,7 @@ CREATE TABLE users (
 
 - `email` và `phone` đều nullable nhưng phải có ít nhất một → cho phép đăng ký bằng SĐT (sinh viên VN phổ biến hơn email).
 - `onboarded_at` dùng để quyết định có hiện luồng khởi động hay không, và để đo chỉ số D1.
-- `ai_quota_used` là JSONB dạng `{"2026-11": {"ocr": 3, "chat": 1}}` — reset theo tháng bằng cách đọc key tháng hiện tại, không cần job dọn dẹp.
+- `ai_quota_used` là JSONB dạng `{"2026-11": {"ocr": 3, "chat": 1}}` — hạn mức được đọc theo key tháng hiện tại (không cần reset số), job `ai-quota-reset` chỉ dọn key tháng cũ.
 - `plan_expires_at` NULL với gói free; có giá trị với gói Pro để job kiểm tra hết hạn.
 
 ---
@@ -171,6 +171,10 @@ CREATE TABLE transactions (
   -- Dùng cho type = 'transfer'
   to_wallet_id  UUID REFERENCES wallets(id),
 
+  -- Dùng cho giao dịch sinh từ recurring_rules (khoá chống trùng)
+  recurring_rule_id UUID,
+  occurrence_date   DATE,
+
   note          TEXT,
   occurred_at   TIMESTAMPTZ NOT NULL,                -- thời điểm chính xác UTC
   occurred_on   DATE NOT NULL,                       -- ngày theo giờ VN, để nhóm
@@ -223,15 +227,7 @@ CREATE INDEX idx_tx_sync
 
 Ví dụ: người dùng ghi lúc 23:30 ngày 30/11 giờ VN. Nếu chỉ có UTC, đó là 16:30 ngày 30/11 — đúng. Nhưng nếu ghi lúc 00:30 ngày 1/12 giờ VN, UTC là 17:30 ngày 30/11 → nếu nhóm theo UTC sẽ tính vào tháng 11 sai. Có `occurred_on` thì luôn đúng.
 
-`occurred_on` được tính ở tầng ứng dụng: `occurred_at` đổi sang `Asia/Ho_Chi_Minh` rồi lấy phần ngày. Có thể dùng generated column nếu cần chắc chắn:
-
-```sql
-occurred_on DATE GENERATED ALWAYS AS (
-  (occurred_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date
-) STORED
-```
-
-Khuyến nghị dùng generated column để không phụ thuộc client tính đúng.
+**Đã chốt:** `occurred_on` do Postgres tạo bằng trigger `trg_occurred_on` (`occurred_at` đổi sang `Asia/Ho_Chi_Minh` rồi lấy phần ngày) — xem [07](07-cron-jobs.md) mục 3.2 và migration khởi tạo. Client chỉ gửi `occurred_at`. Không dùng generated column vì biểu thức đổi múi giờ không đạt tính IMMUTABLE mà Postgres yêu cầu.
 
 ---
 
@@ -420,7 +416,7 @@ CREATE INDEX idx_recurring_due ON recurring_rules(next_run_on)
 
 **Xử lý ngày 29–31 thiếu:** nếu `day_of_month = 31` và tháng chỉ có 30 ngày, chạy vào ngày cuối tháng. Logic ở tầng ứng dụng, không ràng buộc DB.
 
-**Ai sinh giao dịch:** client, khi mở app và phát hiện `next_run_on <= hôm nay`. Sau đó cập nhật `next_run_on` và đẩy lên server. Không dùng cron server vì người dùng phải mở app mới thấy, và tránh phải chạy job 24/7.
+**Ai sinh giao dịch:** job `recurring-generate` trên Worker (00:05, múi giờ VN) — xem [07](07-cron-jobs.md) mục 2.1. Mỗi kỳ sinh được khoá bằng `UNIQUE (recurring_rule_id, occurrence_date)` trên `transactions`, nên chạy lại job không tạo trùng. Client chỉ đọc kết quả qua đồng bộ.
 
 ---
 
@@ -684,8 +680,8 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 |---|---|---|---|---|
 | 1 | Danh mục con (`parent_id`) | Giữ cột nhưng **không dùng ở MVP** | Bỏ hẳn, thêm sau bằng migration | Chờ quyết |
 | 2 | Giao dịch chuyển ví có tính vào tổng chi | Không | Có | **Đã chốt (Q3)** |
-| 4 | `occurred_on` là generated column hay app tính | Generated column | App tính, linh hoạt hơn | Chờ quyết |
-| 5 | Có lưu ảnh hóa đơn ở MVP | Không | Có, dùng Supabase Storage | Chờ quyết |
+| 4 | `occurred_on` do ai tạo | Trigger Postgres (`trg_occurred_on`) | Generated column / app tính | **Đã chốt:** trigger |
+| 5 | Có lưu ảnh hóa đơn ở MVP | Không; cột `receipt_url` đã có sẵn | Có, dùng Supabase Storage | **Đã chốt:** không ở MVP |
 
 Riêng điểm 2: nếu tính chuyển ví vào tổng chi thì tổng chi bị thổi phồng mà không có ý nghĩa. Đề xuất chắc chắn: **không tính**.
 

@@ -21,5 +21,7 @@ npm i @nestjs/bullmq @nestjs/config @nestjs/jwt
 | `sync/` | `POST /v1/sync/push`, `GET /v1/sync/pull` — giải quyết xung đột theo rev |
 | `ai/` | OCR, chat, quota |
 | `devices/` | Đăng ký FCM/APNs token |
+| `goals/` | Mục tiêu tiết kiệm nhập tay (Q8) |
+| `groups/` | Chia tiền nhóm — nhóm, thành viên, chi phí, phần chia (Q9) |
 
 Hợp đồng endpoint: [docs/system-design/02-api-contract.md](../../docs/system-design/02-api-contract.md).

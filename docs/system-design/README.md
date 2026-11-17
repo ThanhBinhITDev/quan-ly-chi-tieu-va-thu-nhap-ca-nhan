@@ -7,7 +7,7 @@ Bộ tài liệu thiết kế kỹ thuật cho Student Finance — Ứng dụng 
 | # | Tài liệu | Nội dung | Trạng thái |
 |---|---|---|---|
 | 00 | [Kiến trúc hệ thống](00-architecture.md) | Mục tiêu, C4 hai mức, 3 nền tảng, luồng dữ liệu, ERD, 12 job, bảo mật, ADR | 2.0 |
-| 01 | [Cơ sở dữ liệu](01-database-schema.md) | 11 bảng, quan hệ, index, RLS, truy vấn then chốt, dung lượng | 2.0 |
+| 01 | [Cơ sở dữ liệu](01-database-schema.md) | 12 bảng, quan hệ, index, RLS, truy vấn then chốt, dung lượng | 2.0 |
 | 02 | [Hợp đồng API](02-api-contract.md) | Endpoint, request/response, mã lỗi, giới hạn tải, công thức dùng chung | 2.0 |
 | 03 | [Đồng bộ dữ liệu](03-sync-strategy.md) | Local-first, hàng đợi, chống trùng, xử lý xung đột, toàn vẹn | 2.0 |
 | 04 | [Màn hình](04-wireframes.md) | 5 màn hình chính, khối, trạng thái, màu, thông báo | 2.0 |
@@ -17,6 +17,7 @@ Bộ tài liệu thiết kế kỹ thuật cho Student Finance — Ứng dụng 
 | 08 | [Nguyên tắc API cho ba nền](08-api-principles.md) | REST JSON thuần, Bearer JWT thống nhất, định dạng lỗi | 2.0 (mới) |
 | 09 | [Chi tiết kỹ thuật](09-chi-tiet-ky-thuat.md) | Phân tầng backend, yêu cầu phi chức năng, chi phí, rủi ro | 2.0 (mới) |
 | 10 | [Bản mô tả UI do nhóm đề xuất](10-ui-spec-de-xuat.md) | Bản nhóm gửi, chỗ nhận được, chỗ xung đột với quyết định đã chốt | 2026-11-17 |
+| 11 | [Quy tắc giao diện Android](11-android-ui-rules.md) | Material 3, layout, trạng thái, offline-first, accessibility, kiểm thử | 1.0 |
 
 ---
 
@@ -56,4 +57,4 @@ Bộ tài liệu thiết kế kỹ thuật cho Student Finance — Ứng dụng 
 
 ## Trạng thái
 
-Bản nháp 2.0 — đã chốt Q1, Q3–Q6, Q8, Q9. Q7 bị Q8 đảo. Bốn điểm còn chờ quyết ở [mục 12 của 00](00-architecture.md#12-điểm-cần-bạn-quyết).
+Bản nháp 2.0 — đã chốt Q1, Q3–Q6, Q8, Q9. Q7 bị Q8 đảo. Chỉ còn ba điểm mở (D2–D4); D1 đã chốt 2026-11-16. Xem [mục 12 của 00](00-architecture.md#12-điểm-cần-bạn-quyết).

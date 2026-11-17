@@ -96,7 +96,7 @@ Phát hiện có mạng (connectivity_plus) hoặc app vào foreground
    ├─ Thành công  → đổi sync_status = 'synced', xóa khỏi queue, lưu server_rev
    ├─ Conflict    → đổi sync_status = 'conflict', lưu server_data
    ├─ 401         → refresh token, thử lại 1 lần
-   ├─ 429 / 5xx   → giữ queue, backoff (2s, 4s, 8s, 16s, tối đa 60s)
+   ├─ 429 / 5xx   → giữ queue, backoff (1s, 5s, 25s, 2 phút, 10 phút — khớp 00 mục 8.2)
    └─ 400         → đánh dấu lỗi vĩnh viễn, ghi log, không thử lại
 4. Nếu còn queue → lặp lại bước 2
 ```

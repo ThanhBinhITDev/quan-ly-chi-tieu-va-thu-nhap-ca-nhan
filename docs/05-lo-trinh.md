@@ -64,7 +64,7 @@ Nếu không kịp, cắt theo đúng thứ tự này:
 
 ## 5. Điểm chờ quyết
 
-Bốn điểm trong [system-design/00](system-design/00-architecture.md) mục 12 ảnh hưởng trực tiếp tới lộ trình:
+Ba điểm còn mở (D2–D4) trong [system-design/00](system-design/00-architecture.md) mục 12 ảnh hưởng trực tiếp tới lộ trình; D1 đã chốt:
 
 | Mã | Câu hỏi | Ảnh hưởng |
 |---|---|---|

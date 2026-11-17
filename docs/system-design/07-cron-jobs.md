@@ -29,8 +29,8 @@ Toàn bộ chạy múi giờ `Asia/Ho_Chi_Minh` (UTC+7). Ngoại lệ ghi rõ �
 | Trường | Nội dung |
 |---|---|
 | Lịch | `05 0 * * *` (00:05 hằng ngày) |
-| Việc làm | Tìm `recurring_rules` có `next_run_on <= today` và `is_active = true`; sinh giao dịch tương ứng; cập nhật `next_run_on` và `last_run_at` |
-| Khoá idempotent | UNIQUE `(rule_id, occurrence_date)` trên bảng `transactions` |
+| Việc làm | Tìm `recurring_rules` có `next_run_on <= today` và `is_active = true`; sinh giao dịch tương ứng; cập nhật `next_run_on` và `last_run_on` |
+| Khoá idempotent | UNIQUE `(recurring_rule_id, occurrence_date)` trên bảng `transactions` (lọc NULL) |
 | Số lần thử | 3, cách nhau 5 phút |
 | Nếu chạy lại | Bản ghi đã sinh bị `ON CONFLICT DO NOTHING`; `next_run_on` chỉ tiến, không lùi |
 
@@ -127,8 +127,8 @@ Toàn bộ chạy múi giờ `Asia/Ho_Chi_Minh` (UTC+7). Ngoại lệ ghi rõ �
 | Trường | Nội dung |
 |---|---|
 | Lịch | `0 0 1 * *` (00:00 ngày 1) |
-| Việc làm | Đặt `ai_quota_used = 0` cho mọi người dùng; ghi lại hạn mức theo gói hiện tại |
-| Khoá idempotent | Chỉ ghi khi `quota_month < tháng hiện tại` |
+| Việc làm | Xoá các key tháng cũ trong `ai_quota_used` (JSONB dạng `{"2026-11":{"ocr":3}}`), giữ key tháng hiện tại — xem [01](01-database-schema.md) mục 3 |
+| Khoá idempotent | Chỉ xoá key có tháng nhỏ hơn tháng hiện tại |
 | Số lần thử | 3, cách 5 phút |
 
 ### 2.9. `ai-cost-breaker` — cầu dao chi phí
@@ -201,16 +201,16 @@ Nếu bất kỳ C1–C8 trả về > 0, báo cáo phải ghi rõ số lượng 
 | Số lần thử | 5 |
 | Khoảng cách | 1s, 5s, 25s, 2 phút, 10 phút (backoff ×5) |
 | Sau lần cuối | Chuyển dead-letter queue, đánh dấu bản ghi `sync_failed`, báo người dùng trong app |
-| Kích thước gói | Tối đa 200 thay đổi mỗi lượt đẩy |
+| Kích thước gói | Tối đa 100 thay đổi mỗi lượt đẩy (khớp [03](03-sync-strategy.md) mục 4.2) |
 | Thứ tự | Theo `created_at`, không đảo |
 
 ### 3.2. Trigger toàn vẹn trong Postgres
 
 | Trigger | Bảng | Việc làm |
 |---|---|---|
-| `trg_updated_at` | mọi bảng có `updated_at` | Gán `updated_at = now()` khi UPDATE |
-| `trg_amount_positive` | `transactions` | Từ chối nếu `amount <= 0` |
-| `trg_transfer_target` | `transactions` | Từ chối nếu `type = 'transfer'` mà `to_wallet_id` NULL hoặc trùng `wallet_id` |
+| `trg_updated_at_*` | 8 bảng có `updated_at` | Gán `updated_at = now()` khi UPDATE |
+| CHECK `amount > 0` | `transactions` | Từ chối số tiền không dương (constraint SQL, không phải trigger) |
+| CHECK `tx_transfer_needs_target`, `tx_transfer_distinct` | `transactions` | Chặn transfer thiếu ví đích hoặc trùng ví nguồn |
 | `trg_occurred_on` | `transactions` | Sinh `occurred_on` từ `occurred_at` theo `Asia/Ho_Chi_Minh` |
 
 **Trigger chỉ bảo vệ toàn vẹn, không chứa nghiệp vụ.** Cập nhật ví, tính ngân sách, gọi AI — đều nằm ở NestJS.
