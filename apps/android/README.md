@@ -21,6 +21,8 @@ flutter create --org com.qlct --platforms android .
 
 Toàn bộ mã Flutter nằm trong `apps/android/lib/`, theo cây thư mục ở [docs/system-design/06-flutter-structure.md](../../docs/system-design/06-flutter-structure.md) mục 2.
 
+Quy tắc giao diện bắt buộc xem tại [docs/system-design/11-android-ui-rules.md](../../docs/system-design/11-android-ui-rules.md).
+
 Lý do: Web đã tách sang Next.js, chỉ còn Android dùng Dart, nên không còn gì để share.
 
 Tên app và applicationId **chưa chốt** — cần quyết trước khi đăng ký Google Play (25 USD).
