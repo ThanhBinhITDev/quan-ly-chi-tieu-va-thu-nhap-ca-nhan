@@ -88,7 +88,7 @@ Ghi chú: 12 ngày còn lại tính cả hôm nay.
 | Web (`apps/web`) | Next.js, React, TypeScript |
 | Backend (`services/`) | NestJS (API) + NestJS Worker, BullMQ, Redis |
 | CSDL, đăng nhập, lưu trữ file | PostgreSQL 15 trên Supabase (chỉ dùng Postgres + Auth + Storage) |
-| AI | ML Kit chạy trên máy + mô hình cỡ nhỏ qua lớp trừu tượng |
+| AI (giai đoạn sau MVP) | ML Kit chạy trên máy + mô hình cỡ nhỏ qua lớp trừu tượng |
 
 Lý do chọn và đánh đổi: [docs/03-ky-thuat.md](docs/03-ky-thuat.md) và [docs/system-design/00-architecture.md](docs/system-design/00-architecture.md).
 

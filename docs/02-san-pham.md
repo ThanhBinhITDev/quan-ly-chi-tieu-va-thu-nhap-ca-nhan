@@ -45,18 +45,18 @@ Chi tiết đầy đủ trong `Chien_luoc_giu_chan_nguoi_dung.docx`.
 
 ## 3. Ma sát ghi chép — giới hạn đã biết
 
-Không có cách nào tự động 100% với tiền mặt. Bốn tầng tiếp cận, xếp theo mức ma sát tăng dần:
+Không có cách nào tự động 100% với tiền mặt. **MVP chỉ nhập tay**, có nhập nhanh bằng cú pháp (`com 35k`) và widget 1 chạm. Các cách tự động dưới đây là giai đoạn sau, chưa cam kết:
 
-| Tầng | Cách làm | Ma sát | Chi phí |
+| Giai đoạn | Cách làm | Ma sát | Chi phí |
 |---|---|---|---|
-| 1 | Sao kê ngân hàng — nhập một lần, phân loại hàng loạt (foreground) | Thấp, 1 lần/tháng | 0đ |
-| 2 | Share sheet từ app khác vào app | Thấp | 0đ |
-| 3 | Ghi tiền mặt 1 lần/ngày (nhập nhanh `com 35k`) | Trung bình | 0đ |
-| 4 | Widget 1 chạm | Thấp | 0đ |
+| MVP | Nhập tay + nhập nhanh `com 35k` | Trung bình | 0đ |
+| MVP | Widget 1 chạm | Thấp | 0đ |
+| Sau MVP | Sao kê ngân hàng — nhập một lần, phân loại hàng loạt (foreground) | Thấp, 1 lần/tháng | 0đ |
+| Sau MVP | Share sheet từ app khác vào app | Thấp | 0đ |
 
 **Đã loại bỏ:** đọc thông báo bằng `NotificationListenerService`. Lý do: không đáng tin — ROM Trung Quốc giết dịch vụ nền, người dùng sẽ thấy app "lúc được lúc không", tệ hơn là không có tính năng.
 
-**Chưa kiểm chứng** (phải thử trước khi cam kết với nhà đầu tư/giám khảo):
+**Chưa kiểm chứng** (phải thử trước khi đưa vào lộ trình giai đoạn sau):
 - VCB/TPBank/MB có xuất được CSV/Excel hay chỉ PDF
 - MoMo share ra text hay chỉ ảnh
 - Có app Việt nào đang làm và còn sống trên Play Store

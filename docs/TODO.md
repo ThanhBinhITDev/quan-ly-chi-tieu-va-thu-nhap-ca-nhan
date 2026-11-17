@@ -27,7 +27,7 @@ Tổng hợp các khoảng trống của dự án tính đến 2026-11-16. Sắp
 | 12 | Xác định tuổi tối thiểu người dùng | Nhắm học sinh THPT đồng nghĩa xử lý dữ liệu người <16 tuổi, cần đồng ý phụ huynh theo NĐ 13/2023 |
 | 13 | Đăng ký tài khoản Google Play developer (25 USD) | Cần thời gian, xem mục 14 |
 | 14 | Lên kế hoạch closed testing 12–20 tester trong 14 ngày | Google Play bắt buộc với tài khoản cá nhân mới — mốc thời gian cứng, phải bắt đầu trước ngày thi ít nhất 1 tháng |
-| 14b | Kiểm chứng 3 điểm trước khi cam kết đọc sao kê | (a) VCB/TPBank/MB có xuất CSV/Excel hay chỉ PDF, (b) MoMo share ra text hay ảnh, (c) có app Việt nào đang làm và còn sống trên Play Store |
+| 14b | Kiểm chứng 3 điểm trước khi đưa đọc sao kê vào lộ trình giai đoạn sau | (a) VCB/TPBank/MB có xuất CSV/Excel hay chỉ PDF, (b) MoMo share ra text hay ảnh, (c) có app Việt nào đang làm và còn sống trên Play Store |
 | 14c | Quyết 4 điểm D1–D4 trong [`system-design/00`](system-design/00-architecture.md) mục 10 | Chặn việc chốt lộ trình và môi trường chạy thật |
 
 ## P2 — Nên có

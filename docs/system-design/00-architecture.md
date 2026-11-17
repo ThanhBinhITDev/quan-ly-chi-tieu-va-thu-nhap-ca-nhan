@@ -30,7 +30,7 @@ Phiên bản 2.0 — 2026-11-16. Thay thế bản 1.1 (một nền tảng Flutte
 
 ### Ngoài phạm vi (không thiết kế ở bản này)
 
-Mục tiêu tiết kiệm — đã loại bỏ vì con số không kiểm chứng được (người dùng tự gõ, không gắn với giao dịch thật). Đọc tiền qua API ngân hàng — Việt Nam chưa có chuẩn Open Banking mở. Đọc thông báo hệ điều hành — bị ROM Trung Quốc giết dịch vụ nền.
+MVP chỉ nhập tay. Các mục sau để giai đoạn sau, chưa thiết kế: đọc sao kê ngân hàng, share sheet từ app khác, OCR hoá đơn (ML Kit). Mục tiêu tiết kiệm đã loại bỏ (Q7). Đọc tiền qua API ngân hàng: Việt Nam chưa có chuẩn Open Banking mở. Đọc thông báo hệ điều hành: không đáng tin trên ROM Trung Quốc.
 
 ---
 

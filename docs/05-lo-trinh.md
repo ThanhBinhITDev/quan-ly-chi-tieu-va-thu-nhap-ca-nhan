@@ -27,11 +27,11 @@ Ba nền chạy song song. Tuần 1–2 cả ba cùng dựng khung; từ tuần 
 | 4 | Ngân sách, danh sách, ví, sửa/xoá | Ngân sách, danh sách, ví | — | Dùng offline hoàn toàn |
 | 5 | Swift Charts: biểu đồ tròn + cột | fl_chart: biểu đồ tròn + cột | Biểu đồ trên web | Có biểu đồ ở cả ba nơi |
 | 6 | Auth + đồng bộ + **App Intents** | Auth + đồng bộ | Auth + đọc dữ liệu thật | Dữ liệu không mất khi đổi thiết bị |
-| 7–8 | AI-1 + AI-2 + cổng hạn mức | AI-1 + AI-2 | — | Đọc được hoá đơn |
+| 7–8 | AI-1 + AI-2 + cổng hạn mức | AI-1 + AI-2 | — | Đọc được hoá đơn (giai đoạn sau MVP) |
 | 9 | Thông báo đẩy (APNs), cài đặt | Thông báo đẩy (FCM), cài đặt | — | Nhắc cuối ngày hoạt động |
 | 10 | Kiểm thử, sửa lỗi, TestFlight | Kiểm thử, sửa lỗi, closed testing | Kiểm thử, deploy | Bản nộp |
 
-**MVP xong ở tuần 6** (chưa có AI, chưa có thông báo). Đây là mốc cần cho bản dự thi.
+**MVP xong ở tuần 6** (chỉ nhập tay; chưa có AI, chưa có thông báo, chưa có nhập tự động). Đây là mốc cần cho bản dự thi.
 
 ---
 

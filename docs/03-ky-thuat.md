@@ -30,8 +30,8 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 | Backend Worker | **NestJS + BullMQ + Redis** | 12 job định kỳ + hàng đợi đồng bộ |
 | CSDL | **PostgreSQL 15** trên Supabase | 7 bảng, RLS bật |
 | Xác thực | **Supabase Auth** | JWT, refresh token, xác thực email |
-| Lưu trữ | **Supabase Storage** | Ảnh hóa đơn (giai đoạn 2) |
-| OCR | **ML Kit (on-device)** | Miễn phí, không gửi ảnh lên server |
+| Lưu trữ | **Supabase Storage** | Ảnh hóa đơn (giai đoạn sau MVP) |
+| OCR | **ML Kit (on-device)** | Giai đoạn sau. Miễn phí, không gửi ảnh lên server |
 | LLM | Mô hình cỡ nhỏ qua lớp trừu tượng | Đổi nhà cung cấp không sửa app |
 | Push | **FCM** (Android) + **APNs** (iOS) | Miễn phí |
 | Payment | Google Play Billing / StoreKit | Bắt buộc cho gói kỹ thuật số |
@@ -101,7 +101,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 | Phân quyền dữ liệu | RLS trên mọi bảng, lọc theo `user_id` |
 | Truyền tải | HTTPS bắt buộc, HSTS |
 | Lưu trữ local | iOS: Keychain cho token; Flutter: `flutter_secure_storage` |
-| Ảnh hóa đơn | Không gửi lên server ở MVP (ML Kit chạy trên máy) |
+| Ảnh hóa đơn | Giai đoạn sau mới có. Khi có: ML Kit chạy trên máy, ảnh không gửi lên server |
 | Dữ liệu xoá | Xoá mềm 30 ngày, sau đó xoá cứng bằng job |
 | Tuổi tối thiểu | 16 |
 

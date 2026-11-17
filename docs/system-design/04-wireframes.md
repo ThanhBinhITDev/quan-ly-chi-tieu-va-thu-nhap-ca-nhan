@@ -461,7 +461,7 @@ Quy tắc phân tích:
 - Từ khóa đầu hoặc cuối là gợi ý danh mục
 - Nếu không nhận ra từ khóa → dùng danh mục dùng nhiều nhất, người dùng sửa được
 
-### Chụp hóa đơn (giai đoạn 2)
+### Chụp hóa đơn (giai đoạn sau MVP)
 
 Nút 📷 ở góc trên. Chụp → gọi `/ai/ocr` → hiện màn xác nhận giống nhập nhanh, người dùng sửa rồi Lưu.
 

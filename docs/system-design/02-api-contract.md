@@ -471,6 +471,8 @@ file: <ảnh jpeg, tối đa 5 MB>
 
 Lý do: nếu OCR tự tạo giao dịch, một lần nhận diện sai sẽ làm sai toàn bộ số liệu tài chính, và người dùng khó phát hiện.
 
+> **Giai đoạn sau MVP.** Nhóm chốt MVP chỉ nhập tay.
+
 ### 9.2. Trợ lý hỏi đáp
 
 ```http

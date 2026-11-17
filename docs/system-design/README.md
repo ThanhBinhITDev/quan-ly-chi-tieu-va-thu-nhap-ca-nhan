@@ -43,7 +43,7 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 | Biểu đồ | Swift Charts (iOS), fl_chart (Flutter) | Không dùng thư viện ngoài cho iOS |
 | Thông báo | FCM (Android), APNs (iOS) | Miễn phí |
 | Thanh toán | Google Play Billing / StoreKit | Bắt buộc cho gói số phẩm |
-| AI | Gemini Flash (server) + ML Kit (máy) | AI không sinh con số tài chính |
+| AI | Gemini Flash (server) + ML Kit (máy) | Giai đoạn sau MVP. AI không sinh con số tài chính |
 
 ## Đã loại bỏ
 
