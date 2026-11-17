@@ -16,6 +16,7 @@ Bộ tài liệu thiết kế kỹ thuật cho ứng dụng Quản lý Chi tiêu
 | 07 | [Công việc định kỳ](07-cron-jobs.md) | 12 job, lịch chạy, khoá chống trùng, xử lý lỗi, giám sát | 2.0 |
 | 08 | [Nguyên tắc API cho ba nền](08-api-principles.md) | REST JSON thuần, Bearer JWT thống nhất, định dạng lỗi | 2.0 (mới) |
 | 09 | [Chi tiết kỹ thuật](09-chi-tiet-ky-thuat.md) | Phân tầng backend, yêu cầu phi chức năng, chi phí, rủi ro | 2.0 (mới) |
+| 10 | [Bản mô tả UI do nhóm đề xuất](10-ui-spec-de-xuat.md) | Bản nhóm gửi, chỗ nhận được, chỗ xung đột với quyết định đã chốt | 2026-11-17 |
 
 ---
 

@@ -18,16 +18,30 @@ Mô tả bằng khối và trạng thái. Không dùng công cụ thiết kế �
 
 ### Bảng màu
 
+Màu nhận diện thương hiệu: **`#2D7C3D`** (xanh lá — tài chính, an toàn). Chốt ngày 2026-11-17.
+
 ```
+Nhận diện      #2D7C3D     Nền tối: #5FBF77
 Nền chính      #FFFFFF     Nền tối: #121212
 Chữ chính      #212121     Nền tối: #E0E0E0
 Chữ phụ        #757575     Nền tối: #9E9E9E
-Nhấn           #1976D2  (xanh dương — tin cậy, tài chính)
-An toàn        #2E7D32  (xanh lá)
-Chú ý          #F57C00  (cam)
+An toàn        #2D7C3D  (dùng chung màu nhận diện)
+Chú ý          #F57C00  (cam — chỉ nền, icon, thanh; chữ dùng #8A4B00)
 Cảnh báo       #C62828  (đỏ)
 Đường viền     #E0E0E0
 ```
+
+**Vì sao "An toàn" dùng chung màu nhận diện:** `#2E7D32` cũ gần như trùng `#2D7C3D`, để hai mã riêng thì mắt không phân biệt được. Xanh lá vốn đã mang nghĩa "an toàn, tài chính", nên gộp làm một. Trạng thái vẫn phân biệt được vì còn cam và đỏ ở hai ngưỡng cao hơn.
+
+**Ràng buộc tương phản (đo bằng công thức WCAG):**
+
+| Cặp màu | Tỷ lệ | Kết luận |
+|---|---|---|
+| Chữ trắng trên `#2D7C3D` | 5,17:1 | Đạt AA cho chữ thường. Dùng cho nút chính và thẻ tổng quan |
+| `#2D7C3D` trên nền tối `#121212` | 3,62:1 | **Không đạt** cho chữ nhỏ. Nền tối phải dùng tint `#5FBF77` (8,21:1) |
+| Chữ `#212121` trên tint `#5FBF77` | 7,06:1 | Đạt AAA |
+| Cam `#F57C00` trên nền trắng | 2,70:1 | **Không đạt** cho chữ. Chỉ dùng cho icon, viền, thanh tiến độ. Chữ cam dùng `#8A4B00` |
+| Đỏ `#C62828` trên nền trắng | 5,62:1 | Đạt AA |
 
 Chỉ dùng 3 màu trạng thái cho thanh tiến độ và số dư. Không dùng cho trang trí.
 
@@ -168,7 +182,7 @@ Chỉ dùng 3 màu trạng thái cho thanh tiến độ và số dư. Không dù
 
 | Điều kiện | Màu | Số hiển thị |
 |---|---|---|
-| `daily_limit > 0` và ngân sách dùng < 70% | `#2E7D32` | `63.888 đ` |
+| `daily_limit > 0` và ngân sách dùng < 70% | `#2D7C3D` | `63.888 đ` |
 | Ngân sách dùng 70–89% | `#F57C00` | `42.300 đ` |
 | Ngân sách dùng 90–99% | `#F57C00` đậm hơn + biểu tượng ⚠ | `12.500 đ` |
 | `daily_limit ≤ 0` | `#C62828` | `Đã vượt 120.000 đ` |

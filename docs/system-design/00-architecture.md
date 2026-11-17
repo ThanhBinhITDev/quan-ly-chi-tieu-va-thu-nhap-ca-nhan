@@ -89,7 +89,7 @@ graph TB
     ADM -->|"xem bảng điều khiển"| MON
 
     classDef ext fill:#F5F5F5,stroke:#9E9E9E
-    classDef sys fill:#E3F2FD,stroke:#1976D2
+    classDef sys fill:#E8F3EA,stroke:#2D7C3D
     class IDP,DB,ST,FCM,GEM,GP,MON ext
     class CORE sys
 ```
