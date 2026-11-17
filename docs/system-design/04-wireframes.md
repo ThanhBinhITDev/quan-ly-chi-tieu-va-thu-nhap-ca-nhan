@@ -131,35 +131,44 @@ Chỉ dùng 3 màu trạng thái cho thanh tiến độ và số dư. Không dù
 
 ## 3. Màn hình 1 — Trang chủ
 
+Bố cục theo bản nhóm chốt ngày 2026-11-17: card tổng quan nền xanh đậm ở trên cùng, các thẻ bo góc xếp dọc.
+
 ```
 ┌─────────────────────────────────────┐
-│  Tháng 11 ▾              🔔   ⚙️   │
+│  Student Finance        🔔    ⚙️    │
 ├─────────────────────────────────────┤
-│                                     │
-│        HÔM NAY ĐƯỢC TIÊU            │
-│                                     │
-│           63.888 đ                  │  ← 40sp, màu theo trạng thái
-│                                     │
-│    Còn 18 ngày · 1.150.000 đ        │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │████████████████░░░░░░░░  61,7% │  │  ← thanh tiến độ ngân sách
-│  └───────────────────────────────┘  │
-│   Đã chi 1.850.000 / 3.000.000      │
-│                                     │
+│ ╭─────────────────────────────────╮ │
+│ │ SỐ DƯ HIỆN TẠI        (nền xanh)│ │
+│ │                                 │ │
+│ │        1.200.000 đ              │ │  ← 36sp, chữ trắng
+│ │                                 │ │
+│ │  ↑ Thu nhập tháng  ↓ Chi tháng  │ │
+│ │     3.000.000        1.800.000  │ │
+│ ╰─────────────────────────────────╯ │
 ├─────────────────────────────────────┤
-│   THU NHẬP      CHI       CÒN LẠI   │
-│  3.000.000   1.850.000  1.150.000   │
+│   Hôm nay được tiêu      63.888 đ › │  ← giữ chỉ số khác biệt
+│   Còn dùng được 18 ngày             │
 ├─────────────────────────────────────┤
+│   NGÂN SÁCH THÁNG 11          ✏️    │
 │                                     │
-│   Cơ cấu chi tiêu                   │
+│   1.850.000 / 3.000.000   61,7%     │
+│   ┌───────────────────────────────┐ │
+│   │████████████████░░░░░░░░       │ │
+│   └───────────────────────────────┘ │
+│   Còn 1.150.000                     │
 │                                     │
-│      ╭───────────╮                  │
-│     │   Ăn uống  │  Ăn uống  53%    │
-│     │    53%     │  Đi lại   17%    │
-│     │            │  Mua sắm  16%    │
-│      ╰───────────╯  Khác     14%    │
+│   🍜     🚌     📚     🎮     🛍     │  ← icon danh mục nhanh
+│   Ăn     Đi     Học    Giải   Mua   │
+│   uống   lại    tập    trí   sắm    │
+├─────────────────────────────────────┤
+│   MỤC TIÊU TIẾT KIỆM          🏅    │
 │                                     │
+│   Mua laptop                        │
+│   200.000 / 500.000        40%      │
+│   ┌───────────────────────────────┐ │
+│   │████████░░░░░░░░░░░░░░░░       │ │
+│   └───────────────────────────────┘ │
+│   [ Ghi thêm tiết kiệm ]            │
 ├─────────────────────────────────────┤
 │   Giao dịch gần đây       Xem tất cả│
 │                                     │
@@ -169,14 +178,17 @@ Chỉ dùng 3 màu trạng thái cho thanh tiến độ và số dư. Không dù
 │  🚌  Xe buýt              -7.000    │
 │      Hôm nay · Đi lại               │
 │                                     │
-│  💰  Mẹ gửi             +2.000.000  │
-│      Hôm qua · Tiền gia đình        │
-│                                     │
 └─────────────────────────────────────┘
                         ╭─────────╮
                         │    +    │   ← nút nổi, 56dp
                         ╰─────────╯
 ```
+
+**Vì sao vẫn có dòng "Hôm nay được tiêu":** card số dư trả lời "tôi có bao nhiêu", nhưng không trả lời "hôm nay tiêu được bao nhiêu". Chỉ số này là điểm khác biệt so với Money Lover. Nó nằm ngay dưới card số dư, không chiếm vị trí số lớn nhất.
+
+**Số dư là số tính ra, không phải số lưu sẵn** (Q1): `initial_balance` + tổng giao dịch. Người dùng không sửa trực tiếp được; muốn đổi thì sửa ví.
+
+**Thẻ mục tiêu chỉ hiện khi có ít nhất một mục tiêu chưa xong.** Chưa có thì ẩn hẳn, không hiện khung trống.
 
 ### Trạng thái màu của số "Hôm nay được tiêu"
 
@@ -378,7 +390,7 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 
 ---
 
-## 7. Màn hình 5 — Tài khoản
+## 7. Màn hình 5 — Tài khoản (mở từ ⚙ ở Trang chủ)
 
 ```
 ┌─────────────────────────────────────┐
@@ -528,14 +540,16 @@ Dùng dấu chấm phân cách nghìn, không dùng dấu phẩy. Đơn vị `đ
 Khởi động (3 bước)
    ↓
 Trang chủ ────┬──── Giao dịch ──── Sửa giao dịch
-              ├──── Ngân sách ──── Đặt ngân sách
-              ├──── Báo cáo
-              └──── Tài khoản ──── Cài đặt con
+              ├──── Ngân sách ──── Đặt ngân sách ──── Mục tiêu
+              ├──── Thống kê
+              └──── (⚙ ở header) ──── Tài khoản ──── Cài đặt con
                      ↑
        Nút + (từ mọi tab) → Modal thêm giao dịch → lưu → về tab cũ
 ```
 
-Thanh tab dưới: 5 mục. Nút `+` nổi chỉ ở tab Trang chủ và Giao dịch.
+Thanh tab dưới: **4 mục** — Trang chủ, Giao dịch, Ngân sách, Thống kê. Nút `+` nổi chỉ ở tab Trang chủ và Giao dịch.
+
+**Vì sao 4 tab, không phải 5:** bản nhóm chốt 2026-11-17. Tab Tài khoản bỏ khỏi thanh dưới, chuyển thành icon ⚙ ở header Trang chủ. Lý do vẫn phải có đường vào Tài khoản: nó chứa chính sách riêng tư — Google Play bắt buộc phải truy cập được từ trong app.
 
 > **Khác biệt nền tảng (Q4):** nút `+` nổi là mẫu Material (Android). Trên **iOS dùng nút thêm ở thanh điều hướng trên** hoặc thanh dưới dạng `Toolbar` — không dùng FAB, vì iOS không có mẫu FAB và HIG không khuyến nghị. Các khối còn lại dùng chung.
 
@@ -547,7 +561,6 @@ Thanh tab dưới: 5 mục. Nút `+` nổi chỉ ở tab Trang chủ và Giao d�
 
 | # | Vấn đề | Đề xuất | Phương án khác |
 |---|---|---|---|
-| 1 | 5 tab hay 4 tab (gộp Báo cáo vào Trang chủ) | 5 tab | 4 tab, gọn hơn nhưng Trang chủ dài |
 | 2 | Số tiền tabular (chữ số đều nhau) | Có | Không, đẹp hơn nhưng số nhảy khi cập nhật |
 | 3 | Chế độ tối | Có, theo hệ thống | Chỉ sáng, đơn giản hơn |
 | 4 | Onboarding 3 bước hay 2 | 3 (có bước ghi thử) | 2 bước, nhanh hơn nhưng không tạo được "aha moment" |

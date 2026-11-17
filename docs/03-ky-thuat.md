@@ -13,7 +13,8 @@ Toàn bộ chi tiết và lý do ở [system-design/00-architecture.md](system-d
 | **Q4** | **Ba nền, ba công nghệ:** iOS SwiftUI native; Android Flutter; Web Next.js (React, TypeScript) | 3 codebase, 3 lần sửa lỗi/test/phát hành. Đổi lại: iOS có Liquid Glass thật, Web có SEO và tải trang nhanh |
 | **Q5** | Backend **tự viết bằng NestJS**; Supabase chỉ còn Postgres + Auth + Storage | Không dùng Realtime, không dùng Edge Functions, không dùng PostgREST tự động |
 | **Q6** | Cron chạy trong **Worker NestJS + BullMQ + Redis** | Không dùng `pg_cron`; 12 job ở [system-design/07](system-design/07-cron-jobs.md) |
-| **Q7** | **Loại bỏ mục tiêu tiết kiệm** | Bảng `goals` không tạo |
+| **Q7** | **Loại bỏ mục tiêu tiết kiệm** | Đã bị đảo bởi Q8 |
+| **Q8** | **Mục tiêu tiết kiệm trở lại, nhập tay** | Bảng `goals` có `saved_amount` nhập tay, không khoá ngoại tới ví |
 
 **Chi phí:** 3 codebase nghĩa là mỗi thay đổi sửa, test và phát hành ba lần. Giảm bằng hợp đồng API chung ([08](system-design/08-api-principles.md)) và bộ số liệu test chung cho công thức "hôm nay được tiêu".
 

@@ -26,15 +26,13 @@ Bốn điểm dưới đây **không nhận nguyên văn**. Cần sếp chọn.
 Bản đề xuất: **"Student Finance"**.
 Tên chính thức đã chốt: **"Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân"**, slogan "TIỀN ĐI ĐÂU – BẠN BIẾT ĐÓ!" ([01-tong-quan](../01-tong-quan.md)).
 
-Đề xuất: giữ tên chính thức ở tiêu đề, "Student Finance" chỉ là tên gọi tắt nội bộ. Hoặc sếp đổi tên chính thức — nhưng phải sửa cả 5 file tài liệu.
+**Đã chốt 2026-11-17:** tên chính thức là **"Student Finance — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân"**. Đã cập nhật README, [01-tong-quan](../01-tong-quan.md) và [system-design/README](README.md).
 
 ### 2.2 Thử thách tiết kiệm / mục tiêu (gamification)
 
 Bản đề xuất có "Thẻ Thử thách tiết kiệm — Mua laptop 500.000đ kèm thanh tiến trình" và "chế độ tiết kiệm hiển thị mục tiêu hiện tại".
 
-**Tính năng mục tiêu tiết kiệm đã bị loại bỏ** ngày 2026-11-16 (Q7): con số người dùng tự gõ, không kiểm chứng được, không gắn với tiền thật. Bảng `goals` không tồn tại trong schema.
-
-Nếu muốn có lại, phải làm khác đi: mục tiêu gắn với số dư thật của một ví, không phải con số tự nhập. Đây là việc thiết kế lại, không phải thêm một thẻ vào giao diện.
+**Đã chốt 2026-11-17 (Q8):** mục tiêu tiết kiệm **có lại, nhập tay**, không gắn số dư ví. Đảo quyết định Q7 ngày 2026-11-16. Bảng `goals` có trong [01 mục 8](01-database-schema.md#8-bảng-goals), endpoint ở [02 mục 7](02-api-contract.md#7-mục-tiêu-tiết-kiệm).
 
 ### 2.3 "Số dư hiện tại" trên card tổng quan
 
@@ -44,16 +42,13 @@ Quyết định Q1: **không lưu `balance` trong `wallets`**; số dư luôn t�
 
 Quan trọng hơn: chỉ số mà app này muốn người dùng thấy là **"hôm nay được tiêu bao nhiêu"**, không phải số dư. Số dư không trả lời câu hỏi "hôm nay tiêu được bao nhiêu". Nếu để số dư to nhất, app mất điểm khác biệt so với Money Lover.
 
-Đề xuất: giữ card xanh, nhưng số to nhất là chỉ số hạn mức hôm nay; số dư và thu/chi tháng xuống hàng dưới.
+**Đã chốt 2026-11-17:** làm theo bản nhóm — card xanh đậm, số dư to nhất, thu/chi ở hàng dưới. **Số dư không gắn ví thật ở giai đoạn đầu:** chỉ là tổng tính từ giao dịch nhập tay (Q1). Chỉ số "hôm nay được tiêu" vẫn giữ, nằm ngay dưới card, theo [04 mục 3](04-wireframes.md#3-màn-hình-1--trang-chủ).
 
 ### 2.4 Thanh điều hướng: 4 tab hay 5 tab
 
-Bản đề xuất: **4 tab** — Trang chủ, Giao dịch, Ngân sách, Thống kê. Không có tab Tài khoản.
-Đặc tả hiện tại: **5 tab** — thêm tab Tài khoản ([04 mục 11](04-wireframes.md#11-điều-hướng)).
+**Đã chốt 2026-11-17:** **4 tab** — Trang chủ, Giao dịch, Ngân sách, Thống kê. Tab Tài khoản chuyển thành icon ⚙ ở header Trang chủ ([04 mục 11](04-wireframes.md#11-điều-hướng)).
 
-Tab Tài khoản chứa đăng xuất, cài đặt thông báo, hạn mức AI, chính sách riêng tư. Bốn thứ này bắt buộc phải có (Google Play yêu cầu chính sách riêng tư truy cập được). Nếu bỏ tab, phải có đường vào khác — thường là icon bánh răng ở góc phải header Trang chủ.
-
-Đề xuất: **4 tab + icon cài đặt ở header**, gọn hơn 5 tab trên màn 360dp.
+Tab Tài khoản chứa chính sách riêng tư, đăng xuất, cài đặt. Vẫn phải truy cập được từ trong app (Google Play yêu cầu), nên icon ⚙ là đường vào bắt buộc.
 
 ---
 

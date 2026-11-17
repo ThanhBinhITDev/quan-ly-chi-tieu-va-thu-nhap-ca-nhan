@@ -30,7 +30,7 @@ Phiên bản 2.0 — 2026-11-16. Thay thế bản 1.1 (một nền tảng Flutte
 
 ### Ngoài phạm vi (không thiết kế ở bản này)
 
-MVP chỉ nhập tay. Các mục sau để giai đoạn sau, chưa thiết kế: đọc sao kê ngân hàng, share sheet từ app khác, OCR hoá đơn (ML Kit). Mục tiêu tiết kiệm đã loại bỏ (Q7). Đọc tiền qua API ngân hàng: Việt Nam chưa có chuẩn Open Banking mở. Đọc thông báo hệ điều hành: không đáng tin trên ROM Trung Quốc.
+MVP chỉ nhập tay. Các mục sau để giai đoạn sau, chưa thiết kế: đọc sao kê ngân hàng, share sheet từ app khác, OCR hoá đơn (ML Kit). Mục tiêu tiết kiệm có trong MVP, nhập tay, không gắn số dư ví (Q8). Đọc tiền qua API ngân hàng: Việt Nam chưa có chuẩn Open Banking mở. Đọc thông báo hệ điều hành: không đáng tin trên ROM Trung Quốc.
 
 ---
 
@@ -42,7 +42,8 @@ MVP chỉ nhập tay. Các mục sau để giai đoạn sau, chưa thiết kế:
 | Q4 | **Ba nền tảng, ba công nghệ riêng:** iOS SwiftUI native; Android Flutter; Web Next.js (React, TypeScript) | 2026-11-16 | Ba codebase, ba ngôn ngữ, một hợp đồng API (OpenAPI) |
 | Q5 | **Backend tách khỏi Supabase: NestJS tự viết, Supabase chỉ làm Postgres + Auth + Storage** | 2026-11-16 | Logic nghiệp vụ nằm ở nơi kiểm thử được |
 | Q6 | **Cron chạy trong worker NestJS + BullMQ, không dùng pg_cron hay Edge Functions** | 2026-11-16 | Có retry, có dead-letter, có log |
-| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Bảng `goals` không tạo; Q2 cũ bị huỷ |
+| Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Đã bị đảo bởi Q8 |
+| Q8 | **Mục tiêu tiết kiệm trở lại, nhập tay, không gắn ví** | 2026-11-17 | Bảng `goals` có `saved_amount` nhập tay; không khoá ngoại tới `wallets`; giai đoạn sau mới xét ví `savings` |
 
 > Q2 cũ ("mục tiêu tiết kiệm tách khỏi ví") không còn hiệu lực vì tính năng đã bị loại bỏ.
 

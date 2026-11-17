@@ -34,6 +34,7 @@ users
   ├──< wallets            (1 user có nhiều ví)
   ├──< categories         (danh mục mặc định user_id = NULL)
   ├──< budgets            (1 ngân sách thuộc 1 danh mục)
+  ├──< goals              (mục tiêu tiết kiệm, nhập tay, không gắn ví)
   ├──< recurring_rules    (giao dịch định kỳ)
   ├──< devices            (thiết bị đăng nhập, push token)
   │
@@ -269,7 +270,35 @@ WHERE t.user_id = :uid
 
 ---
 
-## 8. Bảng `recurring_rules`
+## 8. Bảng `goals`
+
+Mục tiêu tiết kiệm (Q8, 2026-11-17). Giai đoạn đầu chỉ nhập tay: người dùng tự khai số đã tiết kiệm. **Không khoá ngoại tới `wallets`**, nên số này không đổi theo giao dịch thật.
+
+```sql
+CREATE TABLE goals (
+  id             UUID PRIMARY KEY,
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name           TEXT NOT NULL,               -- "Mua laptop"
+  target_amount  BIGINT NOT NULL CHECK (target_amount > 0),
+  saved_amount   BIGINT NOT NULL DEFAULT 0 CHECK (saved_amount >= 0),
+  deadline       DATE,
+  icon           TEXT,
+  is_completed   BOOLEAN NOT NULL DEFAULT false,
+  rev            INT NOT NULL DEFAULT 1,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at     TIMESTAMPTZ
+);
+```
+
+**Quy tắc:**
+- `saved_amount` là số người dùng tự nhập, khác với số dư ví (Q1 không áp dụng ở đây vì không có nguồn giao dịch để tính).
+- Khi `saved_amount >= target_amount`, đặt `is_completed = true`. Đây là quy tắc ở tầng ứng dụng, không ràng buộc DB.
+- Giai đoạn sau có thể thêm ví loại `savings` và liên kết; khi đó sẽ có quyết định mới, không sửa bảng này âm thầm.
+
+---
+
+## 9. Bảng `recurring_rules`
 
 ```sql
 CREATE TABLE recurring_rules (
@@ -299,7 +328,7 @@ CREATE INDEX idx_recurring_due ON recurring_rules(next_run_on)
 
 ---
 
-## 9. Bảng `devices`
+## 10. Bảng `devices`
 
 ```sql
 CREATE TABLE devices (
@@ -317,7 +346,7 @@ Dùng để gửi push và để phát hiện sync bất thường.
 
 ---
 
-## 10. Row Level Security (Supabase)
+## 11. Row Level Security (Supabase)
 
 Bắt buộc bật cho mọi bảng, nếu không dữ liệu tài chính của người này đọc được bởi người khác.
 
@@ -326,6 +355,7 @@ ALTER TABLE wallets      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE goals       ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY p_wallets_own ON wallets
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
@@ -347,7 +377,7 @@ CREATE POLICY p_categories_write ON categories
 
 ---
 
-## 11. Câu truy vấn then chốt
+## 12. Câu truy vấn then chốt
 
 ### 12.1. Chỉ số "Hôm nay được tiêu bao nhiêu"
 
@@ -413,7 +443,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 12. Dung lượng ước tính
+## 13. Dung lượng ước tính
 
 | Bảng | 1 user/năm | 10.000 user/năm |
 |---|---|---|
@@ -429,7 +459,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 13. Những điểm cần bạn quyết
+## 14. Những điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất của tôi | Phương án khác | Trạng thái |
 |---|---|---|---|---|
@@ -442,7 +472,7 @@ Riêng điểm 2: nếu tính chuyển ví vào tổng chi thì tổng chi bị 
 
 ---
 
-## 14. Quyết định đã chốt
+## 15. Quyết định đã chốt
 
 Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới.
 
@@ -450,7 +480,7 @@ Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không
 |---|---|---|---|
 | Q1 | **Không lưu `balance` trong `wallets`** | Số dư luôn tính từ `initial_balance` + tổng giao dịch | Chỉ một nguồn sự thật là bảng `transactions`. Không có cột `balance`, không có trigger cập nhật, không có nguy cơ lệch |
 | Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
-| Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
+| Q8 | **Mục tiêu tiết kiệm trở lại, nhập tay** | `goals.saved_amount` là số người dùng tự khai; không khoá ngoại tới `wallets` | Bảng `goals` ở mục 8. Đảo Q7 ngày 2026-11-16 |
 
 ### Điều cần kiểm tra khi viết mã
 

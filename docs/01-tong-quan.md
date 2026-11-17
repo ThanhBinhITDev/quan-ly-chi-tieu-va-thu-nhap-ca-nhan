@@ -8,7 +8,7 @@
 
 | Mục | Nội dung |
 |---|---|
-| Tên | **Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân** |
+| Tên | **Student Finance** — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân |
 | Slogan | *"Tiền đi đâu — Bạn biết đó!"* |
 | Nền tảng | iOS (native SwiftUI), Android, Web |
 | Mô hình | Freemium, gói Pro 29.000đ/tháng |
@@ -67,7 +67,7 @@ Ranh giới này quan trọng: nó giữ app ngoài phạm vi quản lý của l
 |---|---|
 | **A. Ghi nhận** | Ghi thu/chi, đa ví (tiền mặt, Momo, ngân hàng), nhập nhanh cú pháp, hoạt động offline |
 | **B. Phân tích** | Biểu đồ cơ cấu, xu hướng theo ngày, so sánh kỳ trước, lọc và tìm kiếm |
-| **C. Kiểm soát** | Chỉ số "hôm nay được tiêu", ngân sách theo danh mục, cảnh báo nhiều mức |
+| **C. Kiểm soát** | Chỉ số "hôm nay được tiêu", ngân sách theo danh mục, cảnh báo nhiều mức, mục tiêu tiết kiệm (nhập tay) |
 | **D. AI & nâng cao** | Đọc hóa đơn, trợ lý hỏi đáp, nhận xét thói quen, đồng bộ đa thiết bị |
 | **E. Hỗ trợ** | Onboarding, trợ giúp trong app, kênh phản hồi |
 

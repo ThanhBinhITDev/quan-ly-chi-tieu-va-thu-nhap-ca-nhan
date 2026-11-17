@@ -68,7 +68,6 @@ Không có cách nào tự động 100% với tiền mặt. **MVP chỉ nhập t
 | Thứ | Lý do loại |
 |---|---|
 | Giữ tiền, nạp/rút, liên kết ngân hàng | App chỉ ghi chép; tránh phạm vi luật tổ chức tín dụng |
-| Mục tiêu tiết kiệm | Không xác định được tiến độ thật (Q7, 2026-11-16) |
 | Đọc thông báo tự động | Không đáng tin trên ROM Trung Quốc |
 | Đồng bộ realtime | Không cần cho MVP; đồng bộ theo lượt đủ dùng |
 | Xuất Excel/PDF | Giai đoạn 2 |

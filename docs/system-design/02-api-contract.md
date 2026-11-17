@@ -328,7 +328,72 @@ GET /v1/budgets/progress
 
 ---
 
-## 7. Công thức dùng chung (bắt buộc)
+## 7. Mục tiêu tiết kiệm
+
+Mục tiêu nhập tay (Q8, 2026-11-17). `saved_amount` là số người dùng tự khai; **không** tính từ giao dịch, **không** gắn ví.
+
+### 7.1. Lấy danh sách
+
+```http
+GET /v1/goals
+```
+
+**Trả về 200:**
+
+```json
+{
+  "items": [
+    { "id": "g1...", "name": "Mua laptop", "target_amount": 500000,
+      "saved_amount": 200000, "progress_pct": 40.0, "deadline": "2027-03-01",
+      "icon": "laptop", "is_completed": false, "rev": 2,
+      "updated_at": "2026-11-17T03:00:00Z" }
+  ]
+}
+```
+
+`progress_pct` do server tính: `min(100, saved_amount / target_amount * 100)`, làm tròn 1 chữ số thập phân. `target_amount` luôn > 0 nên không có phép chia cho 0.
+
+### 7.2. Tạo mục tiêu
+
+```http
+POST /v1/goals
+```
+
+```json
+{ "name": "Mua laptop", "target_amount": 500000, "deadline": "2027-03-01", "icon": "laptop" }
+```
+
+**Trả về 201:** như mục 7.1 với `saved_amount = 0`.
+
+**Lỗi 422:** `target_amount <= 0`, `name` rỗng, hoặc `deadline` ở quá khứ.
+
+### 7.3. Cập nhật (kể cả nạp thêm tiền)
+
+```http
+PATCH /v1/goals/{id}
+```
+
+```json
+{ "saved_amount": 350000, "rev": 2 }
+```
+
+**Trả về 200:** mục tiêu sau khi sửa.
+
+**Lỗi 409:** `rev` không khớp — cùng cơ chế chống ghi đè như giao dịch (mục 9.3).
+
+Chỉ gửi trường cần đổi. `saved_amount` là số tuyệt đối, không phải số cộng thêm — client tự cộng rồi gửi, để tránh hai lần cộng trùng khi mất mạng.
+
+### 7.4. Xoá
+
+```http
+DELETE /v1/goals/{id}
+```
+
+Xoá mềm, đặt `deleted_at`. **Trả về 204.**
+
+---
+
+## 8. Công thức dùng chung (bắt buộc)
 
 Đây là điểm dễ sai nhất khi có cả server và client cùng tính.
 
@@ -354,9 +419,9 @@ Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đ�
 
 ---
 
-## 8. Đồng bộ
+## 9. Đồng bộ
 
-### 8.1. Chiến lược
+### 9.1. Chiến lược
 
 **Local-first, last-write-wins theo `rev`.**
 
@@ -368,7 +433,7 @@ Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đ�
 5. Kéo thay đổi từ server về (pull) theo updated_at
 ```
 
-### 8.2. Đẩy thay đổi
+### 9.2. Đẩy thay đổi
 
 ```http
 POST /v1/sync/push
@@ -405,7 +470,7 @@ POST /v1/sync/push
 }
 ```
 
-### 8.3. Giải quyết xung đột
+### 9.3. Giải quyết xung đột
 
 **Quy tắc: server thắng, nhưng không mất dữ liệu người dùng.**
 
@@ -417,7 +482,7 @@ POST /v1/sync/push
 
 Với MVP dùng 1 thiết bị, xung đột gần như không xảy ra. Nhưng **phải có sẵn cơ chế**, nếu không sau này thêm đa thiết bị sẽ phải viết lại toàn bộ tầng sync.
 
-### 8.4. Kéo thay đổi
+### 9.4. Kéo thay đổi
 
 ```http
 GET /v1/sync/pull?since=2026-11-13T04:00:00Z&limit=500
@@ -442,9 +507,9 @@ GET /v1/sync/pull?since=2026-11-13T04:00:00Z&limit=500
 
 ---
 
-## 9. AI (giai đoạn 2 — thiết kế sẵn để không phải sửa)
+## 10. AI (giai đoạn 2 — thiết kế sẵn để không phải sửa)
 
-### 9.1. Đọc hóa đơn
+### 10.1. Đọc hóa đơn
 
 ```http
 POST /v1/ai/ocr
@@ -473,7 +538,7 @@ Lý do: nếu OCR tự tạo giao dịch, một lần nhận diện sai sẽ là
 
 > **Giai đoạn sau MVP.** Nhóm chốt MVP chỉ nhập tay.
 
-### 9.2. Trợ lý hỏi đáp
+### 10.2. Trợ lý hỏi đáp
 
 ```http
 POST /v1/ai/chat
@@ -497,7 +562,7 @@ POST /v1/ai/chat
 
 **Điều bắt buộc:** `data_refs` cho biết câu trả lời dựa trên truy vấn nào. Có thể bấm vào để mở đúng màn hình. Không có cơ chế này thì người dùng không kiểm chứng được AI nói đúng hay sai — rủi ro không chấp nhận được với dữ liệu tiền.
 
-### 9.3. Hạn mức
+### 10.3. Hạn mức
 
 Mọi endpoint AI đều trả `quota` trong response. Khi vượt:
 
@@ -510,7 +575,7 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 
 ---
 
-## 10. Job định kỳ (server)
+## 11. Job định kỳ (server)
 
 Đầy đủ **12 job** — lịch chạy, khoá idempotent, xử lý lỗi, giám sát — ở [07 — Công việc định kỳ](07-cron-jobs.md). Không lặp lại ở đây để tránh lệch.
 
@@ -529,7 +594,7 @@ Mọi job chạy trong **Worker NestJS + BullMQ**, không dùng `pg_cron`, khôn
 
 ---
 
-## 11. Giới hạn tải
+## 12. Giới hạn tải
 
 | Endpoint | Giới hạn | Cách tính |
 |---|---|---|
@@ -541,7 +606,7 @@ Mọi job chạy trong **Worker NestJS + BullMQ**, không dùng `pg_cron`, khôn
 
 ---
 
-## 12. Điểm cần bạn quyết
+## 13. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
 |---|---|---|---|

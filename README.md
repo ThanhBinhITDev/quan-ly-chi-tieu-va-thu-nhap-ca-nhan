@@ -1,4 +1,4 @@
-# Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân
+# Student Finance — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân
 
 > **"Tiền đi đâu — Bạn biết đó!"**
 
@@ -133,6 +133,6 @@ Danh sách việc đầy đủ: [docs/TODO.md](docs/TODO.md).
 
 ## Bản quyền
 
-© 2026 Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân. Bảo lưu mọi quyền.
+© 2026 Student Finance. Bảo lưu mọi quyền.
 
 Mã nguồn, tài liệu thiết kế và bộ nhận diện thương hiệu thuộc quyền sở hữu của nhóm phát triển. Mọi hình thức sao chép, phân phối lại hoặc sử dụng thương mại cần có văn bản đồng ý.
