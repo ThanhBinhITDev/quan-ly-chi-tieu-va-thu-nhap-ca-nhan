@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../../assets/brand/student-finance-logo-192.png" alt="Student Finance" width="96" />
+</p>
+
 # Thiết kế hệ thống
 
 Bộ tài liệu thiết kế kỹ thuật cho Student Finance — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân.

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/brand/student-finance-logo-192.png" alt="Student Finance" width="96" />
+</p>
+
 # 05 — Lộ trình
 
 **Cập nhật:** 2026-11-16 · **Phiên bản:** 2.0 (2 codebase)

@@ -1,6 +1,10 @@
-# Student Finance — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân
+<p align="center">
+  <img src="assets/brand/student-finance-logo-192.png" alt="Student Finance" width="120" />
+</p>
 
-> **"Tiền đi đâu — Bạn biết đó!"**
+<h1 align="center">Student Finance — Ứng dụng Quản lý Chi tiêu và Thu nhập Cá nhân</h1>
+
+<p align="center"><strong>"Tiền đi đâu — Bạn biết đó!"</strong></p>
 
 Nền tảng quản lý tài chính cá nhân dành cho sinh viên Việt Nam. Ghi một khoản chi dưới 5 giây, và luôn biết **hôm nay còn được tiêu bao nhiêu**.
 
