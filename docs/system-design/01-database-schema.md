@@ -38,6 +38,10 @@ users
   ├──< recurring_rules    (giao dịch định kỳ)
   ├──< devices            (thiết bị đăng nhập, push token)
   │
+  └──< group_members >── groups
+  └──< shared_expenses >── groups
+  └──< shared_shares >── shared_expenses
+  │
   └──< transactions >──── wallets
                 └──────> categories
                 └──────> recurring_rules (nếu sinh tự động)
@@ -298,7 +302,99 @@ CREATE TABLE goals (
 
 ---
 
-## 9. Bảng `recurring_rules`
+## 9. Bảng chia tiền nhóm (Split Bill)
+
+Bốn bảng, thêm ngày 2026-11-17. Đây là **nhóm dữ liệu đầu tiên có nhiều người dùng cùng đọc**, khác toàn bộ phần còn lại (mỗi người chỉ thấy dữ liệu của mình). RLS phải viết riêng, không dùng mẫu `user_id = auth.uid()`.
+
+### 9.1. `groups` — nhóm
+
+```sql
+CREATE TABLE groups (
+  id           UUID PRIMARY KEY,
+  name         TEXT NOT NULL,                -- "Nhóm trọ 4 người"
+  owner_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invite_code  TEXT NOT NULL UNIQUE,         -- 8 ký tự, để mời vào nhóm
+  rev          INT NOT NULL DEFAULT 1,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at   TIMESTAMPTZ
+);
+```
+
+`invite_code` sinh ngẫu nhiên, không đoán được. Mời bằng mã, không mời bằng email — tránh lộ danh bạ.
+
+### 9.2. `group_members` — thành viên
+
+```sql
+CREATE TABLE group_members (
+  group_id   UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role       TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner','member')),
+  joined_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  left_at    TIMESTAMPTZ,
+  PRIMARY KEY (group_id, user_id)
+);
+```
+
+Rời nhóm là đặt `left_at`, **không xoá dòng** — nếu xoá thì lịch sử chi tiêu mất người, không tính lại được ai nợ ai.
+
+### 9.3. `shared_expenses` — khoản chi chung
+
+```sql
+CREATE TABLE shared_expenses (
+  id           UUID PRIMARY KEY,
+  group_id     UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  payer_id     UUID NOT NULL REFERENCES users(id),   -- ai trả tiền
+  amount       BIGINT NOT NULL CHECK (amount > 0),
+  note         TEXT,                                  -- "Tiền điện tháng 11"
+  occurred_on  DATE NOT NULL,
+  split_method TEXT NOT NULL DEFAULT 'equal'
+               CHECK (split_method IN ('equal','exact')),
+  rev          INT NOT NULL DEFAULT 1,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at   TIMESTAMPTZ
+);
+
+CREATE INDEX idx_shared_expenses_group ON shared_expenses(group_id, occurred_on DESC)
+  WHERE deleted_at IS NULL;
+```
+
+### 9.4. `shared_shares` — phần của từng người
+
+```sql
+CREATE TABLE shared_shares (
+  expense_id   UUID NOT NULL REFERENCES shared_expenses(id) ON DELETE CASCADE,
+  user_id      UUID NOT NULL REFERENCES users(id),
+  share_amount BIGINT NOT NULL CHECK (share_amount >= 0),
+  settled_at   TIMESTAMPTZ,        -- NULL = chưa thanh toán
+  PRIMARY KEY (expense_id, user_id)
+);
+```
+
+**Ràng buộc quan trọng, phải có test:** tổng `share_amount` của một `expense_id` **phải bằng** `shared_expenses.amount`. Kiểm tra ở tầng service trong một transaction, không dùng CHECK constraint vì cần đọc bảng khác.
+
+### 9.5. Quan hệ với sổ cá nhân — điểm dễ sai nhất
+
+**Không ghi toàn bộ số tiền vào sổ cá nhân của người trả.** Ví dụ: trả 400.000đ tiền điện cho 4 người, phần của mình là 100.000đ.
+
+| Cách làm | Kết quả | Đúng? |
+|---|---|---|
+| Ghi 400.000đ vào chi tiêu cá nhân | Ngân sách tháng bị thổi 300.000đ, không phải tiền mình tiêu | **Sai** |
+| Ghi 100.000đ vào chi tiêu cá nhân | Đúng số tiền mình thực sự tiêu | **Đúng** |
+| Ghi 400.000đ chi + 300.000đ thu | Rối, phải tạo giao dịch giả | **Sai** |
+
+**Quy tắc:** khi tạo khoản chi chung, hệ thống sinh **một giao dịch cá nhân** cho mỗi thành viên, số tiền = `share_amount` của người đó. Giao dịch đó có `note` gắn tên nhóm, `category_id` do người dùng chọn (hoặc để trống).
+
+Hệ quả:
+- Người trả: chi 100.000đ (phần mình), và có 300.000đ **phải thu** — khoản phải thu chỉ nằm trong Split Bill, **không** vào sổ cá nhân.
+- Người nhận: chi 100.000đ, và có 100.000đ **phải trả**.
+
+**Vì sao không đưa khoản phải thu/phải trả vào sổ cá nhân:** nó không phải chi tiêu. Đưa vào thì chỉ số "hôm nay được tiêu" bị sai, vì số dư bị đội lên bởi tiền chưa thực thu.
+
+---
+
+## 10. Bảng `recurring_rules`
 
 ```sql
 CREATE TABLE recurring_rules (
@@ -328,7 +424,7 @@ CREATE INDEX idx_recurring_due ON recurring_rules(next_run_on)
 
 ---
 
-## 10. Bảng `devices`
+## 11. Bảng `devices`
 
 ```sql
 CREATE TABLE devices (
@@ -346,7 +442,7 @@ Dùng để gửi push và để phát hiện sync bất thường.
 
 ---
 
-## 11. Row Level Security (Supabase)
+## 12. Row Level Security (Supabase)
 
 Bắt buộc bật cho mọi bảng, nếu không dữ liệu tài chính của người này đọc được bởi người khác.
 
@@ -375,9 +471,132 @@ CREATE POLICY p_categories_write ON categories
 
 Điểm này dễ làm sai: nếu dùng một policy chung `user_id = auth.uid()` thì user sẽ **không thấy** danh mục mặc định, và app hiện danh sách trống.
 
+### 12.1. Bốn bảng chia tiền — policy khác hẳn
+
+Đây là chỗ dễ hở dữ liệu nhất. Bốn bảng này **không** có cột `user_id` để so trực tiếp, mà phải kiểm qua thành viên nhóm. Viết sai một policy là người ngoài nhóm đọc được chi tiêu của người khác.
+
+```sql
+ALTER TABLE groups           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE group_members    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shared_expenses  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shared_shares    ENABLE ROW LEVEL SECURITY;
+
+-- Hàm kiểm thành viên, tránh lặp ở mọi policy
+CREATE OR REPLACE FUNCTION is_group_member(g UUID)
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM group_members
+    WHERE group_id = g AND user_id = auth.uid() AND left_at IS NULL
+  );
+$$;
+
+-- Xem nhóm: chỉ nhóm mình là thành viên
+CREATE POLICY p_groups_read ON groups
+  FOR SELECT USING (is_group_member(id) OR owner_id = auth.uid());
+
+-- Chỉ chủ nhóm mới sửa/xoá nhóm
+CREATE POLICY p_groups_write ON groups
+  FOR UPDATE USING (owner_id = auth.uid()) WITH CHECK (owner_id = auth.uid());
+
+CREATE POLICY p_groups_delete ON groups
+  FOR DELETE USING (owner_id = auth.uid());
+
+-- Hàm phụ: kiểm chủ nhóm
+CREATE OR REPLACE FUNCTION is_group_owner(g UUID)
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE AS $$
+  SELECT EXISTS (SELECT 1 FROM groups WHERE id = g AND owner_id = auth.uid());
+$$;
+
+-- Thành viên: xem được thành viên cùng nhóm
+CREATE POLICY p_members_read ON group_members
+  FOR SELECT USING (is_group_member(group_id));
+
+-- Chỉ chủ nhóm được thêm người trực tiếp.
+-- Tự vào nhóm bằng mã mời KHÔNG đi qua policy này: API kiểm invite_code
+-- rồi ghi bằng service role. RLS không biết mã mời, nên nếu cho user tự
+-- INSERT thì ai biết group_id cũng vào được nhóm.
+CREATE POLICY p_members_insert ON group_members
+  FOR INSERT WITH CHECK (is_group_owner(group_id));
+
+-- Khoản chi chung: thành viên được XEM
+CREATE POLICY p_expenses_read ON shared_expenses
+  FOR SELECT USING (is_group_member(group_id));
+
+-- Thành viên được THÊM, nhưng phải ghi đúng mình là người trả
+CREATE POLICY p_expenses_insert ON shared_expenses
+  FOR INSERT WITH CHECK (is_group_member(group_id) AND payer_id = auth.uid());
+
+-- Chỉ người trả hoặc chủ nhóm được SỬA/XOÁ
+CREATE POLICY p_expenses_write ON shared_expenses
+  FOR UPDATE USING (is_group_member(group_id)
+                    AND (payer_id = auth.uid() OR is_group_owner(group_id)))
+  WITH CHECK (is_group_member(group_id));
+
+CREATE POLICY p_expenses_delete ON shared_expenses
+  FOR DELETE USING (is_group_member(group_id)
+                    AND (payer_id = auth.uid() OR is_group_owner(group_id)));
+
+-- Phần chia: xem được nếu là thành viên nhóm chứa khoản chi
+CREATE POLICY p_shares_read ON shared_shares
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM shared_expenses e
+            WHERE e.id = expense_id AND is_group_member(e.group_id))
+  );
+
+-- Chỉ người trả khoản chi đó mới được ghi phần chia
+CREATE POLICY p_shares_write ON shared_shares
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM shared_expenses e
+            WHERE e.id = expense_id AND e.payer_id = auth.uid())
+  ) WITH CHECK (
+    EXISTS (SELECT 1 FROM shared_expenses e
+            WHERE e.id = expense_id AND e.payer_id = auth.uid())
+  );
+
+-- Đánh dấu đã trả: mỗi người chỉ sửa được dòng của chính mình
+CREATE POLICY p_shares_settle ON shared_shares
+  FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+```
+
+**Sáu điều phải test bằng SQL thật, không chỉ đọc mã:**
+
+1. Người ngoài nhóm gọi `GET /v1/groups/{id}` → 403, không trả dữ liệu.
+2. Người đã rời nhóm (`left_at` khác NULL) → không đọc được khoản chi mới, nhưng **vẫn đọc được khoản cũ của mình** (cần cho việc đối chiếu nợ).
+3. Người ngoài nhóm không chèn được `shared_shares` cho khoản chi của nhóm khác.
+4. Thành viên thường **không** thêm được người khác vào nhóm (chỉ chủ nhóm).
+5. Thành viên thường **không** sửa/xoá được khoản chi của người khác (chỉ người trả hoặc chủ nhóm).
+6. Người trả khoản chi **không** ghi được `payer_id` là người khác (chống giả mạo người trả).
+
+**RLS giới hạn dòng, không giới hạn cột.** Policy `p_shares_settle` cho người dùng sửa dòng của mình — nhưng nếu không chặn cột, họ sửa luôn `share_amount` để giảm nợ. Phải chặn bằng một trong hai cách:
+
+```sql
+-- Cách 1: chỉ cho ghi cột settled_at
+REVOKE UPDATE ON shared_shares FROM authenticated;
+GRANT UPDATE (settled_at) ON shared_shares TO authenticated;
+
+-- Cách 2: trigger từ chối khi share_amount đổi mà không phải người trả
+CREATE OR REPLACE FUNCTION guard_share_amount() RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.share_amount <> OLD.share_amount
+     AND NOT EXISTS (SELECT 1 FROM shared_expenses e
+                     WHERE e.id = OLD.expense_id AND e.payer_id = auth.uid())
+  THEN RAISE EXCEPTION 'không được đổi số tiền chia';
+  END IF;
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_guard_share_amount
+  BEFORE UPDATE ON shared_shares
+  FOR EACH ROW EXECUTE FUNCTION guard_share_amount();
+```
+
+Chọn cách 1 nếu chỉ cần đánh dấu đã trả; chọn cách 2 nếu sau này cho sửa số tiền chia.
+
+**Vì sao hàm `SECURITY DEFINER`:** nếu viết truy vấn con trực tiếp trong policy của `group_members`, Postgres sẽ đệ quy vô hạn (policy của `group_members` lại gọi `group_members`). Hàm `SECURITY DEFINER` cắt vòng đệ quy đó. Đây là lỗi kinh điển khi làm RLS cho bảng thành viên.
+
 ---
 
-## 12. Câu truy vấn then chốt
+## 13. Câu truy vấn then chốt
 
 ### 12.1. Chỉ số "Hôm nay được tiêu bao nhiêu"
 
@@ -443,7 +662,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 13. Dung lượng ước tính
+## 14. Dung lượng ước tính
 
 | Bảng | 1 user/năm | 10.000 user/năm |
 |---|---|---|
@@ -459,7 +678,7 @@ Client tự điền các ngày không có giao dịch bằng 0 (không dùng `ge
 
 ---
 
-## 14. Những điểm cần bạn quyết
+## 15. Những điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất của tôi | Phương án khác | Trạng thái |
 |---|---|---|---|---|
@@ -472,7 +691,7 @@ Riêng điểm 2: nếu tính chuyển ví vào tổng chi thì tổng chi bị 
 
 ---
 
-## 15. Quyết định đã chốt
+## 16. Quyết định đã chốt
 
 Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không bàn lại** trừ khi có lý do kỹ thuật mới.
 
@@ -481,6 +700,7 @@ Hai quyết định dưới đây được duyệt ngày 2026-11-13 và **không
 | Q1 | **Không lưu `balance` trong `wallets`** | Số dư luôn tính từ `initial_balance` + tổng giao dịch | Chỉ một nguồn sự thật là bảng `transactions`. Không có cột `balance`, không có trigger cập nhật, không có nguy cơ lệch |
 | Q3 | **Chuyển ví không tính vào tổng chi** | `type = 'transfer'` chỉ đổi số dư hai ví | Mọi truy vấn tổng chi phải có `AND type = 'expense'`. Biểu đồ tròn và chỉ số hôm nay bỏ qua `transfer` |
 | Q8 | **Mục tiêu tiết kiệm trở lại, nhập tay** | `goals.saved_amount` là số người dùng tự khai; không khoá ngoại tới `wallets` | Bảng `goals` ở mục 8. Đảo Q7 ngày 2026-11-16 |
+| Q9 | **Chia tiền nhóm vào MVP** | 4 bảng mới; RLS theo thành viên nhóm, không theo `user_id` | Bảng ở mục 9. Người trả chỉ ghi phần của mình vào sổ cá nhân |
 
 ### Điều cần kiểm tra khi viết mã
 

@@ -393,7 +393,130 @@ Xoá mềm, đặt `deleted_at`. **Trả về 204.**
 
 ---
 
-## 8. Công thức dùng chung (bắt buộc)
+## 8. Chia tiền nhóm (Split Bill)
+
+Nhiều người dùng cùng đọc dữ liệu. Quy tắc tính tiền ở [01 mục 9.5](01-database-schema.md#95-quan-hệ-với-sổ-cá-nhân--điểm-dễ-sai-nhất): người trả chỉ ghi **phần của mình** vào sổ cá nhân.
+
+### 8.1. Danh sách nhóm
+
+```http
+GET /v1/groups
+```
+
+**Trả về 200:**
+
+```json
+{
+  "items": [
+    { "id": "gr1...", "name": "Nhóm trọ 4 người", "role": "member",
+      "member_count": 4, "invite_code": null,
+      "my_balance": -100000, "rev": 3, "updated_at": "2026-11-17T04:00:00Z" }
+  ]
+}
+```
+
+`my_balance` âm = mình còn nợ nhóm; dương = nhóm còn nợ mình. `invite_code` chỉ trả về cho chủ nhóm; thành viên thường nhận `null`.
+
+### 8.2. Tạo nhóm
+
+```http
+POST /v1/groups
+```
+
+```json
+{ "name": "Nhóm trọ 4 người" }
+```
+
+**Trả về 201:** nhóm kèm `invite_code` (8 ký tự). Người tạo tự động thành `owner`.
+
+### 8.3. Vào nhóm bằng mã mời
+
+```http
+POST /v1/groups/join
+```
+
+```json
+{ "invite_code": "K7M2QP9X" }
+```
+
+**Trả về 200:** nhóm vừa vào. **Lỗi 404:** mã sai hoặc nhóm đã xoá. Không phân biệt hai trường hợp này, để không dò được mã.
+
+**Lỗi 409:** đã là thành viên.
+
+### 8.4. Thành viên và số dư
+
+```http
+GET /v1/groups/{id}/balances
+```
+
+**Trả về 200:**
+
+```json
+{
+  "items": [
+    { "user_id": "u1...", "display_name": "Nguyễn Huyền Diệu",
+      "paid": 400000, "owed": 100000, "net": 300000 },
+    { "user_id": "u2...", "display_name": "Trần Văn A",
+      "paid": 0, "owed": 100000, "net": -100000 }
+  ],
+  "settlements": [
+    { "from": "u2...", "to": "u1...", "amount": 100000 }
+  ]
+}
+```
+
+`settlements` là gợi ý chuyển tiền **tối thiểu** để tất cả về 0, tính bằng cách ghép người nợ nhiều nhất với người được nhận nhiều nhất. Server tính, không phải client.
+
+### 8.5. Thêm khoản chi chung
+
+```http
+POST /v1/groups/{id}/expenses
+```
+
+```json
+{
+  "amount": 400000,
+  "note": "Tiền điện tháng 11",
+  "occurred_on": "2026-11-17",
+  "split_method": "equal",
+  "shares": [
+    { "user_id": "u1...", "share_amount": 100000 },
+    { "user_id": "u2...", "share_amount": 100000 },
+    { "user_id": "u3...", "share_amount": 100000 },
+    { "user_id": "u4...", "share_amount": 100000 }
+  ]
+}
+```
+
+**Trả về 201:** khoản chi kèm các phần chia.
+
+**Lỗi 422:** tổng `share_amount` khác `amount`; có `user_id` không thuộc nhóm; `share_amount` âm; `amount <= 0`.
+
+**Việc server làm trong một transaction:**
+1. Tạo `shared_expenses`.
+2. Tạo các dòng `shared_shares`.
+3. Kiểm tổng phần chia bằng `amount` — sai thì rollback toàn bộ.
+4. **Sinh giao dịch cá nhân** cho mỗi người có `share_amount > 0`: `type = 'expense'`, `amount = share_amount`, `note` gắn tên nhóm.
+
+Bước 4 là chỗ dễ bỏ sót. Bỏ thì số liệu cá nhân của mọi thành viên sai, nhưng Split Bill vẫn hiện đúng — lỗi rất khó phát hiện.
+
+### 8.6. Đánh dấu đã thanh toán
+
+```http
+POST /v1/groups/{id}/settle
+```
+
+```json
+{ "with_user_id": "u1...", "amount": 100000 }
+```
+
+Đặt `settled_at` cho các phần chia liên quan. **Trả về 200** kèm số dư mới.
+
+**Giới hạn:** chỉ đánh dấu được phần của **chính mình**. Muốn xác nhận người khác đã trả, họ phải tự đánh dấu. Không cho một người sửa nợ của người khác.
+
+---
+
+## 9. Công thức dùng chung (bắt buộc)
 
 Đây là điểm dễ sai nhất khi có cả server và client cùng tính.
 
@@ -419,9 +542,9 @@ Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đ�
 
 ---
 
-## 9. Đồng bộ
+## 10. Đồng bộ
 
-### 9.1. Chiến lược
+### 10.1. Chiến lược
 
 **Local-first, last-write-wins theo `rev`.**
 
@@ -433,7 +556,7 @@ Phải có bộ test cho công thức này, chạy trên cả Dart và SQL, đ�
 5. Kéo thay đổi từ server về (pull) theo updated_at
 ```
 
-### 9.2. Đẩy thay đổi
+### 10.2. Đẩy thay đổi
 
 ```http
 POST /v1/sync/push
@@ -470,7 +593,7 @@ POST /v1/sync/push
 }
 ```
 
-### 9.3. Giải quyết xung đột
+### 10.3. Giải quyết xung đột
 
 **Quy tắc: server thắng, nhưng không mất dữ liệu người dùng.**
 
@@ -482,7 +605,7 @@ POST /v1/sync/push
 
 Với MVP dùng 1 thiết bị, xung đột gần như không xảy ra. Nhưng **phải có sẵn cơ chế**, nếu không sau này thêm đa thiết bị sẽ phải viết lại toàn bộ tầng sync.
 
-### 9.4. Kéo thay đổi
+### 10.4. Kéo thay đổi
 
 ```http
 GET /v1/sync/pull?since=2026-11-13T04:00:00Z&limit=500
@@ -507,9 +630,9 @@ GET /v1/sync/pull?since=2026-11-13T04:00:00Z&limit=500
 
 ---
 
-## 10. AI (giai đoạn 2 — thiết kế sẵn để không phải sửa)
+## 11. AI (giai đoạn 2 — thiết kế sẵn để không phải sửa)
 
-### 10.1. Đọc hóa đơn
+### 11.1. Đọc hóa đơn
 
 ```http
 POST /v1/ai/ocr
@@ -538,7 +661,7 @@ Lý do: nếu OCR tự tạo giao dịch, một lần nhận diện sai sẽ là
 
 > **Giai đoạn sau MVP.** Nhóm chốt MVP chỉ nhập tay.
 
-### 10.2. Trợ lý hỏi đáp
+### 11.2. Trợ lý hỏi đáp
 
 ```http
 POST /v1/ai/chat
@@ -562,7 +685,7 @@ POST /v1/ai/chat
 
 **Điều bắt buộc:** `data_refs` cho biết câu trả lời dựa trên truy vấn nào. Có thể bấm vào để mở đúng màn hình. Không có cơ chế này thì người dùng không kiểm chứng được AI nói đúng hay sai — rủi ro không chấp nhận được với dữ liệu tiền.
 
-### 10.3. Hạn mức
+### 11.3. Hạn mức
 
 Mọi endpoint AI đều trả `quota` trong response. Khi vượt:
 
@@ -575,7 +698,7 @@ App hiển thị: *"Bạn đã dùng hết 10 lượt xem hóa đơn trong thán
 
 ---
 
-## 11. Job định kỳ (server)
+## 12. Job định kỳ (server)
 
 Đầy đủ **12 job** — lịch chạy, khoá idempotent, xử lý lỗi, giám sát — ở [07 — Công việc định kỳ](07-cron-jobs.md). Không lặp lại ở đây để tránh lệch.
 
@@ -594,7 +717,7 @@ Mọi job chạy trong **Worker NestJS + BullMQ**, không dùng `pg_cron`, khôn
 
 ---
 
-## 12. Giới hạn tải
+## 13. Giới hạn tải
 
 | Endpoint | Giới hạn | Cách tính |
 |---|---|---|
@@ -606,7 +729,7 @@ Mọi job chạy trong **Worker NestJS + BullMQ**, không dùng `pg_cron`, khôn
 
 ---
 
-## 13. Điểm cần bạn quyết
+## 14. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
 |---|---|---|---|

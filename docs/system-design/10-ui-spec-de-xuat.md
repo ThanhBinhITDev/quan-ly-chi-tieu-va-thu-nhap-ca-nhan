@@ -44,7 +44,7 @@ Quan trọng hơn: chỉ số mà app này muốn người dùng thấy là **"h
 
 **Đã chốt 2026-11-17:** làm theo bản nhóm — card xanh đậm, số dư to nhất, thu/chi ở hàng dưới. **Số dư không gắn ví thật ở giai đoạn đầu:** chỉ là tổng tính từ giao dịch nhập tay (Q1). Chỉ số "hôm nay được tiêu" vẫn giữ, nằm ngay dưới card, theo [04 mục 3](04-wireframes.md#3-màn-hình-1--trang-chủ).
 
-### 2.4 Thanh điều hướng: 4 tab hay 5 tab
+### 2.4 Thanh điều hướng: 4 tab (đã chốt)
 
 **Đã chốt 2026-11-17:** **4 tab** — Trang chủ, Giao dịch, Ngân sách, Thống kê. Tab Tài khoản chuyển thành icon ⚙ ở header Trang chủ ([04 mục 11](04-wireframes.md#11-điều-hướng)).
 
@@ -54,15 +54,15 @@ Tab Tài khoản chứa chính sách riêng tư, đăng xuất, cài đặt. V�
 
 ## 3. Tính năng mới chưa có trong thiết kế
 
-Ba thứ này **chưa có** trong schema, API, hay lộ trình. Không dựng được ngay.
+**Cập nhật 2026-11-17:** cả ba đã chốt làm.
 
-| Tính năng | Thiếu gì | Ước lượng |
-|---|---|---|
-| **Split Bill** (chia tiền nhóm trọ) | 3 bảng mới: nhóm, thành viên, khoản chia. API mới. Đồng bộ nhiều người dùng — khác hẳn mô hình local-first hiện tại | Lớn: 2–3 tuần, không thuộc MVP |
-| **Trợ lý "có nên mua món này"** | Chỉ là biến thể của AI hỏi đáp (AI-3), đã có trong lộ trình tuần 9. Không cần thiết kế mới | Nhỏ, dùng lại AI-3 |
-| **"Dự báo dùng được 20 ngày nữa"** | Công thức đã có: `daily_limit`. Chỉ là cách diễn đạt khác: `số_dư / daily_limit`. Chia cho 0 thì phải xử lý | Nhỏ, chỉ là hiển thị |
+| Tính năng | Trạng thái |
+|---|---|
+| **Split Bill** (chia tiền nhóm) | **Đã thiết kế (Q9).** 4 bảng ở [01 mục 9](01-database-schema.md#9-bảng-chia-tiền-nhóm-split-bill), endpoint ở [02 mục 8](02-api-contract.md#8-chia-tiền-nhóm-split-bill), màn ở [04 mục 12](04-wireframes.md#12-màn-hình--chia-tiền-nhóm-split-bill). Xếp tuần 5–6 lộ trình |
+| **Trợ lý "có nên mua món này"** | Là biến thể của AI hỏi đáp (AI-3), không cần thiết kế riêng |
+| **"Dự báo dùng được 20 ngày nữa"** | Đã có trong Trang chủ: "Còn dùng được 18 ngày", tính từ `daily_limit` |
 
-**Khuyến nghị:** Split Bill không làm ở MVP. Nó phá mô hình dữ liệu một người dùng và tốn 2–3 tuần.
+**Điểm phải nhớ khi làm Split Bill:** người trả chỉ ghi **phần của mình** vào sổ cá nhân, không ghi toàn bộ. Ghi toàn bộ thì ngân sách tháng sai. Chi tiết ở [01 mục 9.5](01-database-schema.md#95-quan-hệ-với-sổ-cá-nhân--điểm-dễ-sai-nhất).
 
 ---
 

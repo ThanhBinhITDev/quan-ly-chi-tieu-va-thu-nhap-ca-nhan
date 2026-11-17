@@ -290,6 +290,12 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 │  └───────────────────────────────┘  │
 │  Còn 1.150.000 · 18 ngày            │
 │                                     │
+│      ╭──────────────────╮           │
+│     ╱    ████ 61,7%      ╲          │  ← donut: phần đã dùng
+│    │    ░░░░░░░░░░░░      │         │     phần còn lại màu xám
+│     ╲                     ╱         │
+│      ╰───────────────────╯          │
+│                                     │
 ├─────────────────────────────────────┤
 │  THEO DANH MỤC                      │
 │                                     │
@@ -342,11 +348,62 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 
 ---
 
-## 6. Màn hình 4 — Báo cáo
+### Thẻ mẹo (gắn ngưỡng, không phải AI khen)
 
 ```
 ┌─────────────────────────────────────┐
-│  Báo cáo              [Tháng 11 ▾]  │
+│  💡 Đã dùng 61,7% ngân sách,        │
+│     còn 18 ngày. Mức hiện tại là    │
+│     ổn.                             │
+└─────────────────────────────────────┘
+```
+
+Câu sinh theo ngưỡng cố định, **không gọi AI**, để cùng số liệu thì luôn ra cùng câu:
+
+| Đã dùng | Câu |
+|---|---|
+| < 50% | "Đã dùng X%, còn N ngày. Còn nhiều dư địa." |
+| 50–80% | "Đã dùng X%, còn N ngày. Mức hiện tại là ổn." |
+| 80–100% | "Đã dùng X%, còn N ngày. Chậm lại một chút." |
+| > 100% | "Đã vượt X% ngân sách. Cắt khoản không cần thiết." |
+
+Lý do không dùng AI: câu khen "Bạn đang chi tiêu khá hợp lý!" phụ thuộc mô hình, cùng dữ liệu có thể ra câu khác nhau, và không kiểm chứng được. Ngưỡng thì test được.
+
+### Chế độ tiết kiệm
+
+Công tắc bật/tắt nằm ở cuối màn Ngân sách. **Định nghĩa cụ thể** (theo bản nhóm chốt, chi tiết hoá để code được):
+
+- Bật → **hạn mức ngày** giảm đi một khoản dự trữ, để người dùng giữ lại tiền cho mục tiêu.
+- Khoản dự trữ = `mục tiêu đang ưu tiên` ÷ số ngày còn lại trong tháng. Mục tiêu ưu tiên là mục tiêu chưa xong có `deadline` gần nhất (nếu không có deadline, lấy mục tiêu tạo trước).
+- Tắt → hạn mức ngày như bình thường.
+- Chỉ ảnh hưởng số "hôm nay được tiêu" trên Trang chủ. **Không** thay đổi ngân sách danh mục hay số liệu thống kê.
+
+Ví dụ: mục tiêu laptop 500.000đ, còn 200.000đ, còn 40 ngày → dự trữ 7.500đ/ngày. Hạn mức ngày 63.888đ thành 56.388đ.
+
+```
+┌─────────────────────────────────────┐
+│  CHẾ ĐỘ TIẾT KIỆM            [ ◯ ]  │
+│  Đang tắt                           │
+│                                     │
+│  Bật: giữ lại 7.500đ/ngày cho      │
+│  "Mua laptop" (còn 40 ngày)         │
+└─────────────────────────────────────┘
+```
+
+**Khi không có mục tiêu chưa xong:** công tắc bị khoá, hiện "Đặt mục tiêu để dùng chế độ này".
+
+---
+
+## 6. Màn hình 4 — Thống kê
+
+```
+┌─────────────────────────────────────┐
+│  Thống kê        [Tháng này ▾]      │
+├─────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐ │
+│  │ ↑ Tổng thu   │  │ ↓ Tổng chi   │ │
+│  │  3.000.000   │  │  1.850.000   │ │
+│  └──────────────┘  └──────────────┘ │
 ├─────────────────────────────────────┤
 │  CHI TIÊU THEO NGÀY                 │
 │                                     │
@@ -370,6 +427,20 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 │  🛍 Mua sắm   +85.000  (+40%)       │
 │                                     │
 ├─────────────────────────────────────┤
+│  CƠ CẤU CHI TIÊU                    │
+│                                     │
+│      ╭──────────────────╮           │
+│     ╱  ████ Ăn uống 53%  ╲          │
+│    │  ▓▓▓▓ Đi lại 17%    │          │
+│    │  ▒▒▒▒ Mua sắm 16%   │          │
+│     ╲ ░░░░ Khác 14%     ╱           │
+│      ╰──────────────────╯           │
+│                                     │
+├─────────────────────────────────────┤
+│  KHOẢN CHI LỚN NHẤT                 │
+│  🍜 Ăn uống                         │
+│  720.000 đ · 38,9% tổng chi         │
+├─────────────────────────────────────┤
 │  XẾP HẠNG DANH MỤC                  │
 │                                     │
 │  1. Ăn uống      980.000    53,0%   │
@@ -385,6 +456,8 @@ Không hiển thị `0 đ` — gây cảm giác sản phẩm hỏng.
 │     [ Nâng cấp Pro ]                │
 └─────────────────────────────────────┘
 ```
+
+**Thứ tự khối quan trọng:** tổng thu/chi trước (trả lời "tháng này thế nào"), rồi xu hướng ngày, rồi so sánh tháng trước, rồi cơ cấu tròn, rồi khoản chi lớn nhất, rồi xếp hạng. Người dùng đọc từ trên xuống và dừng ở đâu cũng đã có thông tin dùng được.
 
 **Khối bị khóa** hiển thị mờ + nút nâng cấp. Không ẩn hoàn toàn — để người dùng biết có gì đang chờ.
 
@@ -542,12 +615,15 @@ Khởi động (3 bước)
 Trang chủ ────┬──── Giao dịch ──── Sửa giao dịch
               ├──── Ngân sách ──── Đặt ngân sách ──── Mục tiêu
               ├──── Thống kê
+              ├──── Chia tiền nhóm ──── Chi tiết nhóm ──── Thêm chi phí
               └──── (⚙ ở header) ──── Tài khoản ──── Cài đặt con
                      ↑
        Nút + (từ mọi tab) → Modal thêm giao dịch → lưu → về tab cũ
 ```
 
 Thanh tab dưới: **4 mục** — Trang chủ, Giao dịch, Ngân sách, Thống kê. Nút `+` nổi chỉ ở tab Trang chủ và Giao dịch.
+
+**Chia tiền nhóm** mở từ mục "Chia tiền" trong tab Giao dịch hoặc nút `+` → "Chia chi phí". Không có tab riêng, để thanh dưới giữ 4 mục.
 
 **Vì sao 4 tab, không phải 5:** bản nhóm chốt 2026-11-17. Tab Tài khoản bỏ khỏi thanh dưới, chuyển thành icon ⚙ ở header Trang chủ. Lý do vẫn phải có đường vào Tài khoản: nó chứa chính sách riêng tư — Google Play bắt buộc phải truy cập được từ trong app.
 
@@ -557,7 +633,73 @@ Thanh tab dưới: **4 mục** — Trang chủ, Giao dịch, Ngân sách, Thốn
 
 ---
 
-## 12. Điểm cần bạn quyết
+## 12. Màn hình — Chia tiền nhóm (Split Bill)
+
+Mở từ tab Thêm (+) hoặc từ mục "Chia tiền" trong Giao dịch. Không có tab riêng, tránh thanh dưới thành 5 mục.
+
+**Danh sách nhóm:**
+
+```
+┌─────────────────────────────────────┐
+│  ←  Chia tiền                  ＋   │
+├─────────────────────────────────────┤
+│  Nhóm trọ 4 người             4 người│
+│  Bạn đang nhận 300.000              │
+│                                     │
+│  Nhóm đi chơi                3 người│
+│  Bạn đang nợ 50.000                 │
+│                                     │
+│  [ Vào nhóm bằng mã ]               │
+└─────────────────────────────────────┘
+```
+
+**Chi tiết nhóm:** một danh sách khoản chi, mỗi dòng có người trả và phần của mình. Nút "Thêm chi phí" ở cuối. Khối "Ai nợ ai" hiện ở đầu, bấm vào để đánh dấu đã trả.
+
+```
+┌─────────────────────────────────────┐
+│  ←  Nhóm trọ 4 người           ⋯   │
+├─────────────────────────────────────┤
+│  AI NỢ AI                           │
+│  Trần Văn A → Diệu     100.000  [Đã trả] │
+│  Lê Thị B   → Diệu     100.000  [Đã trả] │
+├─────────────────────────────────────┤
+│  Tiền điện tháng 11      400.000    │
+│  Diệu trả · chia đều 4 người        │
+│  Phần của bạn: 100.000              │
+│                                     │
+│  Tiền nước tháng 11      120.000    │
+│  Bạn trả · chia đều 4 người         │
+│  Phần của bạn: 30.000               │
+├─────────────────────────────────────┤
+│  [ + Thêm chi phí ]                 │
+└─────────────────────────────────────┘
+```
+
+**Quy tắc hiển thị, phải làm đúng:**
+- Dòng luôn ghi rõ **"Phần của bạn"**, không ghi tổng. Người xem phải biết mình chịu bao nhiêu.
+- Nếu bạn là người trả: hiện thêm "Bạn cần thu" = tổng − phần của bạn.
+- Số trong "Ai nợ ai" là gợi ý tối thiểu từ server, không tự tính ở app.
+
+**Thêm chi phí:** nhập số tiền, ghi chú, chọn người trả, chọn cách chia. Cách chia mặc định là **chia đều**; cho phép **chia theo số tiền cụ thể** cho từng người (phải cộng đúng bằng tổng, không đúng thì không cho lưu).
+
+**Khi không có mạng:** khoản chi nhóm **không** lưu offline như giao dịch cá nhân, vì người khác cần thấy ngay và số liệu phải khớp giữa các máy. Hiện thông báo "Cần mạng để chia tiền nhóm", không cho lưu nháp. Giao dịch cá nhân vẫn hoạt động offline bình thường.
+
+**Trạng thái trống:**
+
+```
+┌─────────────────────────────────────┐
+│     Chưa có nhóm nào                │
+│                                     │
+│   Tạo nhóm để chia tiền trọ,        │
+│   đi chơi, hoá đơn chung            │
+│                                     │
+│   [ Tạo nhóm ]  [ Vào bằng mã ]     │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 13. Điểm cần bạn quyết
 
 | # | Vấn đề | Đề xuất | Phương án khác |
 |---|---|---|---|

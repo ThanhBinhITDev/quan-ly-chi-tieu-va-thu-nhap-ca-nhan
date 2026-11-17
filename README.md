@@ -20,7 +20,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   ├── api/                        # NestJS: nhận request HTTP từ app
 │   └── worker/                     # NestJS: 12 job định kỳ + hàng đợi đồng bộ
 ├── infra/                          # Hạ tầng
-│   └── migrations/                 # SQL tạo 7 bảng (chưa có)
+│   └── migrations/                 # SQL tạo 11 bảng (chưa có)
 ├── docs/                           # Tài liệu
 │   ├── 01-tong-quan.md             # Định vị, vấn đề, giải pháp
 │   ├── 02-san-pham.md              # Tính năng, AI, giữ chân người dùng

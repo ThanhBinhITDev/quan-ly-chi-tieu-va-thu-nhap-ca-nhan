@@ -44,8 +44,9 @@ MVP chỉ nhập tay. Các mục sau để giai đoạn sau, chưa thiết kế:
 | Q6 | **Cron chạy trong worker NestJS + BullMQ, không dùng pg_cron hay Edge Functions** | 2026-11-16 | Có retry, có dead-letter, có log |
 | Q7 | Loại bỏ tính năng mục tiêu tiết kiệm | 2026-11-16 | Đã bị đảo bởi Q8 |
 | Q8 | **Mục tiêu tiết kiệm trở lại, nhập tay, không gắn ví** | 2026-11-17 | Bảng `goals` có `saved_amount` nhập tay; không khoá ngoại tới `wallets`; giai đoạn sau mới xét ví `savings` |
+| Q9 | **Chia tiền nhóm (Split Bill) vào MVP** | 2026-11-17 | Thêm 4 bảng; RLS theo thành viên nhóm; người trả chỉ ghi phần của mình vào sổ cá nhân |
 
-> Q2 cũ ("mục tiêu tiết kiệm tách khỏi ví") không còn hiệu lực vì tính năng đã bị loại bỏ.
+> Q2 cũ ("mục tiêu tiết kiệm tách khỏi ví") không còn hiệu lực: Q7 loại tính năng, rồi Q8 đưa trở lại nhưng **không gắn ví**. Trạng thái hiện tại do Q8 quyết.
 
 ### Vì sao mỗi nền chọn một công nghệ
 
@@ -126,7 +127,7 @@ graph TB
     end
 
     subgraph DATA["Lớp dữ liệu"]
-        PG["PostgreSQL 15<br/>7 bảng, RLS bật"]
+        PG["PostgreSQL 15<br/>11 bảng, RLS bật"]
         OBJ["Object Storage<br/>ảnh hoá đơn, signed URL"]
     end
 
@@ -199,7 +200,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 │   ├── api/                         # NestJS — HTTP, 9 module
 │   └── worker/                      # NestJS — 12 job cron + hàng đợi
 ├── infra/
-│   └── migrations/                  # SQL tạo 7 bảng
+│   └── migrations/                  # SQL tạo 11 bảng
 └── docs/                            # tài liệu, system-design/ là bộ kỹ thuật
 ```
 
@@ -368,6 +369,9 @@ erDiagram
     users ||--o{ budgets : "đặt"
     users ||--o{ recurring_rules : "tạo"
     users ||--o{ devices : "đăng ký"
+    users ||--o{ goals : "đặt mục tiêu"
+    users ||--o{ group_members : "tham gia"
+    users ||--o{ shared_expenses : "trả tiền"
 
     wallets ||--o{ transactions : "chứa"
     wallets ||--o{ transactions : "nhận chuyển"
@@ -436,6 +440,40 @@ erDiagram
         date next_run_on
         timestamptz last_run_at
     }
+    goals {
+        uuid id PK
+        uuid user_id FK
+        text name
+        bigint target_amount
+        bigint saved_amount
+        date deadline
+        bool is_completed
+    }
+    groups {
+        uuid id PK
+        text name
+        uuid owner_id FK
+        text invite_code
+    }
+    group_members {
+        uuid group_id FK
+        uuid user_id FK
+        text role
+        timestamptz left_at
+    }
+    shared_expenses {
+        uuid id PK
+        uuid group_id FK
+        uuid payer_id FK
+        bigint amount
+        date occurred_on
+    }
+    shared_shares {
+        uuid expense_id FK
+        uuid user_id FK
+        bigint share_amount
+        timestamptz settled_at
+    }
     devices {
         uuid id PK
         uuid user_id FK
@@ -447,7 +485,7 @@ erDiagram
 
 Chi tiết cột, kiểu, index, ràng buộc: xem [01-database-schema.md](01-database-schema.md).
 
-**Ghi chú ERD:** bảng `goals` đã bị loại bỏ. Bảng `transactions` có hai khoá ngoại tới `wallets` — `wallet_id` (ví nguồn) và `to_wallet_id` (chỉ dùng khi `type = 'transfer'`).
+**Ghi chú ERD:** bảng `goals` có lại từ Q8 (2026-11-17), nhập tay, không khoá ngoại tới `wallets`. Bốn bảng chia tiền (`groups`, `group_members`, `shared_expenses`, `shared_shares`) từ Q9. Bảng `transactions` có hai khoá ngoại tới `wallets` — `wallet_id` (ví nguồn) và `to_wallet_id` (chỉ dùng khi `type = 'transfer'`).
 
 ---
 

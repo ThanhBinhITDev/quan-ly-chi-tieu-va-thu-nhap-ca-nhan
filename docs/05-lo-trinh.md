@@ -24,14 +24,16 @@ Ba nền chạy song song. Tuần 1–2 cả ba cùng dựng khung; từ tuần 
 | 1 | `Core/`, SwiftData + seed, kiểm chứng hiệu năng query | `core/`, drift + seed | Dựng Next.js, landing tĩnh | Mở app thấy danh mục mặc định |
 | 2 | Onboarding + QuickEntry + Trang chủ | Onboarding + nhập nhanh + Trang chủ | Trang đăng ký, đăng nhập | Ghi được giao dịch (iOS + Android) |
 | 3 | `DailyLimitCalculator` + 40 test + **Widget** | `DailyLimitCalculator` + 40 test | Báo cáo tháng (chỉ đọc) | Chỉ số hôm nay đúng trên iOS và Android |
-| 4 | Ngân sách, danh sách, ví, sửa/xoá | Ngân sách, danh sách, ví | — | Dùng offline hoàn toàn |
-| 5 | Swift Charts: biểu đồ tròn + cột | fl_chart: biểu đồ tròn + cột | Biểu đồ trên web | Có biểu đồ ở cả ba nơi |
-| 6 | Auth + đồng bộ + **App Intents** | Auth + đồng bộ | Auth + đọc dữ liệu thật | Dữ liệu không mất khi đổi thiết bị |
+| 4 | Ngân sách, danh sách, ví, sửa/xoá, **mục tiêu tiết kiệm** | Ngân sách, danh sách, ví, **mục tiêu** | — | Dùng offline hoàn toàn |
+| 5 | Swift Charts: biểu đồ + **Chia tiền nhóm** (màn) | fl_chart + **Chia tiền nhóm** | Biểu đồ trên web | Có biểu đồ ở cả ba nơi |
+| 6 | Auth + đồng bộ + **App Intents** + **RLS chia tiền** | Auth + đồng bộ + RLS | Auth + đọc dữ liệu thật | Chia được hoá đơn 4 người, số liệu cá nhân vẫn đúng |
 | 7–8 | AI-1 + AI-2 + cổng hạn mức | AI-1 + AI-2 | — | Đọc được hoá đơn (giai đoạn sau MVP) |
 | 9 | Thông báo đẩy (APNs), cài đặt | Thông báo đẩy (FCM), cài đặt | — | Nhắc cuối ngày hoạt động |
 | 10 | Kiểm thử, sửa lỗi, TestFlight | Kiểm thử, sửa lỗi, closed testing | Kiểm thử, deploy | Bản nộp |
 
 **MVP xong ở tuần 6** (chỉ nhập tay; chưa có AI, chưa có thông báo, chưa có nhập tự động). Đây là mốc cần cho bản dự thi.
+
+**Lưu ý:** Chia tiền nhóm chen vào tuần 5–6 làm hai tuần này dày hơn trước. Nếu chậm, cắt Split Bill trước — nó không nằm trong ba thứ demo (mục 3).
 
 ---
 
@@ -52,6 +54,7 @@ Nếu không kịp, cắt theo đúng thứ tự này:
 | Thứ tự | Cắt gì | Vì sao cắt được |
 |---|---|---|
 | 1 | Ghi giao dịch + ví trên Web | Người dùng chính dùng điện thoại; giữ landing + đăng ký + báo cáo đọc |
+| 1b | **Chia tiền nhóm (Split Bill)** | Thêm 4 bảng + RLS nhiều người dùng; không nằm trong ba thứ demo cốt lõi |
 | 2 | Đồng bộ đa thiết bị (tuần 6) | Offline-first vẫn dùng được một máy |
 | 3 | Thông báo đẩy (tuần 9) | Không phải tính năng cốt lõi |
 | 4 | AI-3 hỏi đáp | AI-1 đọc hóa đơn đã đủ gây ấn tượng |
@@ -61,7 +64,7 @@ Nếu không kịp, cắt theo đúng thứ tự này:
 
 ## 5. Điểm chờ quyết
 
-Bốn điểm trong [system-design/00](system-design/00-architecture.md) mục 10 ảnh hưởng trực tiếp tới lộ trình:
+Bốn điểm trong [system-design/00](system-design/00-architecture.md) mục 12 ảnh hưởng trực tiếp tới lộ trình:
 
 | Mã | Câu hỏi | Ảnh hưởng |
 |---|---|---|
