@@ -1,0 +1,125 @@
+enum TransactionType { expense, income, transfer }
+
+enum DemoScenario { ready, empty, error, offline }
+
+enum SyncStatus { synced, syncing, offline }
+
+class CategoryItem {
+  const CategoryItem({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
+
+class TransactionItem {
+  const TransactionItem({
+    required this.id,
+    required this.amount,
+    required this.type,
+    required this.category,
+    required this.wallet,
+    required this.note,
+    required this.dayLabel,
+    this.pending = false,
+  });
+
+  final String id;
+  final int amount;
+  final TransactionType type;
+  final CategoryItem category;
+  final String wallet;
+  final String note;
+  final String dayLabel;
+  final bool pending;
+}
+
+class BudgetItem {
+  const BudgetItem({
+    required this.id,
+    required this.name,
+    required this.limit,
+    required this.spent,
+    required this.remaining,
+    required this.percent,
+    required this.periodLabel,
+  });
+
+  final String id;
+  final String name;
+  final int limit;
+  final int spent;
+  final int remaining;
+  final double percent;
+  final String periodLabel;
+}
+
+class MonthSummary {
+  const MonthSummary({
+    required this.income,
+    required this.expense,
+    required this.balance,
+    required this.dailyLimit,
+    required this.budgetAmount,
+    required this.daysLeft,
+    required this.spent,
+  });
+
+  final int income;
+  final int expense;
+  final int balance;
+  final int dailyLimit;
+  final int budgetAmount;
+  final int daysLeft;
+  final int spent;
+}
+
+class DashboardData {
+  const DashboardData({
+    required this.summary,
+    required this.budgets,
+    required this.recent,
+    required this.syncStatus,
+    this.isEmpty = false,
+  });
+
+  final MonthSummary summary;
+  final List<BudgetItem> budgets;
+  final List<TransactionItem> recent;
+  final SyncStatus syncStatus;
+  final bool isEmpty;
+}
+
+class CategoryTotal {
+  const CategoryTotal({
+    required this.name,
+    required this.amount,
+    required this.percent,
+  });
+
+  final String name;
+  final int amount;
+  final double percent;
+}
+
+class DayTotal {
+  const DayTotal({required this.label, required this.amount});
+
+  final String label;
+  final int amount;
+}
+
+class StatsData {
+  const StatsData({
+    required this.categories,
+    required this.daily,
+    required this.totalExpense,
+    required this.comparisonPercent,
+    this.isEmpty = false,
+  });
+
+  final List<CategoryTotal> categories;
+  final List<DayTotal> daily;
+  final int totalExpense;
+  final int comparisonPercent;
+  final bool isEmpty;
+}

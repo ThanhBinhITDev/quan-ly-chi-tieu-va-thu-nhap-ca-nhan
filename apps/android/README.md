@@ -26,3 +26,11 @@ Quy tắc giao diện bắt buộc xem tại [docs/system-design/11-android-ui-r
 Lý do: Web đã tách sang Next.js, chỉ còn Android dùng Dart, nên không còn gì để share.
 
 Tên app và applicationId **chưa chốt** — cần quyết trước khi đăng ký Google Play (25 USD).
+
+## Tiến độ UI hiện tại
+
+App đã thay counter mặc định bằng khung 4 tab: Trang chủ, Giao dịch, Ngân sách, Thống kê. Mỗi tab có trạng thái loading, empty và error có chữ. Dữ liệu đến từ `FakeFinanceRepository` qua Riverpod; công thức `dailyLimit` nằm ở `lib/domain/finance_calculator.dart`, UI không tự tính số tài chính.
+
+Menu “Trạng thái dữ liệu” trên thanh trên cùng cho phép chuyển giữa các kịch bản `Dữ liệu mẫu`, `Trống`, `Lỗi`, `Offline` để kiểm tra các trạng thái.
+
+Kotlin hiện chỉ có `MainActivity.kt` mở rộng `FlutterActivity`, dùng để khởi chạy Flutter; chưa có platform channel.

@@ -38,6 +38,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.6.0+eol
   dio: ^5.11.1
   fl_chart: ^1.3.1
+  material_ui: ^1.11.1
+  lucide_icons_flutter: ^4.0.3
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +64,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/brand/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
