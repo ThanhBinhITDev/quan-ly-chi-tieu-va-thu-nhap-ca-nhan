@@ -192,6 +192,16 @@ Additive only. Bảng mới, không sửa cột/bảng cũ, không `DROP`, khôn
 Chưa có yêu cầu phát hành. Áp lên Supabase `ebbqcnnwqeasozmcqigu` là thao
 tác riêng cần duyệt tường minh; file đã sẵn sàng.
 
+Chặn kỹ thuật ghi nhận ngày 2026-11-20 04:49 +07: MCP `supabase`
+(`project_ref=ebbqcnnwqeasozmcqigu`, transport streamable-http) có trong
+`mcp.servers` và `openclaw mcp doctor` báo `ok`, nhưng phiên này **không**
+thấy bộ công cụ Supabase; `openclaw mcp probe` và `openclaw mcp login` bị
+từ chối với lý do "requires exclusive offline state ownership" trong khi
+Gateway đang chạy. `~/.openclaw/credentials` cũng không có token OAuth nào
+cho MCP này, nên lần chạy trước chắc chắn dùng một kênh khác. Muốn áp: cấp
+lại kênh Supabase MCP (đăng nhập OAuth hoặc thêm access token) rồi làm 4
+bước dưới.
+
 ### Việc còn lại khi áp lên Supabase
 
 1. Xác minh project ref `ebbqcnnwqeasozmcqigu` bằng URL trả về từ MCP.
