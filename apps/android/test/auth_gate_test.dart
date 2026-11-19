@@ -1,6 +1,5 @@
 import 'package:android/core/session/auth_controller.dart';
 import 'package:android/data/session/session_store.dart';
-import 'package:android/providers.dart';
 import 'package:android/ui/auth/auth_gate.dart';
 import 'package:android/ui/strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +21,6 @@ Future<void> _pumpGate(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        demoModeProvider.overrideWith(() => _DemoModeOff()),
         authControllerProvider.overrideWith(_SignedOutController.new),
       ],
       // Tắt hiệu ứng nền: `AnimationController.repeat()` khiến
@@ -35,11 +33,6 @@ Future<void> _pumpGate(WidgetTester tester) async {
     ),
   );
   await tester.pumpAndSettle();
-}
-
-class _DemoModeOff extends DemoModeNotifier {
-  @override
-  bool build() => false;
 }
 
 void main() {

@@ -49,13 +49,9 @@ class AppConfig {
   /// Đăng nhập qua API dev thay vì Supabase.
   static bool get hasDevLogin => !hasSupabase && devLoginPassword.isNotEmpty;
 
-  /// Có ít nhất một đường đăng nhập. Không có thì app chỉ xem được bản demo.
+  /// Có ít nhất một đường đăng nhập. Không có thì app không dùng được: không
+  /// còn chế độ xem dữ liệu mẫu để rơi về.
   static bool get canSignIn => hasSupabase || hasDevLogin;
-
-  /// Chế độ dữ liệu mẫu: **mặc định tắt**. Chỉ bật khi dev chủ động truyền
-  /// `--dart-define=DEMO_MODE=true`, để bản chạy thật không bao giờ tự đổ dữ
-  /// liệu giả vào màn hình của người dùng.
-  static const bool demoMode = bool.fromEnvironment('DEMO_MODE');
 
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 20);

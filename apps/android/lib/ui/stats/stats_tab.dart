@@ -6,7 +6,6 @@ import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
-import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
 import 'package:android/ui/format.dart';
 import 'package:android/ui/stats/charts.dart';
@@ -37,7 +36,6 @@ class StatsTab extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabStats),
-        actions: const [ScenarioMenu()],
       ),
       body: async.when(
         loading: () => const LoadingView(),

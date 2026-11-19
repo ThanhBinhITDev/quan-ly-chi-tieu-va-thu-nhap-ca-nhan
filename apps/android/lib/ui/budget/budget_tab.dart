@@ -1,10 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
-import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
@@ -18,7 +16,6 @@ class BudgetTab extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabBudget),
-        actions: const [ScenarioMenu()],
       ),
       body: async.when(
         loading: () => const LoadingView(),
@@ -28,12 +25,10 @@ class BudgetTab extends ConsumerWidget {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return EmptyView(
-              message: AppStrings.emptyBudget,
-              actionLabel: AppStrings.createBudget,
-              onAction: () =>
-                  ref.read(scenarioProvider.notifier).select(DemoScenario.ready),
-            );
+            // Không còn chỗ "chuyển sang dữ liệu mẫu": ngân sách trống là
+            // trạng thái thật, và tạo ngân sách mới là việc người dùng làm
+            // ở màn ngân sách chứ không phải bấm nút đổi kịch bản.
+            return const EmptyView(message: AppStrings.emptyBudget);
           }
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(

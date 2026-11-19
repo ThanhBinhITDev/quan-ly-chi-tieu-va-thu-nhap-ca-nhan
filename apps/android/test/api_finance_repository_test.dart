@@ -6,9 +6,10 @@ import 'package:android/data/remote/api_client.dart';
 import 'package:android/data/remote/auth_api.dart';
 import 'package:android/data/remote/finance_api.dart';
 import 'package:android/data/session/session_store.dart';
-import 'package:android/domain/models.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'support/fake_backend.dart';
 
 /// Trả JSON cố định theo đường dẫn, không chạm mạng. Dùng để khoá lại việc
 /// ghép nhiều endpoint thành một `DashboardData` mà không cần API thật.
@@ -119,7 +120,7 @@ void main() {
       },
     });
 
-    final dashboard = await repo.getDashboard(DemoScenario.ready);
+    final dashboard = await repo.getDashboard();
 
     expect(dashboard.summary.balance, 330000);
     expect(dashboard.summary.balance, isNot(1150000));
@@ -211,9 +212,57 @@ void main() {
       ],
     });
 
-    final rows = await repo.getTransactions(DemoScenario.ready);
+    final rows = await repo.getTransactions();
 
     expect(rows.single.category.name, 'Ăn uống');
     expect(rows.single.wallet, 'Tiền mặt');
+  });
+
+  test('tạo, sửa rồi xoá ví đều đi qua API và cập nhật cache', () async {
+    // Màn "Ví của tôi" phụ thuộc đúng chuỗi này: id do client sinh, rev phải
+    // là rev + 1 khi sửa, và cache tên ví phải đổi theo để form nhập liệu
+    // không còn hiện tên cũ.
+    final backend = FakeBackend();
+    final store = MemorySessionStore();
+    final dio = Dio(BaseOptions(baseUrl: 'http://127.0.0.1:3000'))
+      ..httpClientAdapter = backend;
+    final repo = ApiFinanceRepository(
+      FinanceApi(
+        ApiClient(store: store, authApi: AuthApi(store: store), dio: dio),
+      ),
+    );
+
+    await repo.warmUp();
+    expect(repo.wallets, ['Tiền mặt']);
+
+    final created = await repo.createWallet(
+      name: 'Ví Momo',
+      type: 'ewallet',
+      initialBalance: 250000,
+    );
+    expect(created.name, 'Ví Momo');
+    expect(created.balance, 250000);
+    expect(repo.wallets, ['Tiền mặt', 'Ví Momo']);
+    expect(backend.calls, contains('POST /v1/wallets'));
+
+    final updated = await repo.updateWallet(
+      id: created.id,
+      rev: created.rev,
+      name: 'Ví Momo đổi tên',
+      initialBalance: 400000,
+    );
+    expect(updated.name, 'Ví Momo đổi tên');
+    // Sửa số dư ban đầu thì số dư hiện tại cũng phải nhích theo, nếu không
+    // trang chủ vẫn hiện số cũ.
+    expect(updated.initialBalance, 400000);
+    expect(updated.balance, 400000);
+    expect(repo.wallets, contains('Ví Momo đổi tên'));
+    // rev gửi lên phải là rev + 1 để server phát hiện xung đột hai máy.
+    expect(updated.rev, created.rev + 1);
+
+    await repo.deleteWallet(updated.id, rev: updated.rev + 1);
+    expect(repo.wallets, ['Tiền mặt']);
+    expect(backend.calls.where((c) => c.startsWith('DELETE /v1/wallets/')),
+        isNotEmpty);
   });
 }

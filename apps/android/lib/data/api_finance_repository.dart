@@ -27,6 +27,13 @@ class ApiFinanceRepository implements FinanceRepository {
   /// Tên các ví hiện có (dùng cho ô chọn ví trong form).
   List<String> get wallets => _walletCache.map((w) => w.name).toList();
 
+  /// Danh sách ví đầy đủ cho màn "Ví của tôi".
+  Future<List<WalletDto>> walletsDetailed() async {
+    final rows = await _api.wallets();
+    _walletCache = rows;
+    return rows;
+  }
+
   /// Nạp danh mục và ví một lần để các màn hình dùng lại.
   Future<void> warmUp() async {
     final results = await Future.wait([
@@ -52,8 +59,49 @@ class ApiFinanceRepository implements FinanceRepository {
     }
   }
 
+  /// Tạo ví mới với số dư ban đầu. Đây là đường duy nhất để "khai" số tiền
+  /// đang có, vì số dư hiện tại luôn tính từ mốc này cộng giao dịch.
+  Future<WalletDto> createWallet({
+    required String name,
+    required String type,
+    required int initialBalance,
+  }) async {
+    final created = await _api.createWallet({
+      'id': generateUuidV4(),
+      'name': name,
+      'type': type,
+      'initial_balance': initialBalance,
+    });
+    _walletCache = [..._walletCache, created];
+    return created;
+  }
+
+  /// Sửa tên hoặc số dư ban đầu. `rev` phải là rev hiện tại + 1, sai thì
+  /// server trả SYNC_CONFLICT — dùng để phát hiện hai máy sửa cùng lúc.
+  Future<WalletDto> updateWallet({
+    required String id,
+    required int rev,
+    String? name,
+    int? initialBalance,
+  }) async {
+    final updated = await _api.updateWallet(id, {
+      'rev': rev + 1,
+      'name': ?name,
+      'initial_balance': ?initialBalance,
+    });
+    _walletCache = _walletCache
+        .map((w) => w.id == updated.id ? updated : w)
+        .toList();
+    return updated;
+  }
+
+  Future<void> deleteWallet(String id, {int? rev}) async {
+    await _api.deleteWallet(id, rev: rev);
+    _walletCache = _walletCache.where((w) => w.id != id).toList();
+  }
+
   @override
-  Future<DashboardData> getDashboard(DemoScenario scenario) async {
+  Future<DashboardData> getDashboard() async {
     final month = _currentMonth();
     // "Giao dịch gần đây" cũng hiện tên danh mục, nên phải có cache trước khi
     // map; không có thì mọi dòng thành "Khác".
@@ -114,7 +162,7 @@ class ApiFinanceRepository implements FinanceRepository {
   }
 
   @override
-  Future<List<TransactionItem>> getTransactions(DemoScenario scenario) async {
+  Future<List<TransactionItem>> getTransactions() async {
     await _ensureCaches();
     final rows = await _api.transactions(limit: 100);
     return rows.map(_toTransactionItem).toList();
@@ -155,16 +203,13 @@ class ApiFinanceRepository implements FinanceRepository {
   }
 
   @override
-  Future<List<BudgetItem>> getBudgets(DemoScenario scenario) async {
+  Future<List<BudgetItem>> getBudgets() async {
     final rows = await _api.budgetProgress();
     return rows.map(_toBudgetItem).toList();
   }
 
   @override
-  Future<StatsData> getStats({
-    required String range,
-    required DemoScenario scenario,
-  }) async {
+  Future<StatsData> getStats({required String range}) async {
     final now = DateTime.now();
     // Chip "Tháng trước" phải thật sự đổi kỳ dữ liệu, không chỉ đổi nhãn.
     final anchor = range == 'previous'

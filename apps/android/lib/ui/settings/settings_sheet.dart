@@ -3,13 +3,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/core/session/auth_controller.dart';
-import 'package:android/providers.dart';
 import 'package:android/ui/legal/legal_documents.dart';
 import 'package:android/ui/legal/legal_screen.dart';
 import 'package:android/ui/profile/avatar_view.dart';
 import 'package:android/ui/profile/profile_screen.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
+import 'package:android/ui/wallets/wallets_screen.dart';
 
 /// Bảng cài đặt: ai đang đăng nhập, vào hồ sơ, xem điều khoản, đăng xuất.
 class SettingsSheet extends ConsumerWidget {
@@ -27,7 +27,6 @@ class SettingsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authControllerProvider).value;
-    final demo = ref.watch(demoModeProvider);
     final me = ref.watch(meProvider).value;
 
     return SafeArea(
@@ -118,6 +117,19 @@ class SettingsSheet extends ConsumerWidget {
               ),
 
             const SizedBox(height: AppSpace.md),
+            // Ví phải vào được từ đây chứ không chỉ từ gợi ý ở trang chủ:
+            // gợi ý đó biến mất ngay khi đã có ví, mà nhu cầu sửa số dư ban
+            // đầu thì vẫn còn.
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(LucideIcons.walletMinimal),
+              title: const Text(AppStrings.walletsTitle),
+              trailing: const Icon(LucideIcons.chevronRight, size: 18),
+              onTap: () {
+                Navigator.of(context).pop();
+                WalletsScreen.open(context);
+              },
+            ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(LucideIcons.scale),
@@ -140,23 +152,8 @@ class SettingsSheet extends ConsumerWidget {
               },
             ),
 
-            if (demo) ...[
-              const SizedBox(height: AppSpace.sm),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  ref.read(demoModeProvider.notifier).setDemo(false);
-                  if (context.mounted) Navigator.of(context).pop();
-                },
-                icon: const Icon(LucideIcons.logIn, size: 18),
-                label: const Text('Thoát chế độ xem mẫu'),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(48),
-                ),
-              ),
-            ],
-
             const SizedBox(height: AppSpace.md),
-            if (session != null && !demo)
+            if (session != null)
               OutlinedButton.icon(
                 onPressed: () async {
                   await ref.read(authControllerProvider.notifier).signOut();

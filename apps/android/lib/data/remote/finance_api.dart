@@ -81,6 +81,57 @@ class FinanceApi {
     return WalletDto.fromJson(json);
   }
 
+  /// Tạo ví. `id` do client sinh để gọi lại cùng id là idempotent (đồng bộ
+  /// offline gửi lại được mà không sinh ví trùng).
+  Future<WalletDto> createWallet(Map<String, dynamic> data) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/wallets',
+      data: data,
+    );
+    return WalletDto.fromJson(json);
+  }
+
+  /// Sửa ví. `data` phải có `rev` = rev hiện tại + 1.
+  Future<WalletDto> updateWallet(String id, Map<String, dynamic> data) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/wallets/$id',
+      data: data,
+    );
+    return WalletDto.fromJson(json);
+  }
+
+  /// Hộp thư thông báo, mới nhất trước.
+  Future<NotificationListDto> notifications({int limit = 30}) async {
+    final json = await _client.get<Map<String, dynamic>>(
+      '/v1/notifications?limit=$limit',
+    );
+    return NotificationListDto.fromJson(json);
+  }
+
+  /// Chỉ con số, nhẹ hơn tải cả hộp thư khi chỉ cần badge.
+  Future<int> unreadNotificationCount() async {
+    final json = await _client.get<Map<String, dynamic>>(
+      '/v1/notifications/unread-count',
+    );
+    return (json['unread_count'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Đánh dấu một tin đã đọc.
+  Future<NotificationDto> markNotificationRead(String id) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/notifications/$id/read',
+    );
+    return NotificationDto.fromJson(json);
+  }
+
+  /// Đánh dấu tất cả đã đọc. Trả số dòng vừa đổi.
+  Future<int> markAllNotificationsRead() async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/notifications/read-all',
+    );
+    return (json['updated'] as num?)?.toInt() ?? 0;
+  }
+
   Future<List<CategoryDto>> categories({bool includeDeleted = false}) async {
     final path = includeDeleted
         ? '/v1/categories?include_deleted=true'

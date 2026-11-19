@@ -6,7 +6,6 @@ import 'package:android/app.dart';
 import 'package:android/core/config/app_config.dart';
 import 'package:android/core/error/app_exception.dart';
 import 'package:android/core/session/auth_controller.dart';
-import 'package:android/providers.dart';
 import 'package:android/ui/auth/animated_background.dart';
 import 'package:android/ui/legal/consent_checkbox.dart';
 import 'package:android/ui/strings.dart';
@@ -18,10 +17,8 @@ class AuthGate extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Chưa cấu hình Supabase (hoặc người dùng chọn xem thử): vào thẳng app với
-    // dữ liệu mẫu để giao diện vẫn dùng được.
-    if (ref.watch(demoModeProvider)) return const AppShell();
-
+    // Chưa đăng nhập thì chỉ có form: không còn đường vòng vào app bằng dữ
+    // liệu mẫu. Dữ liệu luôn thuộc về tài khoản đang đăng nhập.
     final auth = ref.watch(authControllerProvider);
     return auth.when(
       loading: () => const _Splash(),
@@ -188,8 +185,6 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
                       _error = null;
                       _info = null;
                     }),
-                    onDemo: () =>
-                        ref.read(demoModeProvider.notifier).setDemo(true),
                   ),
                 ),
               ),
@@ -218,7 +213,6 @@ class _LoginCard extends StatelessWidget {
     required this.onConsentChanged,
     required this.onSubmit,
     required this.onToggleMode,
-    required this.onDemo,
     this.error,
     this.info,
   });
@@ -236,7 +230,6 @@ class _LoginCard extends StatelessWidget {
   final ValueChanged<bool> onConsentChanged;
   final VoidCallback onSubmit;
   final VoidCallback onToggleMode;
-  final VoidCallback onDemo;
   final String? error;
   final String? info;
 
@@ -406,29 +399,6 @@ class _LoginCard extends StatelessWidget {
                 ),
               ),
             ],
-
-            const SizedBox(height: AppSpace.sm),
-            Row(
-              children: [
-                const Expanded(child: Divider(color: AppColors.divider)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.md),
-                  child: Text(
-                    AppStrings.orDivider,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-                const Expanded(child: Divider(color: AppColors.divider)),
-              ],
-            ),
-            const SizedBox(height: AppSpace.sm),
-            TextButton(
-              onPressed: isLoading ? null : onDemo,
-              child: const Text(AppStrings.continueOffline),
-            ),
           ],
         ),
       ),

@@ -6,7 +6,6 @@ import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
-import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
 import 'package:android/ui/transactions/add_transaction_sheet.dart';
 import 'package:android/ui/strings.dart';
@@ -28,7 +27,6 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.tabTransactions),
-        actions: const [ScenarioMenu()],
       ),
       body: async.when(
         loading: () => const LoadingView(),
@@ -99,6 +97,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab-transactions',
         onPressed: () => showAddTransactionSheet(context),
         tooltip: AppStrings.addTransaction,
         icon: const Icon(LucideIcons.plus, size: 20),

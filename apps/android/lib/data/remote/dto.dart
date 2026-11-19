@@ -426,3 +426,50 @@ class MeDto {
         .toUpperCase();
   }
 }
+/// Một tin trong hộp thư thông báo.
+class NotificationDto {
+  const NotificationDto({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.body,
+    required this.createdAt,
+    this.readAt,
+  });
+
+  factory NotificationDto.fromJson(Map<String, dynamic> json) => NotificationDto(
+        id: json['id'] as String,
+        type: json['type'] as String? ?? 'system',
+        title: json['title'] as String? ?? '',
+        body: json['body'] as String? ?? '',
+        createdAt: _parseDate(json['created_at']) ?? DateTime.now(),
+        readAt: _parseDate(json['read_at']),
+      );
+
+  final String id;
+
+  /// 'budget_alert' | 'daily_reminder' | 'weekly_report' | 'monthly_report'
+  /// | 'winback' | 'system'
+  final String type;
+  final String title;
+  final String body;
+  final DateTime createdAt;
+  final DateTime? readAt;
+
+  bool get isUnread => readAt == null;
+}
+
+class NotificationListDto {
+  const NotificationListDto({required this.items, required this.unreadCount});
+
+  factory NotificationListDto.fromJson(Map<String, dynamic> json) =>
+      NotificationListDto(
+        items: (json['items'] as List<dynamic>? ?? const [])
+            .map((e) => NotificationDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
+      );
+
+  final List<NotificationDto> items;
+  final int unreadCount;
+}

@@ -1,7 +1,5 @@
 enum TransactionType { expense, income, transfer }
 
-enum DemoScenario { ready, empty, error, offline }
-
 enum SyncStatus { synced, syncing, offline }
 
 class CategoryItem {

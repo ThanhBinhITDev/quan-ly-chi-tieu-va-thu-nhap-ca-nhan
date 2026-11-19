@@ -6,6 +6,15 @@ class AppStrings {
   static const tabStats = 'Thống kê';
 
   static const scenarioLabel = 'Trạng thái dữ liệu';
+
+  /// Nhãn loại ví. Dùng chung cho màn Ví để danh sách và form không lệch chữ.
+  static String walletTypeLabelOf(String type) => switch (type) {
+        'cash' => walletTypeCash,
+        'ewallet' => walletTypeEwallet,
+        'bank' => walletTypeBank,
+        'credit' => walletTypeCredit,
+        _ => walletTypeCash,
+      };
   static const scenarioReady = 'Dữ liệu mẫu';
   static const scenarioEmpty = 'Trống';
   static const scenarioError = 'Lỗi';
@@ -17,7 +26,9 @@ class AppStrings {
   static const offlineBanner = 'Đang ngoại tuyến. Dữ liệu vẫn được lưu trên máy.';
   static const pending = 'Chờ đồng bộ';
 
-  static const homeGreeting = 'Chào bạn,';
+  static const homeGreeting = 'Xin chào,';
+  static const homeGreetingShort = 'Xin chào,';
+  static const homeGuestName = 'bạn';
   static const homeOverview = 'Tổng quan hôm nay';
   static const homeToday = 'Hôm nay';
   static const balance = 'Số dư hiện tại';
@@ -146,4 +157,59 @@ class AppStrings {
   static const pickFromCamera = 'Chụp ảnh mới';
   static const avatarTooLarge = 'Ảnh quá lớn, chọn ảnh dưới 5 MB.';
   static const memberSince = 'Thành viên từ';
+
+  // Ví của tôi
+  static const walletsTitle = 'Ví của tôi';
+  static const walletsOpen = 'Mở ví';
+  static const walletsTotal = 'Tổng số dư các ví';
+  static String walletsCount(int count) =>
+      count == 0 ? 'Chưa có ví' : '$count ví đang dùng';
+  static const walletsShareNote =
+      'Số dư của mỗi ví bằng số dư ban đầu cộng thu và trừ chi. Sửa số dư ban '
+      'đầu khi nhập nhầm, không phải khi muốn thêm tiền — khoản thêm nên ghi '
+      'thành giao dịch thu nhập để giữ đúng lịch sử.';
+  static const walletAdd = 'Thêm ví';
+  static const walletAddAction = 'Tạo ví';
+  static const walletEdit = 'Sửa ví';
+  static const walletSave = 'Lưu ví';
+  static const walletDelete = 'Xoá ví';
+  static const walletActions = 'Thao tác với ví';
+  static String walletDeleteConfirm(String name) =>
+      'Xoá ví "$name"? Giao dịch cũ vẫn được giữ, nhưng ví sẽ không còn trong '
+      'danh sách và không tính vào tổng số dư.';
+  static const walletDeleted = 'Đã xoá ví';
+  static const walletSaveFailed = 'Không lưu được ví.';
+  static const walletLimitReached =
+      'Gói miễn phí chỉ cho phép 3 ví đang dùng. Xoá bớt một ví rồi thêm lại.';
+  static const walletCurrent = 'hiện tại';
+  static String walletInitialShort(String amount) => 'ban đầu $amount';
+  static const walletEmptyTitle = 'Chưa có ví nào';
+  static const walletEmptyBody =
+      'Thêm ví đầu tiên kèm số tiền đang có để trang chủ hiện đúng số dư của bạn.';
+  static const walletNameLabel = 'Tên ví';
+  static const walletNameRequired = 'Nhập tên ví.';
+  static const walletNameTooLong = 'Tên ví tối đa 80 ký tự.';
+  static const walletTypeLabel = 'Loại ví';
+  static const walletTypeCash = 'Tiền mặt';
+  static const walletTypeEwallet = 'Ví điện tử';
+  static const walletTypeBank = 'Ngân hàng';
+  static const walletTypeCredit = 'Thẻ tín dụng';
+  static const walletBalanceLabel = 'Số dư ban đầu';
+  static const walletBalanceHint =
+      'Số tiền đang có trong ví lúc bắt đầu dùng ứng dụng.';
+  static const walletBalanceInvalid = 'Số dư phải là số không âm.';
+  static const noWalletTitle = 'Chưa có số dư';
+  static const noWalletBody =
+      'Thêm ví kèm số tiền đang có để biết mình còn bao nhiêu.';
+
+  // Thông báo
+  static const notifications = 'Thông báo';
+  static const notificationsUnread = 'tin chưa đọc';
+  static const notificationsEmptyTitle = 'Chưa có thông báo nào';
+  static const notificationsEmptyBody =
+      'Cảnh báo ngân sách và báo cáo tháng sẽ xuất hiện ở đây khi có số liệu.';
+  static const notificationJustNow = 'Vừa xong';
+  static String notificationMinutesAgo(int minutes) => '$minutes phút trước';
+  static String notificationHoursAgo(int hours) => '$hours giờ trước';
+  static String notificationDaysAgo(int days) => '$days ngày trước';
 }
