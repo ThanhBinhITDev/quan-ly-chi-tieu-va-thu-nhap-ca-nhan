@@ -60,12 +60,18 @@ chạy mỗi lần đăng nhập máy.
 ```
 DATABASE_URL=postgresql://thanhbinh@127.0.0.1:5432/student_finance
 DATABASE_SSL=false
-AUTH_ALLOW_UNVERIFIED=true
+SUPABASE_JWT_SECRET=dev-local-secret-chi-dung-o-may
 PORT=3000
+HOST=0.0.0.0
 ```
 
-`AUTH_ALLOW_UNVERIFIED=true` chỉ dùng ở local vì máy không có GoTrue phát
-JWT. Lên production phải đặt `SUPABASE_URL` để verify qua JWKS.
+Máy không có GoTrue phát JWT nên API tự xác thực bằng `SUPABASE_JWT_SECRET`
+(HS256): token phải được **ký đúng secret này** thì mới qua. Không còn cờ
+nào cho phép bỏ qua chữ ký. Lên production đặt `SUPABASE_URL` để verify qua
+JWKS và bỏ `SUPABASE_JWT_SECRET`.
+
+`HOST=0.0.0.0` để emulator Android gọi được qua `10.0.2.2`. Trên production
+để `127.0.0.1` và đặt sau reverse proxy.
 
 ## Kiểm tra nhanh
 

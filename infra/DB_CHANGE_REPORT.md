@@ -109,4 +109,44 @@ trùng bản Supabase đang chạy (17.12.0.000).
   PostgREST hoặc client Supabase JS.
 - Không có `storage`, `net`, `vault`, `realtime`. Migration hiện tại không
   dùng các schema này nên không ảnh hưởng.
-- Không có GoTrue phát JWT; API dev dùng `AUTH_ALLOW_UNVERIFIED=true`.
+- Không có GoTrue phát JWT; API dev tự xác thực bằng `SUPABASE_JWT_SECRET`
+  (HS256). Cờ `AUTH_ALLOW_UNVERIFIED` đã bị xoá khỏi code vì từng cho phép
+  token ký bằng secret bất kỳ đi qua.
+
+## 2026-11-20 — Hồ sơ người dùng: username + ảnh đại diện (chỉ local)
+
+**Không chạy SQL nào lên Supabase.** Project `ebbqcnnwqeasozmcqigu` trong
+suốt phiên này không được kết nối, chỉ đọc lại ghi chú cũ trong file này.
+
+### Đã làm
+
+- Thêm `infra/migrations/20261120020000_user_profile_username_avatar.sql`
+  và áp lên database local `student_finance` (PostgreSQL 17.12).
+- Thay đổi: 4 cột mới trên `users` (`username citext`, `avatar_mime text`,
+  `avatar_data bytea`, `avatar_updated_at timestamptz`), 4 CHECK
+  (`users_username_format`, `users_avatar_size`, `users_avatar_mime`,
+  `users_avatar_pair`) và 1 unique index bộ phận `users_username_active_key`.
+- Kiểm chứng lại bằng `\d users`: cột, index và cả 4 CHECK đều có mặt; dữ
+  liệu cũ không bị sửa (`username` để NULL).
+
+### Operation classification
+
+Additive only. Không `DROP`, `TRUNCATE`, `DELETE`, không rewrite migration
+đã áp, không đụng project Supabase nào.
+
+### Vì sao chưa áp lên Supabase
+
+Đây là thay đổi phục vụ màn hình hồ sơ trên nhánh `dev/android`, chưa có
+yêu cầu phát hành. Áp lên Supabase là thao tác riêng, cần duyệt tường minh;
+file migration đã sẵn sàng để áp khi được duyệt.
+
+### Việc còn lại khi áp lên Supabase
+
+1. Xác minh lại project ref `ebbqcnnwqeasozmcqigu` bằng URL trả về từ MCP
+   trước khi chạy bất kỳ DDL nào.
+2. Đọc schema live để chắc 4 cột/index/CHECK chưa tồn tại (migration đã có
+   `IF NOT EXISTS` / `DROP CONSTRAINT IF EXISTS` nên chạy lại an toàn, nhưng
+   vẫn phải kiểm trước theo quy tắc).
+3. Áp migration, rồi đọc lại `information_schema` + `pg_constraint` để đối
+   chiếu với local.
+4. Cập nhật mục này từ "chỉ local" thành "đã áp" kèm thời điểm.
