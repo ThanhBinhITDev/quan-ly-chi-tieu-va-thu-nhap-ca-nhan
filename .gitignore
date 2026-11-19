@@ -33,3 +33,6 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Keep the env template, ignore real env files
+!.env.example
