@@ -88,6 +88,39 @@ describe('WalletsService', () => {
     expect((error as ApiError).code).toBe('SYNC_CONFLICT');
   });
 
+  it('sửa số dư ban đầu: ghi vào initial_balance, không đụng số dư đã tính', async () => {
+    // Số dư hiện tại = initial_balance + giao dịch. Sửa mốc xuất phát là cách
+    // duy nhất để chỉnh số dư khi người dùng nhập sai lúc tạo ví.
+    const db = new FakeDatabase();
+    db.query = async <T,>(sql: string) => {
+      db.executed.push(sql);
+      if (sql.includes('UPDATE wallets')) return [] as T[];
+      if (sql.includes('FROM wallets w')) {
+        const updating = db.executed.some((s) => s.includes('UPDATE wallets'));
+        return [
+          walletRow(
+            updating
+              ? { rev: 2, initial_balance: '250000', balance: '250000' }
+              : { rev: 1 },
+          ),
+        ] as T[];
+      }
+      return [] as T[];
+    };
+    const service = new WalletsService(db);
+
+    const row = await service.update(USER, WALLET, {
+      initial_balance: 250000,
+      rev: 2,
+    });
+
+    expect(row.initial_balance).toBe(250000);
+    // Tên và trạng thái lưu trữ phải giữ nguyên khi chỉ sửa số dư.
+    expect(row.name).toBe('Tiền mặt');
+    const update = db.executed.find((sql) => sql.includes('UPDATE wallets'));
+    expect(update).toContain('initial_balance = COALESCE($7');
+  });
+
   it('xoá mềm ví: set deleted_at, tăng rev, trả bản ghi đã xoá', async () => {
     const deleted = walletRow({
       rev: 2,

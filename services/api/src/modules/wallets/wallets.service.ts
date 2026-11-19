@@ -183,6 +183,7 @@ export class WalletsService {
     await this.db.query(
       `UPDATE wallets
           SET name = COALESCE($3, name),
+              initial_balance = COALESCE($7, initial_balance),
               color = COALESCE($4, color),
               icon = COALESCE($5, icon),
               is_archived = COALESCE($6, is_archived),
@@ -195,6 +196,7 @@ export class WalletsService {
         dto.color ?? null,
         dto.icon ?? null,
         dto.is_archived ?? null,
+        dto.initial_balance ?? null,
       ],
     );
     const row = await this.findById(userId, walletId);
