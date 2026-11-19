@@ -198,9 +198,20 @@ Chặn kỹ thuật ghi nhận ngày 2026-11-20 04:49 +07: MCP `supabase`
 thấy bộ công cụ Supabase; `openclaw mcp probe` và `openclaw mcp login` bị
 từ chối với lý do "requires exclusive offline state ownership" trong khi
 Gateway đang chạy. `~/.openclaw/credentials` cũng không có token OAuth nào
-cho MCP này, nên lần chạy trước chắc chắn dùng một kênh khác. Muốn áp: cấp
-lại kênh Supabase MCP (đăng nhập OAuth hoặc thêm access token) rồi làm 4
-bước dưới.
+cho MCP này, nên lần chạy trước chắc chắn dùng một kênh khác.
+
+Bằng chứng đo được (2026-11-20 04:52 +07):
+
+```
+GET https://mcp.supabase.com/mcp?project_ref=ebbqcnnwqeasozmcqigu  → 401
+{"message":"No access token provided"}
+GET … (Authorization: Bearer sb_invalid)                          → 401
+{"message":"JWT could not be decoded"}
+```
+
+Endpoint sống và đúng project ref, chỉ thiếu token. Muốn áp: cấp lại kênh
+Supabase MCP (đăng nhập OAuth qua `openclaw mcp login supabase`, cần chạy
+khi Gateway nhả quyền state, hoặc đặt access token) rồi làm 4 bước dưới.
 
 ### Việc còn lại khi áp lên Supabase
 
