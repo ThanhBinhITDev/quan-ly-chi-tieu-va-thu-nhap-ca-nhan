@@ -13,6 +13,7 @@ import { DevModule } from './modules/dev/dev.module.js';
 import { DevicesModule } from './modules/devices/devices.module.js';
 import { GoalsModule } from './modules/goals/goals.module.js';
 import { GroupsModule } from './modules/groups/groups.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
 import { SyncModule } from './modules/sync/sync.module.js';
 import { TransactionsModule } from './modules/transactions/transactions.module.js';
@@ -42,6 +43,7 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     DevicesModule,
     GoalsModule,
     GroupsModule,
+    NotificationsModule,
     SyncModule,
     // Đăng nhập giả lập cho dev. Tự tắt khi NODE_ENV=production hoặc thiếu
     // DEV_LOGIN_PASSWORD — xem DevLoginService.assertEnabled.
