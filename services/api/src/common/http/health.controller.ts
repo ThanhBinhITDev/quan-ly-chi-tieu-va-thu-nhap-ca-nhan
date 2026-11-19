@@ -1,8 +1,10 @@
 import { Controller, Get, Inject } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 
 import { DATABASE, type Database } from '../db/database.js';
 
 @Controller()
+@SkipThrottle()
 export class HealthController {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 

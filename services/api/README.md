@@ -20,8 +20,8 @@ Biến môi trường bắt buộc: `DATABASE_URL`, `SUPABASE_URL`. Xem `.env.ex
 | Module (src/modules/) | Trách nhiệm | Trạng thái |
 |---|---|---|
 | `auth/` | Hồ sơ người dùng (`GET/PATCH /v1/me`) | Đã có. Đăng ký/đăng nhập dùng thẳng Supabase Auth, API chỉ xác thực JWT |
-| `wallets/` | CRUD ví (Q1: không lưu `balance`) | Đã có: GET, POST, PATCH |
-| `categories/` | Danh mục hệ thống + riêng, seed mặc định | Đã có: GET, POST, PATCH |
+| `wallets/` | CRUD ví (Q1: không lưu cột `balance`, luôn tính từ giao dịch) | Đã có: GET (kèm `balance`), GET `/summary`, POST, PATCH, DELETE (mềm) |
+| `categories/` | Danh mục hệ thống + riêng, seed mặc định | Đã có: GET, POST, PATCH, DELETE (mềm; chặn danh mục hệ thống) |
 | `transactions/` | CRUD giao dịch (Q3: mọi tổng chi có `AND type = 'expense'`) | Đã có: GET (cursor), POST, PATCH (kể cả xoá mềm) |
 | `budgets/` | Ngân sách + tiến độ | Đã có: GET, POST, PATCH, GET `/progress` |
 | `reports/` | Tổng hợp tháng, xu hướng | Đã có: GET `/month-summary` |

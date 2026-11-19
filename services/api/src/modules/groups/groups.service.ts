@@ -142,6 +142,10 @@ export class GroupsService {
         [group.id, userId],
       );
     } else {
+      // `group_members.user_id` có khoá ngoại tới `users(id)`. Người mới
+      // đăng ký qua Supabase Auth nhưng chưa gọi /v1/me thì chưa có dòng
+      // `users`, và INSERT sẽ vi phạm khoá ngoại (trước đây trả 500).
+      await this.ensureUserRow(userId);
       await this.db.query(
         `INSERT INTO group_members (group_id, user_id, role)
          VALUES ($1, $2, 'member')`,
@@ -347,6 +351,23 @@ export class GroupsService {
     }
 
     return this.balances(userId, groupId);
+  }
+
+  /**
+   * Tạo dòng `users` tối thiểu nếu chưa có, để các khoá ngoại tới `users(id)`
+   * không bị vi phạm. Dùng khi thao tác không đi qua /v1/me.
+   *
+   * `users_contact` bắt buộc có email hoặc phone; caller đã xác thực JWT nên
+   * id luôn tồn tại bên Supabase Auth. Nếu thiếu cả hai trường, dùng email
+   * dẫn xuất từ id để không chặn người dùng hợp lệ.
+   */
+  private async ensureUserRow(userId: string): Promise<void> {
+    await this.db.query(
+      `INSERT INTO users (id, email, display_name)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (id) DO NOTHING`,
+      [userId, `u-${userId}@studentfinance.local`, 'Người dùng'],
+    );
   }
 
   private async findById(

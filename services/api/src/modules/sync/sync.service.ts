@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 
+import { publicErrorDetail } from '../../common/config/env.js';
 import { DATABASE, type Database } from '../../common/db/database.js';
 import type { PullQuery, PushDto, SyncChangeDto } from './sync.dto.js';
 
@@ -16,6 +17,9 @@ export interface SyncConflict {
   status: 'conflict';
   server_rev: number;
   server_data: Record<string, unknown>;
+  /** 'ERROR' khi bản ghi không áp dụng được vì lỗi dữ liệu, không phải xung đột rev. */
+  reason?: 'ERROR';
+  message?: string;
 }
 
 export interface PushResult {
@@ -51,7 +55,10 @@ export class SyncService {
           applied.push(outcome);
         }
       } catch (error) {
-        // Một bản ghi lỗi không được làm hỏng cả lô.
+        // Một bản ghi lỗi không được làm hỏng cả lô. Trả `ERROR` kèm lý do
+        // để client biết đây là lỗi dữ liệu, không phải xung đột phiên bản
+        // (trước đây gộp chung vào `conflict` với server_rev: 0 nên client
+        // tưởng phải kéo dữ liệu về và thử lại vô ích).
         this.logger.warn(
           `Sync thất bại cho ${change.table}/${change.id}: ${
             error instanceof Error ? error.message : String(error)
@@ -63,6 +70,10 @@ export class SyncService {
           status: 'conflict',
           server_rev: 0,
           server_data: {},
+          reason: 'ERROR',
+          // Chi tiết lỗi DB chỉ trả ở môi trường phát triển: thông báo của
+          // Postgres lộ tên bảng, tên constraint và cấu trúc nội bộ.
+          message: publicErrorDetail(error),
         });
       }
     }

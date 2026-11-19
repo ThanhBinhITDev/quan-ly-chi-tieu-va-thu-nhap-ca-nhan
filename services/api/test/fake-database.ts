@@ -11,6 +11,12 @@ export interface FakeRow {
 export class FakeDatabase implements Database {
   private handlers: Array<(sql: string, params: unknown[]) => FakeRow[]> = [];
 
+  /** SQL của lần gọi gần nhất; dùng để khẳng định câu truy vấn có lọc đúng. */
+  lastSql = '';
+
+  /** Toàn bộ SQL đã chạy, theo thứ tự. */
+  readonly executed: string[] = [];
+
   on(matcher: RegExp | string, rows: FakeRow[] | ((params: unknown[]) => FakeRow[])) {
     const test =
       typeof matcher === 'string'
@@ -23,6 +29,8 @@ export class FakeDatabase implements Database {
   }
 
   async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+    this.lastSql = sql;
+    this.executed.push(sql);
     for (const handler of this.handlers) {
       const rows = handler(sql, params);
       if (rows.length > 0) return rows as T[];
