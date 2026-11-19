@@ -69,3 +69,44 @@ Required Supabase project ref: `ebbqcnnwqeasozmcqigu`
 ## Handoff notes
 
 Keep this report factual. Distinguish clearly between a migration file being written and SQL actually being applied to Supabase. Never include credentials or access tokens.
+
+## 2026-11-19 — Dựng Postgres local để dev
+
+**Không chạy SQL nào lên Supabase.** Project `ebbqcnnwqeasozmcqigu` trong
+suốt phiên này chỉ được đọc metadata (service versions), không có DDL/DML.
+
+### Đã làm trên máy
+
+- Cài `postgresql@17` 17.12.0 (Homebrew, keg-only), cluster mặc định
+  `/opt/homebrew/var/postgresql@17`.
+- Tạo database `student_finance`.
+- Chạy `infra/local/00-bootstrap.sql` — tạo schema `extensions`, schema
+  `auth`, role `authenticated`, hàm stub `auth.uid()` / `auth.jwt()`, đặt
+  `search_path` của database.
+- Áp hai migration hiện có lên database mới.
+
+### Vì sao cần bootstrap
+
+Migration `20261117122700` phụ thuộc `auth.uid()` (21 lần),
+`GRANT ... TO authenticated` (2), `CREATE EXTENSION citext WITH SCHEMA
+extensions` (1). Đó đều là hạ tầng Supabase dựng sẵn. Trên Postgres thuần
+phải tạo trước, nếu không migration dừng tại `CREATE POLICY` đầu tiên.
+
+**Hai file migration trong `infra/migrations/` không bị sửa một byte nào.**
+Bootstrap chỉ bù hạ tầng, nhờ vậy migration vẫn là nguồn sự thật duy nhất
+cho cả local và Supabase.
+
+### Kết quả
+
+Local: 12 bảng, 23 policy, 9 trigger, extension `citext` + `pgcrypto` —
+khớp schema đã áp trên Supabase. `select version()` trả PostgreSQL 17.12,
+trùng bản Supabase đang chạy (17.12.0.000).
+
+### Khác biệt so với Supabase
+
+- RLS ở local **không có hiệu lực** vì API kết nối bằng role owner; policy
+  chỉ là code chết. Trên Supabase, RLS có hiệu lực khi truy cập qua
+  PostgREST hoặc client Supabase JS.
+- Không có `storage`, `net`, `vault`, `realtime`. Migration hiện tại không
+  dùng các schema này nên không ảnh hưởng.
+- Không có GoTrue phát JWT; API dev dùng `AUTH_ALLOW_UNVERIFIED=true`.
