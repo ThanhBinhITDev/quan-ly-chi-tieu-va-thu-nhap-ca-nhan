@@ -1,5 +1,7 @@
 # apps/web — Web (Next.js)
 
+> Nhánh: `dev/web`. Phát triển vùng này thì đứng ở nhánh đó — xem [../../docs/BRANCHING.md](../../docs/BRANCHING.md).
+
 Chưa tạo project. Sẽ có ở tuần 1.
 
 | Việc | Giá trị |

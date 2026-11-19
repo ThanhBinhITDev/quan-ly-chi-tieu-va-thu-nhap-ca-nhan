@@ -1,5 +1,7 @@
 # services/worker — Worker NestJS (cron + queue)
 
+> Nhánh: `dev/worker`. Phát triển vùng này thì đứng ở nhánh đó — xem [../../docs/BRANCHING.md](../../docs/BRANCHING.md).
+
 Chưa tạo project. Sẽ có ở tuần 1, cùng API.
 
 | Việc | Công cụ |

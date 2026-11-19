@@ -1,5 +1,7 @@
 # apps/ios — iOS (SwiftUI native)
 
+> Nhánh: `dev/ios`. Phát triển vùng này thì đứng ở nhánh đó — xem [../../docs/BRANCHING.md](../../docs/BRANCHING.md).
+
 Chưa tạo project Xcode. Sẽ có ở tuần 1.
 
 | Việc | Giá trị |

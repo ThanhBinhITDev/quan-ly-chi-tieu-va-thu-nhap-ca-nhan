@@ -1,5 +1,7 @@
 # services/api — API NestJS
 
+> Nhánh: `dev/api`. Phát triển vùng này thì đứng ở nhánh đó — xem [../../docs/BRANCHING.md](../../docs/BRANCHING.md).
+
 Đã dựng project NestJS (ESM, TypeScript, vitest). Chạy local:
 
 ```bash

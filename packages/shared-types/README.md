@@ -1,5 +1,7 @@
 # packages/shared-types
 
+> Nhánh: `dev/shared-types`. Phát triển vùng này thì đứng ở nhánh đó — xem [../../docs/BRANCHING.md](../../docs/BRANCHING.md).
+
 `openapi.yaml` là nguồn sự thật duy nhất về hình dạng dữ liệu giữa ba client và backend.
 
 ```

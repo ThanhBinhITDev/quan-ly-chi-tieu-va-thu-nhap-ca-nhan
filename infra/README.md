@@ -1,5 +1,7 @@
 # infra/ — Hạ tầng
 
+> Nhánh: `dev/infra`. Phát triển vùng này thì đứng ở nhánh đó — xem [docs/BRANCHING.md](../docs/BRANCHING.md).
+
 | Thư mục | Chạy ở đâu | Ghi chú |
 |---|---|---|
 | `docker-compose.yml` (chưa tạo) | Máy dev | Postgres + Redis + API + worker |

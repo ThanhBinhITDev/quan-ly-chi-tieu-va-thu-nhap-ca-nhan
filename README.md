@@ -54,6 +54,7 @@ quan-ly-chi-tieu-va-thu-nhap-ca-nhan/
 | [docs/04-kinh-doanh.md](docs/04-kinh-doanh.md) | Gói giá, doanh thu thực nhận, chi phí |
 | [docs/05-lo-trinh.md](docs/05-lo-trinh.md) | Mốc thời gian, phạm vi MVP, thứ tự cắt |
 | [docs/system-design/00-architecture.md](docs/system-design/00-architecture.md) | Kiến trúc hệ thống đầy đủ — bắt đầu từ đây nếu là người kỹ thuật |
+| [docs/BRANCHING.md](docs/BRANCHING.md) | Quy trình nhánh: phát triển vùng nào thì đứng nhánh nào |
 
 ---
 
