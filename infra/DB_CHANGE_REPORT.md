@@ -150,3 +150,52 @@ file migration đã sẵn sàng để áp khi được duyệt.
 3. Áp migration, rồi đọc lại `information_schema` + `pg_constraint` để đối
    chiếu với local.
 4. Cập nhật mục này từ "chỉ local" thành "đã áp" kèm thời điểm.
+
+---
+
+## 2026-11-20 — Bảng `notifications`
+
+### Đã làm (local)
+
+- Thêm `infra/migrations/20261120030000_notifications.sql` và áp lên
+  database local `student_finance` (PostgreSQL 17.12), lúc 04:23 +07.
+- Tạo bảng `notifications` (8 cột) phục vụ hai việc: hộp thư trong app cho
+  icon chuông, và khoá chống gửi trùng cho các job đẩy tin.
+- Chỉ mục: `uq_notifications_dedupe` UNIQUE bộ phận trên
+  `(user_id, dedupe_key) WHERE dedupe_key IS NOT NULL`;
+  `idx_notifications_user_time` trên `(user_id, created_at DESC)`;
+  `idx_notifications_unread` trên `(user_id) WHERE read_at IS NULL`.
+- RLS bật, 2 policy: `p_notifications_read` (SELECT) và
+  `p_notifications_mark_read` (UPDATE), cả hai giới hạn `user_id = auth.uid()`.
+  Cố ý **không** có policy INSERT: thông báo do job phía server sinh ra, cho
+  client ghi là mở đường tự tạo tin giả.
+- Kiểm chứng bằng `\d notifications`: 8 cột, 3 chỉ mục, 2 policy, 1 CHECK
+  `type` và khoá ngoại `user_id → users` đều có mặt.
+
+### Kiểm chứng khoá chống trùng
+
+Chèn lại cùng `dedupe_key` cho cùng người dùng bị Postgres chặn đúng như
+thiết kế:
+
+```
+ERROR: duplicate key value violates unique constraint "uq_notifications_dedupe"
+DETAIL: Key (user_id, dedupe_key)=(5555..., budget:2026-11:total:90) already exists.
+```
+
+### Operation classification
+
+Additive only. Bảng mới, không sửa cột/bảng cũ, không `DROP`, không
+`TRUNCATE`, không rewrite migration đã áp.
+
+### Vì sao chưa áp lên Supabase
+
+Chưa có yêu cầu phát hành. Áp lên Supabase `ebbqcnnwqeasozmcqigu` là thao
+tác riêng cần duyệt tường minh; file đã sẵn sàng.
+
+### Việc còn lại khi áp lên Supabase
+
+1. Xác minh project ref `ebbqcnnwqeasozmcqigu` bằng URL trả về từ MCP.
+2. Đọc schema live xác nhận `public.notifications` chưa tồn tại.
+3. Áp migration, rồi đọc lại `information_schema.columns`,
+   `pg_indexes` và `pg_policies` để đối chiếu với local.
+4. Cập nhật mục này thành "đã áp" kèm thời điểm.
