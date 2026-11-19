@@ -8,6 +8,7 @@ import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
 import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/transactions/add_transaction_sheet.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
@@ -98,7 +99,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () => showAddTransactionSheet(context),
         tooltip: AppStrings.addTransaction,
         icon: const Icon(LucideIcons.plus, size: 20),
         label: const Text(AppStrings.addTransaction),

@@ -62,4 +62,14 @@ class AppStrings {
 
   static const settings = 'Cài đặt';
   static const unknown = 'Khác';
+
+  static const amountLabel = 'Số tiền';
+  static const categoryLabel = 'Danh mục';
+  static const walletLabel = 'Ví';
+  static const noteLabel = 'Ghi chú';
+  static const walletCash = 'Tiền mặt';
+  static const walletBank = 'Ngân hàng';
+  static const pickCategory = 'Chọn danh mục.';
+  static const save = 'Lưu giao dịch';
+  static const saveFailed = 'Không lưu được giao dịch. Vui lòng thử lại.';
 }

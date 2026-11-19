@@ -1,10 +1,17 @@
 import 'package:android/domain/finance_calculator.dart';
 import 'package:android/domain/models.dart';
+import 'package:android/domain/transaction_input.dart';
 
 abstract class FinanceRepository {
   Future<DashboardData> getDashboard(DemoScenario scenario);
 
   Future<List<TransactionItem>> getTransactions(DemoScenario scenario);
+
+  /// Ghi giao dịch xuống bộ nhớ cục bộ trước (offline-first).
+  /// Bản ghi mới được đánh dấu chờ đồng bộ cho tới khi server xác nhận.
+  Future<TransactionItem> addTransaction(NewTransaction input);
+
+  List<CategoryItem> get categories;
 
   Future<List<BudgetItem>> getBudgets(DemoScenario scenario);
 
@@ -18,6 +25,12 @@ class FakeFinanceRepository implements FinanceRepository {
   FakeFinanceRepository({this.instant = false});
 
   final bool instant;
+
+  final List<TransactionItem> _added = [];
+  int _nextId = 1;
+
+  @override
+  List<CategoryItem> get categories => _categories;
 
   final List<CategoryItem> _categories = const [
     CategoryItem(id: 'food', name: 'Ăn uống'),
@@ -88,7 +101,25 @@ class FakeFinanceRepository implements FinanceRepository {
   Future<List<TransactionItem>> getTransactions(DemoScenario scenario) async {
     await _delay();
     _checkError(scenario);
-    return scenario == DemoScenario.empty ? const [] : _transactions();
+    final base = scenario == DemoScenario.empty ? const <TransactionItem>[] : _transactions();
+    return [..._added.reversed, ...base];
+  }
+
+  @override
+  Future<TransactionItem> addTransaction(NewTransaction input) async {
+    await _delay();
+    final item = TransactionItem(
+      id: 'new-${_nextId++}',
+      amount: input.amount,
+      type: input.type,
+      category: input.category,
+      wallet: input.wallet,
+      note: input.note.isEmpty ? input.category.name : input.note,
+      dayLabel: 'Hôm nay',
+      pending: true,
+    );
+    _added.add(item);
+    return item;
   }
 
   @override
