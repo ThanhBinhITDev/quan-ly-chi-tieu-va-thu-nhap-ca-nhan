@@ -9,6 +9,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _DemoModeOn extends DemoModeNotifier {
+  @override
+  bool build() => true;
+}
+
 Future<void> _pump(WidgetTester tester) async {
   tester.view.physicalSize = const Size(360, 640);
   tester.view.devicePixelRatio = 1.0;
@@ -17,6 +22,7 @@ Future<void> _pump(WidgetTester tester) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        demoModeProvider.overrideWith(_DemoModeOn.new),
         financeRepositoryProvider.overrideWithValue(
           FakeFinanceRepository(instant: true),
         ),

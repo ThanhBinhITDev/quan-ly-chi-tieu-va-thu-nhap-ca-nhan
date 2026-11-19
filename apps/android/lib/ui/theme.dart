@@ -67,6 +67,15 @@ ThemeData buildAppTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    // Chuyển cảnh mượt cho mọi `Navigator.push` trong app (hồ sơ, điều khoản,
+    // cắt ảnh). Một chỗ khai báo, tất cả màn hình hưởng chung.
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: _FadeThroughTransitions(),
+        TargetPlatform.iOS: _FadeThroughTransitions(),
+        TargetPlatform.macOS: _FadeThroughTransitions(),
+      },
+    ),
     scaffoldBackgroundColor: AppColors.background,
     dividerColor: AppColors.divider,
     textTheme: const TextTheme(
@@ -150,4 +159,36 @@ ThemeData buildAppTheme() {
       shape: StadiumBorder(),
     ),
   );
+}
+
+/// Chuyển cảnh "fade through" kiểu Material 3: màn mới mờ dần và nhích lên
+/// nhẹ, màn cũ đứng yên. Nhẹ hơn `CupertinoPageTransitionsBuilder` và không
+/// gây cảm giác trượt ngang khi màn trước không có quan hệ ngang hàng.
+class _FadeThroughTransitions extends PageTransitionsBuilder {
+  const _FadeThroughTransitions();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
 }

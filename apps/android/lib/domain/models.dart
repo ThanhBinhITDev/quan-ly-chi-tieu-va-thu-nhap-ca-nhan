@@ -113,13 +113,21 @@ class StatsData {
     required this.categories,
     required this.daily,
     required this.totalExpense,
-    required this.comparisonPercent,
+    this.comparisonPercent,
+    this.previousExpense,
     this.isEmpty = false,
   });
 
   final List<CategoryTotal> categories;
   final List<DayTotal> daily;
   final int totalExpense;
-  final int comparisonPercent;
+
+  /// Mức tăng/giảm so với kỳ trước, tính theo %. `null` khi không có mốc
+  /// để so sánh (chưa chi gì ở kỳ trước) — khác hẳn với 0% (không đổi).
+  final int? comparisonPercent;
+
+  /// Chi tiêu kỳ trước, dùng cho phần chú thích dưới thẻ so sánh.
+  final int? previousExpense;
+
   final bool isEmpty;
 }

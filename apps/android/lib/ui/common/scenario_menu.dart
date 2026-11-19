@@ -15,6 +15,8 @@ class ScenarioMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Chỉ có ý nghĩa khi đang xem dữ liệu mẫu; chế độ mạng thì ẩn đi.
+    if (!ref.watch(demoModeProvider)) return const SizedBox.shrink();
     final current = ref.watch(scenarioProvider);
     return PopupMenuButton<DemoScenario>(
       tooltip: AppStrings.scenarioLabel,

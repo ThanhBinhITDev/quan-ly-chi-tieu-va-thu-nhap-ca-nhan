@@ -7,6 +7,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _DemoModeOn extends DemoModeNotifier {
+  @override
+  bool build() => true;
+}
+
 Future<void> _pump(
   WidgetTester tester, {
   Size size = const Size(360, 640),
@@ -18,6 +23,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        // Test này kiểm giao diện app, không kiểm luồng đăng nhập: bật chế độ
+        // xem thử để vào thẳng AppShell với dữ liệu giả.
+        demoModeProvider.overrideWith(_DemoModeOn.new),
         financeRepositoryProvider.overrideWithValue(
           FakeFinanceRepository(instant: true),
         ),

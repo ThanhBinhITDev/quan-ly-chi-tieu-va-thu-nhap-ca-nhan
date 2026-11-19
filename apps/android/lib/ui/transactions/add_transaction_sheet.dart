@@ -34,7 +34,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
   TransactionType _type = TransactionType.expense;
   CategoryItem? _category;
-  String _wallet = AppStrings.walletCash;
+  String? _wallet;
   bool _saving = false;
   String? _saveError;
 
@@ -54,6 +54,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     }
     final amount = parseAmount(_amountController.text);
     if (amount == null) return;
+    // Ô chọn ví mặc định lấy ví đầu tiên; chỉ báo lỗi khi thật sự không có ví.
+    final wallet = _wallet ??
+        ref.read(walletNamesProvider).value?.firstOrNull;
+    if (wallet == null) {
+      setState(() => _saveError = AppStrings.pickWallet);
+      return;
+    }
 
     setState(() {
       _saving = true;
@@ -65,7 +72,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               amount: amount,
               type: _type,
               category: category,
-              wallet: _wallet,
+              wallet: wallet,
               note: _noteController.text.trim(),
             ),
           );
@@ -84,7 +91,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.read(financeRepositoryProvider).categories;
+    final categories = ref.watch(categoriesProvider).value ?? const [];
+    final wallets = ref.watch(walletNamesProvider).value ?? const [];
+    final wallet = _wallet ?? (wallets.isEmpty ? null : wallets.first);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
@@ -150,23 +159,17 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               ),
               const SizedBox(height: AppSpace.md),
               DropdownButtonFormField<String>(
-                initialValue: _wallet,
+                initialValue: wallet,
                 decoration: const InputDecoration(
                   labelText: AppStrings.walletLabel,
                   border: OutlineInputBorder(),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AppStrings.walletCash,
-                    child: Text(AppStrings.walletCash),
-                  ),
-                  DropdownMenuItem(
-                    value: AppStrings.walletBank,
-                    child: Text(AppStrings.walletBank),
-                  ),
+                items: [
+                  for (final name in wallets)
+                    DropdownMenuItem(value: name, child: Text(name)),
                 ],
-                onChanged: (value) =>
-                    setState(() => _wallet = value ?? _wallet),
+                validator: (value) => value == null ? AppStrings.pickWallet : null,
+                onChanged: (value) => setState(() => _wallet = value),
               ),
               const SizedBox(height: AppSpace.md),
               TextFormField(

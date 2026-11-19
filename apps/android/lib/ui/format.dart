@@ -10,3 +10,25 @@ String formatMoney(int amount) {
 }
 
 String formatPercent(double value) => '${value.toStringAsFixed(1)}%';
+
+/// Số tiền rút gọn cho nhãn trục biểu đồ: `12 nghìn`, `1,5 triệu`.
+///
+/// Trục Y chỉ rộng ~44px nên `1.350.000 đ` sẽ bị cắt. Ngưỡng tính bằng nghìn
+/// vì người dùng Việt đọc tiền theo nghìn/triệu, không theo K/M.
+String formatMoneyShort(int amount) {
+  final abs = amount.abs();
+  final sign = amount < 0 ? '-' : '';
+  if (abs < 1000) return '$sign$abs';
+  if (abs < 1000000) {
+    final value = abs / 1000;
+    final text = value >= 100 || value == value.roundToDouble()
+        ? value.round().toString()
+        : value.toStringAsFixed(1).replaceAll('.', ',');
+    return '$sign$text nghìn';
+  }
+  final value = abs / 1000000;
+  final text = value >= 100 || value == value.roundToDouble()
+      ? value.round().toString()
+      : value.toStringAsFixed(1).replaceAll('.', ',');
+  return '$sign$text tr';
+}

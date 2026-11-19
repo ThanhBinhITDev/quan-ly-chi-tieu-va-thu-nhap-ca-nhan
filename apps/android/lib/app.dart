@@ -28,7 +28,29 @@ class _AppShellState extends ConsumerState<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _pages),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        // Chỉ mờ dần + nhích lên 8px: đủ để biết đã đổi tab, không gây
+        // cảm giác "nhảy" khi bấm qua lại liên tục.
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.012),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        // Key theo tab để AnimatedSwitcher biết nội dung đã đổi. IndexedStack
+        // vẫn giữ trạng thái cuộn của từng tab.
+        child: KeyedSubtree(
+          key: ValueKey(_selectedIndex),
+          child: IndexedStack(index: _selectedIndex, children: _pages),
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

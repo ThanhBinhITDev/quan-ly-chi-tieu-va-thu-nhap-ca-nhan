@@ -7,6 +7,9 @@ import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/profile/avatar_view.dart';
+import 'package:android/ui/profile/profile_screen.dart';
+import 'package:android/ui/settings/settings_sheet.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
@@ -106,9 +109,9 @@ class HomeTab extends ConsumerWidget {
   }
 }
 
-class _GreetingHeader extends StatelessWidget {
+class _GreetingHeader extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         Expanded(
@@ -127,10 +130,24 @@ class _GreetingHeader extends StatelessWidget {
             ],
           ),
         ),
+        // Ảnh hồ sơ thay cho icon cài đặt: một chạm là vào hồ sơ, và người
+        // dùng thấy ngay mình đang đăng nhập bằng tài khoản nào.
+        Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Semantics(
+            button: true,
+            label: AppStrings.profile,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+              onTap: () => ProfileScreen.open(context),
+              child: const AvatarCircle(size: 40),
+            ),
+          ),
+        ),
         IconButton.filledTonal(
           tooltip: AppStrings.settings,
           icon: const Icon(LucideIcons.settings2, size: 20),
-          onPressed: () {},
+          onPressed: () => SettingsSheet.show(context),
         ),
       ],
     );

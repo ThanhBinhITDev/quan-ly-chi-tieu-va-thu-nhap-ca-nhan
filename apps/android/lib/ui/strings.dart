@@ -42,6 +42,9 @@ class AppStrings {
   static const emptyTransactions = 'Chưa có giao dịch nào trong kỳ này.';
   static const emptyBudget = 'Chưa có ngân sách. Tạo ngân sách đầu tiên để biết hạn mức mỗi ngày.';
   static const emptyStats = 'Chưa đủ dữ liệu để thống kê. Hãy ghi vài giao dịch trước.';
+  static const emptyStatsPrevious =
+      'Tháng trước chưa có khoản chi nào được ghi lại.';
+  static const backToCurrentMonth = 'Xem tháng này';
   static const createBudget = 'Tạo ngân sách';
 
   static const filterAll = 'Tất cả';
@@ -54,6 +57,10 @@ class AppStrings {
   static const categories = 'Cơ cấu chi tiêu';
   static const dailyTrend = 'Chi tiêu theo ngày';
   static const comparePrevious = 'So với tháng trước';
+  static const compareNoBaseline = 'Chưa có mốc so sánh';
+  static const compareNoBaselineNote = 'Tháng trước chưa ghi khoản chi nào';
+  static const sameAsPrevious = 'Không đổi';
+  static String previousExpenseAmount(String amount) => 'Tháng trước: $amount';
   static const chartSummaryPrefix = 'Biểu đồ chi tiêu:';
 
   static const budgetPeriod = 'Kỳ áp dụng';
@@ -70,6 +77,73 @@ class AppStrings {
   static const walletCash = 'Tiền mặt';
   static const walletBank = 'Ngân hàng';
   static const pickCategory = 'Chọn danh mục.';
+  static const pickWallet = 'Chọn ví.';
   static const save = 'Lưu giao dịch';
   static const saveFailed = 'Không lưu được giao dịch. Vui lòng thử lại.';
+
+  // Đăng nhập / đăng ký
+  static const loginTitle = 'Đăng nhập';
+  static const loginSubtitle = 'Quản lý chi tiêu của bạn mọi lúc, mọi nơi.';
+  static const emailLabel = 'Email';
+  static const passwordLabel = 'Mật khẩu';
+  static const displayNameLabel = 'Tên hiển thị';
+  static const signInAction = 'Đăng nhập';
+  static const signUpAction = 'Tạo tài khoản';
+  static const switchToSignUp = 'Chưa có tài khoản? Đăng ký';
+  static const switchToSignIn = 'Đã có tài khoản? Đăng nhập';
+  static const signOutAction = 'Đăng xuất';
+  static const emailInvalid = 'Email không hợp lệ.';
+  static const passwordTooShort = 'Mật khẩu cần ít nhất 6 ký tự.';
+  static const nameRequired = 'Vui lòng nhập tên hiển thị.';
+  static const signUpNeedsConfirm =
+      'Đã tạo tài khoản. Kiểm tra email để xác nhận rồi đăng nhập.';
+  static const notConfiguredTitle = 'Chưa cấu hình máy chủ';
+  static const notConfiguredBody =
+      'Ứng dụng chưa có SUPABASE_URL và SUPABASE_ANON_KEY nên không thể đăng '
+      'nhập. Chạy lại với --dart-define để cấu hình.';
+  static const continueOffline = 'Xem dữ liệu mẫu';
+  static const orDivider = 'hoặc';
+  static const signUpSubtitle =
+      'Tạo tài khoản để bắt đầu ghi lại thu nhập và chi tiêu.';
+  static const signingIn = 'Đang đăng nhập...';
+
+  // Điều khoản pháp lý & đồng ý
+  static const consentPrefix = 'Tôi đã đọc và đồng ý với';
+  static const termsOfUse = 'Điều khoản sử dụng';
+  static const privacyPolicy = 'Chính sách quyền riêng tư';
+  static const consentAnd = 'và';
+  static const consentRequired =
+      'Bạn cần đọc và đồng ý với Điều khoản sử dụng và Chính sách quyền '
+      'riêng tư trước khi tiếp tục.';
+  static const consentDataNote =
+      'Việc đăng nhập đồng nghĩa bạn đồng ý để chúng tôi xử lý email, tên hiển '
+      'thị và dữ liệu chi tiêu bạn tự nhập, theo đúng Chính sách quyền riêng tư.';
+  static const legalUpdatedAt = 'Cập nhật lần cuối: 20/11/2026';
+  static const legalVersion = '1.0';
+  static const readLegal = 'Đọc điều khoản';
+  static const closeLabel = 'Đóng';
+  static const legalTabTerms = 'Điều khoản';
+  static const legalTabPrivacy = 'Quyền riêng tư';
+
+  // Hồ sơ người dùng
+  static const profile = 'Hồ sơ của bạn';
+  static const profileEdit = 'Sửa hồ sơ';
+  static const displayNameLabelShort = 'Tên hiển thị';
+  static const usernameLabel = 'Tên người dùng';
+  static const usernameHint = 'Chỉ chữ thường, số, dấu chấm và gạch dưới';
+  static const emailChange = 'Đổi email';
+  static const emailChangeNote =
+      'Email dùng để đăng nhập và nhận thông báo. Đổi email cần xác nhận lại.';
+  static const avatarChange = 'Đổi ảnh đại diện';
+  static const avatarHint = 'Ảnh vuông, tối thiểu 256×256, tối đa 5 MB';
+  static const saveProfile = 'Lưu thay đổi';
+  static const profileSaved = 'Đã lưu hồ sơ.';
+  static const cropTitle = 'Cắt ảnh đại diện';
+  static const cropHint = 'Kéo và thu phóng để chọn vùng ảnh';
+  static const cropApply = 'Dùng ảnh này';
+  static const cropCancel = 'Huỷ';
+  static const pickFromGallery = 'Chọn từ thư viện';
+  static const pickFromCamera = 'Chụp ảnh mới';
+  static const avatarTooLarge = 'Ảnh quá lớn, chọn ảnh dưới 5 MB.';
+  static const memberSince = 'Thành viên từ';
 }
