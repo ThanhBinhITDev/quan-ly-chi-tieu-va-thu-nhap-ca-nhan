@@ -74,6 +74,12 @@ final budgetProgressProvider = FutureProvider<List<BudgetProgressDto>>((ref) {
   return ref.watch(financeApiProvider).budgetProgress();
 });
 
+/// Ngân sách đang áp dụng, kèm `rev` để sửa. Khác [budgetProgressProvider]:
+/// provider kia chỉ có số đã tiêu, không có `rev` nên không PATCH được.
+final activeBudgetsProvider = FutureProvider<List<BudgetDto>>((ref) {
+  return ref.watch(financeApiProvider).budgets(active: true);
+});
+
 /// Mục tiêu tiết kiệm cho thẻ thử thách ở trang chủ.
 final goalsProvider = FutureProvider<List<GoalDto>>((ref) {
   return ref.watch(financeApiProvider).goals();

@@ -9,12 +9,12 @@ class AppStrings {
 
   /// Nhãn loại ví. Dùng chung cho màn Ví để danh sách và form không lệch chữ.
   static String walletTypeLabelOf(String type) => switch (type) {
-        'cash' => walletTypeCash,
-        'ewallet' => walletTypeEwallet,
-        'bank' => walletTypeBank,
-        'credit' => walletTypeCredit,
-        _ => walletTypeCash,
-      };
+    'cash' => walletTypeCash,
+    'ewallet' => walletTypeEwallet,
+    'bank' => walletTypeBank,
+    'credit' => walletTypeCredit,
+    _ => walletTypeCash,
+  };
   static const scenarioReady = 'Dữ liệu mẫu';
   static const scenarioEmpty = 'Trống';
   static const scenarioError = 'Lỗi';
@@ -23,7 +23,8 @@ class AppStrings {
   static const loading = 'Đang tải dữ liệu...';
   static const errorTitle = 'Không thể tải dữ liệu';
   static const retry = 'Thử lại';
-  static const offlineBanner = 'Đang ngoại tuyến. Dữ liệu vẫn được lưu trên máy.';
+  static const offlineBanner =
+      'Đang ngoại tuyến. Dữ liệu vẫn được lưu trên máy.';
   static const pending = 'Chờ đồng bộ';
 
   static const homeGreeting = 'Xin chào,';
@@ -77,12 +78,15 @@ class AppStrings {
   static const recordSaveExpense = 'Lưu khoản chi';
   static const recordSaveIncome = 'Lưu khoản thu';
   static const backLabel = 'Quay lại';
-  static const emptyHome = 'Chưa có dữ liệu chi tiêu. Hãy thêm khoản chi đầu tiên.';
+  static const emptyHome =
+      'Chưa có dữ liệu chi tiêu. Hãy thêm khoản chi đầu tiên.';
   static const emptyHomeAction = 'Tạo ngân sách';
 
   static const emptyTransactions = 'Chưa có giao dịch nào trong kỳ này.';
-  static const emptyBudget = 'Chưa có ngân sách. Tạo ngân sách đầu tiên để biết hạn mức mỗi ngày.';
-  static const emptyStats = 'Chưa đủ dữ liệu để thống kê. Hãy ghi vài giao dịch trước.';
+  static const emptyBudget =
+      'Chưa có ngân sách. Tạo ngân sách đầu tiên để biết hạn mức mỗi ngày.';
+  static const emptyStats =
+      'Chưa đủ dữ liệu để thống kê. Hãy ghi vài giao dịch trước.';
   static const emptyStatsPrevious =
       'Tháng trước chưa có khoản chi nào được ghi lại.';
   static const backToCurrentMonth = 'Xem tháng này';
@@ -127,6 +131,21 @@ class AppStrings {
       'dư này nên chuyển vào mục tiêu tiết kiệm.';
   static const budgetTipGood =
       'Bạn đang chi tiêu khá hợp lý! Hãy cố gắng giữ vững nhé.';
+  static const budgetEditTotal = 'Sửa hạn mức tháng';
+  static const budgetNew = 'Ngân sách mới';
+  static const budgetCreate = 'Tạo ngân sách';
+  static const budgetAddJar = 'Thêm hũ';
+  static const budgetAmountLabel = 'Hạn mức';
+  static const budgetUnassigned = 'Chưa chia';
+  static const budgetScopeTotalShort = 'Tổng';
+  static const budgetSave = 'Lưu hạn mức';
+  static const budgetAmountError = 'Nhập hạn mức lớn hơn 0.';
+  static const budgetScopeTotal = 'Tổng tất cả khoản chi';
+  static const budgetScopeLabel = 'Áp dụng cho';
+  static const budgetSaved = 'Đã lưu ngân sách.';
+  static const budgetExists =
+      'Đã có hạn mức cho mục này, sửa trực tiếp bên dưới.';
+  static const budgetJarHint = 'Chạm vào hũ để sửa hạn mức.';
   static const budgetRemaining = 'Còn lại';
   static const budgetUsed = 'Đã dùng';
 

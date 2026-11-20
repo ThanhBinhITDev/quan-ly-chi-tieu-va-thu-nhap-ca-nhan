@@ -32,11 +32,15 @@ class FakeBackend implements HttpClientAdapter {
     List<Map<String, dynamic>>? transactions,
     List<Map<String, dynamic>>? notifications,
     List<Map<String, dynamic>>? goals,
-  })  : wallets = wallets ?? [_defaultWallet()],
-        categories = categories ?? [_defaultCategory()],
-        transactions = transactions ?? [],
-        notifications = notifications ?? [],
-        goals = goals ?? [_defaultGoal()];
+    List<Map<String, dynamic>>? budgets,
+    Map<String, int>? expenseByCategory,
+  }) : wallets = wallets ?? [_defaultWallet()],
+       expenseByCategory = expenseByCategory ?? {},
+       budgets = budgets ?? [_defaultBudget(budgetTotal)],
+       categories = categories ?? [_defaultCategory()],
+       transactions = transactions ?? [],
+       notifications = notifications ?? [],
+       goals = goals ?? [_defaultGoal()];
 
   /// Mô phỏng mất mạng: mọi request ném lỗi kết nối.
   bool offline = false;
@@ -63,6 +67,9 @@ class FakeBackend implements HttpClientAdapter {
   /// Mục tiêu tiết kiệm trả cho thẻ thử thách ở trang chủ.
   final List<Map<String, dynamic>> goals;
 
+  /// Ngân sách đang áp dụng, trả cho `GET /v1/budgets?active=true`.
+  final List<Map<String, dynamic>> budgets;
+
   /// Nhật ký lời gọi, dạng `GET /v1/wallets`. Test dùng để khẳng định
   /// "đã gọi đúng endpoint" thay vì chỉ nhìn giao diện.
   final List<String> calls = [];
@@ -70,39 +77,64 @@ class FakeBackend implements HttpClientAdapter {
   /// Body của lần POST giao dịch gần nhất, để kiểm dữ liệu gửi lên.
   Map<String, dynamic>? lastTransactionBody;
 
+  /// Body của lần POST/PATCH ngân sách gần nhất.
+  Map<String, dynamic>? lastBudgetBody;
+
+  /// Chi tiêu theo danh mục để hũ danh mục có số riêng.
+  final Map<String, int> expenseByCategory;
+
+  Map<String, int> get _expenseByCategory => expenseByCategory;
+
+  String _categoryName(String? id) {
+    for (final category in categories) {
+      if (category['id'] == id) return category['name'] as String;
+    }
+    return 'Danh mục';
+  }
+
   /// Tham số `year`/`month` của mỗi lần gọi báo cáo tháng.
   final List<Map<String, int>> monthSummaryQueries = [];
 
   static Map<String, dynamic> _defaultWallet() => {
-        'id': '5a000000-0000-4000-8000-000000000001',
-        'name': 'Tiền mặt',
-        'type': 'cash',
-        'initial_balance': 800000,
-        'balance': 485000,
-        'rev': 1,
-        'is_archived': false,
-        'deleted_at': null,
-      };
+    'id': '5a000000-0000-4000-8000-000000000001',
+    'name': 'Tiền mặt',
+    'type': 'cash',
+    'initial_balance': 800000,
+    'balance': 485000,
+    'rev': 1,
+    'is_archived': false,
+    'deleted_at': null,
+  };
 
   static Map<String, dynamic> _defaultGoal() => {
-        'id': '5d000000-0000-4000-8000-000000000001',
-        'name': 'Mua laptop',
-        'target_amount': 500000,
-        'saved_amount': 150000,
-        'progress_pct': 30.0,
-        'is_completed': false,
-        'rev': 1,
-        'deadline': null,
-        'icon': 'trophy',
-      };
+    'id': '5d000000-0000-4000-8000-000000000001',
+    'name': 'Mua laptop',
+    'target_amount': 500000,
+    'saved_amount': 150000,
+    'progress_pct': 30.0,
+    'is_completed': false,
+    'rev': 1,
+    'deadline': null,
+    'icon': 'trophy',
+  };
+
+  static Map<String, dynamic> _defaultBudget(int amount) => {
+    'id': '5c000000-0000-4000-8000-000000000001',
+    'category_id': null,
+    'amount': amount,
+    'period': 'month',
+    'start_date': '2026-11-01',
+    'end_date': null,
+    'rev': 1,
+  };
 
   static Map<String, dynamic> _defaultCategory() => {
-        'id': '5b000000-0000-4000-8000-000000000001',
-        'name': 'Ăn uống',
-        'type': 'expense',
-        'is_system': false,
-        'rev': 1,
-      };
+    'id': '5b000000-0000-4000-8000-000000000001',
+    'name': 'Ăn uống',
+    'type': 'expense',
+    'is_system': false,
+    'rev': 1,
+  };
 
   @override
   Future<ResponseBody> fetch(
@@ -120,12 +152,9 @@ class FakeBackend implements HttpClientAdapter {
       );
     }
     if (failAll) {
-      return _json(
-        {
-          'error': {'code': 'INTERNAL', 'message': 'Máy chủ gặp sự cố.'},
-        },
-        status: failStatus,
-      );
+      return _json({
+        'error': {'code': 'INTERNAL', 'message': 'Máy chủ gặp sự cố.'},
+      }, status: failStatus);
     }
 
     switch (path) {
@@ -175,21 +204,42 @@ class FakeBackend implements HttpClientAdapter {
           'by_type': <String, int>{},
           'computed_at': _nowIso(),
         });
+      case '/v1/budgets':
+        if (options.method == 'POST') {
+          final body = (options.data as Map).cast<String, dynamic>();
+          lastBudgetBody = body;
+          final created = {...body, 'end_date': null, 'rev': 1};
+          budgets.add(created);
+          return _json(created);
+        }
+        return _json(budgets);
       case '/v1/budgets/progress':
+        // Sinh từ danh sách ngân sách, giống server: hũ danh mục chỉ tính chi
+        // của đúng danh mục đó, hũ "Tổng" tính toàn bộ chi trong tháng.
+        if (!hasBudget) return _json({'items': <Object>[]});
         return _json({
           'items': [
-            if (hasBudget)
-              {
-                'budget_id': '5c000000-0000-4000-8000-000000000001',
-                'name': 'Ngân sách tháng',
-                'amount': budgetTotal,
-                'spent': expense,
-                'remaining': remaining,
-                'used_pct': budgetTotal == 0 ? 0 : (expense / budgetTotal) * 100,
-                'status': 'ok',
-                'days_left': daysLeft,
-                'category_id': null,
-              },
+            for (final b in budgets)
+              () {
+                final isTotal = b['category_id'] == null;
+                final amount = (b['amount'] as num).toInt();
+                final spent = isTotal
+                    ? expense
+                    : _expenseByCategory[b['category_id']] ?? 0;
+                return {
+                  'budget_id': b['id'],
+                  'name': isTotal
+                      ? 'Ngân sách tháng'
+                      : _categoryName(b['category_id'] as String?),
+                  'amount': amount,
+                  'spent': spent,
+                  'remaining': amount - spent,
+                  'used_pct': amount == 0 ? 0.0 : spent / amount * 100,
+                  'status': 'ok',
+                  'days_left': daysLeft,
+                  'category_id': b['category_id'],
+                };
+              }(),
           ],
         });
       case '/v1/transactions':
@@ -225,13 +275,9 @@ class FakeBackend implements HttpClientAdapter {
           'daily_limit': dailyLimit,
           'budget': {
             'total': budgetTotal,
-            'used_pct':
-                budgetTotal == 0 ? 0.0 : (expense / budgetTotal) * 100,
+            'used_pct': budgetTotal == 0 ? 0.0 : (expense / budgetTotal) * 100,
           },
-          'previous': {
-            'expense': previousExpense,
-            'delta_pct': deltaPct,
-          },
+          'previous': {'expense': previousExpense, 'delta_pct': deltaPct},
           'by_category': [
             if (expense > 0)
               {
@@ -247,20 +293,19 @@ class FakeBackend implements HttpClientAdapter {
           'computed_at': _nowIso(),
         });
       case '/v1/goals':
-        return _json({
-          'items': goals,
-          'count': goals.length,
-        });
+        return _json({'items': goals, 'count': goals.length});
       case '/v1/notifications':
         return _json({
           'items': notifications,
-          'unread_count':
-              notifications.where((n) => n['read_at'] == null).length,
+          'unread_count': notifications
+              .where((n) => n['read_at'] == null)
+              .length,
         });
       case '/v1/notifications/unread-count':
         return _json({
-          'unread_count':
-              notifications.where((n) => n['read_at'] == null).length,
+          'unread_count': notifications
+              .where((n) => n['read_at'] == null)
+              .length,
         });
       case '/v1/notifications/read-all':
         var updated = 0;
@@ -274,7 +319,8 @@ class FakeBackend implements HttpClientAdapter {
     }
 
     // POST /v1/notifications/<id>/read
-    final readMatch = RegExp(r'^/v1/notifications/([^/]+)/read$').firstMatch(path);
+    final readMatch = RegExp(r'^/v1/notifications/([^/]+)/read$')
+        .firstMatch(path);
     if (readMatch != null) {
       final id = readMatch.group(1);
       final item = notifications.firstWhere(
@@ -282,15 +328,33 @@ class FakeBackend implements HttpClientAdapter {
         orElse: () => <String, dynamic>{},
       );
       if (item.isEmpty) {
-        return _json(
-          {
-            'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy.'},
-          },
-          status: 404,
-        );
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy.'},
+        }, status: 404);
       }
       item['read_at'] = _nowIso();
       return _json(item);
+    }
+
+    // PATCH /v1/budgets/<id>
+    final budgetMatch = RegExp(r'^/v1/budgets/([^/]+)$').firstMatch(path);
+    if (budgetMatch != null) {
+      final id = budgetMatch.group(1);
+      final index = budgets.indexWhere((b) => b['id'] == id);
+      if (index < 0) {
+        return _json({
+          'error': {
+            'code': 'NOT_FOUND',
+            'message': 'Không tìm thấy ngân sách.',
+          },
+        }, status: 404);
+      }
+      final body = (options.data as Map).cast<String, dynamic>();
+      lastBudgetBody = body;
+      final updated = {...budgets[index], ...body};
+      updated['rev'] = ((budgets[index]['rev'] as num).toInt()) + 1;
+      budgets[index] = updated;
+      return _json(updated);
     }
 
     // PATCH /v1/goals/<id>
@@ -299,19 +363,17 @@ class FakeBackend implements HttpClientAdapter {
       final id = goalMatch.group(1);
       final index = goals.indexWhere((g) => g['id'] == id);
       if (index < 0) {
-        return _json(
-          {
-            'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy mục tiêu.'},
-          },
-          status: 404,
-        );
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy mục tiêu.'},
+        }, status: 404);
       }
       final body = (options.data as Map).cast<String, dynamic>();
       final updated = {...goals[index], ...body};
       final target = (updated['target_amount'] as num).toInt();
       final saved = (updated['saved_amount'] as num).toInt();
-      updated['progress_pct'] =
-          target == 0 ? 0.0 : (saved / target * 100).clamp(0, 100).toDouble();
+      updated['progress_pct'] = target == 0
+          ? 0.0
+          : (saved / target * 100).clamp(0, 100).toDouble();
       updated['rev'] = ((goals[index]['rev'] as num).toInt()) + 1;
       goals[index] = updated;
       return _json(updated);
@@ -323,12 +385,9 @@ class FakeBackend implements HttpClientAdapter {
       final id = walletMatch.group(1);
       final index = wallets.indexWhere((w) => w['id'] == id);
       if (index < 0) {
-        return _json(
-          {
-            'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy ví.'},
-          },
-          status: 404,
-        );
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy ví.'},
+        }, status: 404);
       }
       if (options.method == 'DELETE') {
         final removed = wallets.removeAt(index);
@@ -340,18 +399,15 @@ class FakeBackend implements HttpClientAdapter {
       // API tính lại số dư theo số dư ban đầu mới, giao dịch giữ nguyên.
       final delta =
           ((body['initial_balance'] as num?)?.toInt() ?? 0) -
-              ((wallets[index]['initial_balance'] as num?)?.toInt() ?? 0);
+          ((wallets[index]['initial_balance'] as num?)?.toInt() ?? 0);
       updated['balance'] = ((wallets[index]['balance'] as num?) ?? 0) + delta;
       wallets[index] = updated;
       return _json(updated);
     }
 
-    return _json(
-      {
-        'error': {'code': 'NOT_FOUND', 'message': 'Không có endpoint $path.'},
-      },
-      status: 404,
-    );
+    return _json({
+      'error': {'code': 'NOT_FOUND', 'message': 'Không có endpoint $path.'},
+    }, status: 404);
   }
 
   @override
@@ -386,10 +442,10 @@ class FakeBackend implements HttpClientAdapter {
 class MemorySessionStore extends SessionStore {
   @override
   Future<AuthSession?> read() async => AuthSession(
-        accessToken: 'token-gia',
-        refreshToken: '',
-        expiresAt: DateTime.now().add(const Duration(hours: 1)),
-      );
+    accessToken: 'token-gia',
+    refreshToken: '',
+    expiresAt: DateTime.now().add(const Duration(hours: 1)),
+  );
 
   @override
   Future<void> write(AuthSession session) async {}
@@ -402,10 +458,10 @@ class MemorySessionStore extends SessionStore {
 class SignedInController extends AuthController {
   @override
   Future<AuthSession?> build() async => AuthSession(
-        accessToken: 'token-gia',
-        refreshToken: '',
-        expiresAt: DateTime.now().add(const Duration(hours: 1)),
-      );
+    accessToken: 'token-gia',
+    refreshToken: '',
+    expiresAt: DateTime.now().add(const Duration(hours: 1)),
+  );
 }
 
 /// App thật với API giả và phiên đăng nhập giả.
@@ -420,7 +476,11 @@ Widget testApp(FakeBackend backend) {
     overrides: [
       financeApiProvider.overrideWithValue(
         FinanceApi(
-          ApiClient(store: store, authApi: AuthApi(store: store), dio: dio),
+          ApiClient(
+            store: store,
+            authApi: AuthApi(store: store),
+            dio: dio,
+          ),
         ),
       ),
       authControllerProvider.overrideWith(SignedInController.new),

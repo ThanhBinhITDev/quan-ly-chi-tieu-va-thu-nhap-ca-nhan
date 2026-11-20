@@ -184,6 +184,25 @@ class FinanceApi {
         .toList();
   }
 
+  /// Tạo ngân sách. Mỗi cặp (category, period) chỉ có một ngân sách đang
+  /// áp dụng: đã có thì server trả `RULE_VIOLATION` và app phải PATCH.
+  Future<BudgetDto> createBudget(Map<String, dynamic> data) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/budgets',
+      data: data,
+    );
+    return BudgetDto.fromJson(json);
+  }
+
+  /// Sửa hạn mức. `data` phải có `rev` = rev hiện tại + 1.
+  Future<BudgetDto> updateBudget(String id, Map<String, dynamic> data) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/budgets/$id',
+      data: data,
+    );
+    return BudgetDto.fromJson(json);
+  }
+
   Future<List<BudgetProgressDto>> budgetProgress() async {
     final json = await _client.get<Map<String, dynamic>>('/v1/budgets/progress');
     final items = json['items'] as List<dynamic>;
