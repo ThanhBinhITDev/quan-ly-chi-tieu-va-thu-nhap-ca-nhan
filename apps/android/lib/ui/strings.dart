@@ -38,6 +38,24 @@ class AppStrings {
   static const predictionTitle = 'Bạn có thể sử dụng tiền trong khoảng';
   static const predictionDays = 'ngày nữa';
   static const budgetSection = 'Ngân sách tháng';
+  static const quickCategories = 'Ghi nhanh';
+  static const savingsChallenge = 'Thử thách tiết kiệm';
+  static const savingsEmpty = 'Đặt mục tiêu nhỏ đầu tiên để bắt đầu tiết kiệm.';
+  static const savingsCreate = 'Tạo mục tiêu';
+  static const savingsSaved = 'Đã để dành';
+  static const savingsTarget = 'Mục tiêu';
+  static const savingsDone = 'Đã hoàn thành';
+  static const savingsMissing = 'Còn thiếu';
+  static const savingsNewTitle = 'Mục tiêu mới';
+  static const savingsNameLabel = 'Tên mục tiêu';
+  static const savingsTargetLabel = 'Số tiền cần đạt';
+  static const savingsAddAmount = 'Thêm vào mục tiêu';
+  static const savingsAddConfirm = 'Thêm vào mục tiêu';
+  static const savingsAdded = 'Đã thêm vào mục tiêu';
+  static const savingsAmountLabel = 'Số tiền để dành thêm';
+  static const savingsNameError = 'Nhập tên mục tiêu.';
+  static const savingsTargetError = 'Nhập số tiền lớn hơn 0.';
+  static const savingsGoalDone = 'Mục tiêu này đã hoàn thành.';
   static const monthBudget = 'Ngân sách tháng 11';
   static const categoryFood = 'Ăn uống';
   static const categoryTravel = 'Đi lại';
@@ -47,6 +65,18 @@ class AppStrings {
       'Từ ngân sách đã đặt, đã chi trong tháng và số ngày còn lại (tính cả hôm nay).';
   static const recentTransactions = 'Giao dịch gần đây';
   static const addTransaction = 'Thêm giao dịch';
+  static const recordTitle = 'Ghi chép giao dịch';
+  static const recordExpense = 'Chi tiêu';
+  static const recordIncome = 'Thu nhập';
+  static const recordCategoryTitle = 'Chọn danh mục';
+  static const recordNoCategory = 'Chưa có danh mục nào để chọn.';
+  static const recordAmountHint = 'Nhập số tiền, không cần dấu chấm';
+  static const recordAmountError = 'Nhập số tiền lớn hơn 0.';
+  static const recordClearAmount = 'Xoá số tiền';
+  static const recordNoteHelper = 'Tối đa 120 ký tự';
+  static const recordSaveExpense = 'Lưu khoản chi';
+  static const recordSaveIncome = 'Lưu khoản thu';
+  static const backLabel = 'Quay lại';
   static const emptyHome = 'Chưa có dữ liệu chi tiêu. Hãy thêm khoản chi đầu tiên.';
   static const emptyHomeAction = 'Tạo ngân sách';
 
@@ -75,6 +105,28 @@ class AppStrings {
   static const chartSummaryPrefix = 'Biểu đồ chi tiêu:';
 
   static const budgetPeriod = 'Kỳ áp dụng';
+  static const budgetTotalMonth = 'Tổng ngân sách tháng';
+  static const budgetSpentLabel = 'Đã dùng';
+  static const budgetDayUnit = 'Ngày còn lại';
+  static String budgetDaysLeft(int days) => 'Còn $days ngày';
+  static const budgetAllocation = 'Phân bổ theo hũ';
+  static const budgetJars = 'Hũ chi tiêu';
+  static const budgetNothingSpent = 'Tháng này chưa có khoản chi nào trong hũ.';
+  static const budgetTipTitle = 'Mẹo nhỏ';
+  static const budgetTipOver =
+      'Bạn đã dùng hết hạn mức tháng. Những khoản phát sinh từ giờ nên ghi '
+      'riêng để tháng sau điều chỉnh lại hạn mức.';
+  static String budgetTipOneJar(String name) =>
+      'Hũ "$name" sắp chạm trần. Giảm khoản chi lớn nhất trong hũ này trước '
+      'khi chạm giới hạn.';
+  static const budgetTipWatch =
+      'Bạn đang dùng khá nhanh hạn mức tháng. Giữ nhịp chi hiện tại thì sẽ '
+      'hết trước cuối tháng.';
+  static const budgetTipAlmostDone =
+      'Tháng gần hết mà bạn vẫn còn nhiều hạn mức. Đừng tiêu cho đủ — phần '
+      'dư này nên chuyển vào mục tiêu tiết kiệm.';
+  static const budgetTipGood =
+      'Bạn đang chi tiêu khá hợp lý! Hãy cố gắng giữ vững nhé.';
   static const budgetRemaining = 'Còn lại';
   static const budgetUsed = 'Đã dùng';
 
@@ -133,6 +185,7 @@ class AppStrings {
   static const legalVersion = '1.0';
   static const readLegal = 'Đọc điều khoản';
   static const closeLabel = 'Đóng';
+  static const cancelLabel = 'Huỷ';
   static const legalTabTerms = 'Điều khoản';
   static const legalTabPrivacy = 'Quyền riêng tư';
 

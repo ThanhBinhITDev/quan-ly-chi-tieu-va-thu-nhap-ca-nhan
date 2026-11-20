@@ -68,6 +68,17 @@ final walletsProvider = FutureProvider<List<WalletDto>>((ref) {
   return ref.watch(financeApiProvider).wallets();
 });
 
+/// Tiến độ ngân sách theo từng hũ cho tab Ngân sách. Server đã tính sẵn
+/// `spent`, `remaining`, `used_pct` và `days_left` nên UI không tự suy ra.
+final budgetProgressProvider = FutureProvider<List<BudgetProgressDto>>((ref) {
+  return ref.watch(financeApiProvider).budgetProgress();
+});
+
+/// Mục tiêu tiết kiệm cho thẻ thử thách ở trang chủ.
+final goalsProvider = FutureProvider<List<GoalDto>>((ref) {
+  return ref.watch(financeApiProvider).goals();
+});
+
 /// Hộp thư thông báo, mới nhất trước.
 final notificationsProvider = FutureProvider<NotificationListDto>((ref) {
   return ref.watch(financeApiProvider).notifications();

@@ -473,3 +473,46 @@ class NotificationListDto {
   final List<NotificationDto> items;
   final int unreadCount;
 }
+
+/// `/v1/goals` — mục tiêu tiết kiệm (thử thách tiết kiệm ở trang chủ).
+class GoalDto {
+  const GoalDto({
+    required this.id,
+    required this.name,
+    required this.targetAmount,
+    required this.savedAmount,
+    required this.progressPct,
+    required this.isCompleted,
+    required this.rev,
+    this.deadline,
+    this.icon,
+  });
+
+  factory GoalDto.fromJson(Map<String, dynamic> json) => GoalDto(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        targetAmount: (json['target_amount'] as num).toInt(),
+        savedAmount: (json['saved_amount'] as num?)?.toInt() ?? 0,
+        progressPct: (json['progress_pct'] as num?)?.toDouble() ?? 0,
+        isCompleted: json['is_completed'] as bool? ?? false,
+        rev: (json['rev'] as num?)?.toInt() ?? 1,
+        deadline: json['deadline'] as String?,
+        icon: json['icon'] as String?,
+      );
+
+  final String id;
+  final String name;
+  final int targetAmount;
+  final int savedAmount;
+  final double progressPct;
+  final bool isCompleted;
+  final int rev;
+  final String? deadline;
+  final String? icon;
+
+  /// Số còn thiếu để đạt mục tiêu, không âm.
+  int get missing {
+    final left = targetAmount - savedAmount;
+    return left < 0 ? 0 : left;
+  }
+}

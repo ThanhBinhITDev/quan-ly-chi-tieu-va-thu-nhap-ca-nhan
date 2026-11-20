@@ -3,10 +3,17 @@ enum TransactionType { expense, income, transfer }
 enum SyncStatus { synced, syncing, offline }
 
 class CategoryItem {
-  const CategoryItem({required this.id, required this.name});
+  const CategoryItem({
+    required this.id,
+    required this.name,
+    this.type = 'expense',
+  });
 
   final String id;
   final String name;
+
+  /// 'expense' | 'income' — lưới danh mục lọc theo loại đang ghi.
+  final String type;
 }
 
 class TransactionItem {

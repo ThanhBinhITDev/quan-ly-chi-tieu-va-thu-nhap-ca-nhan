@@ -31,10 +31,12 @@ class FakeBackend implements HttpClientAdapter {
     List<Map<String, dynamic>>? categories,
     List<Map<String, dynamic>>? transactions,
     List<Map<String, dynamic>>? notifications,
+    List<Map<String, dynamic>>? goals,
   })  : wallets = wallets ?? [_defaultWallet()],
         categories = categories ?? [_defaultCategory()],
         transactions = transactions ?? [],
-        notifications = notifications ?? [];
+        notifications = notifications ?? [],
+        goals = goals ?? [_defaultGoal()];
 
   /// Mô phỏng mất mạng: mọi request ném lỗi kết nối.
   bool offline = false;
@@ -58,6 +60,9 @@ class FakeBackend implements HttpClientAdapter {
   final List<Map<String, dynamic>> transactions;
   final List<Map<String, dynamic>> notifications;
 
+  /// Mục tiêu tiết kiệm trả cho thẻ thử thách ở trang chủ.
+  final List<Map<String, dynamic>> goals;
+
   /// Nhật ký lời gọi, dạng `GET /v1/wallets`. Test dùng để khẳng định
   /// "đã gọi đúng endpoint" thay vì chỉ nhìn giao diện.
   final List<String> calls = [];
@@ -77,6 +82,18 @@ class FakeBackend implements HttpClientAdapter {
         'rev': 1,
         'is_archived': false,
         'deleted_at': null,
+      };
+
+  static Map<String, dynamic> _defaultGoal() => {
+        'id': '5d000000-0000-4000-8000-000000000001',
+        'name': 'Mua laptop',
+        'target_amount': 500000,
+        'saved_amount': 150000,
+        'progress_pct': 30.0,
+        'is_completed': false,
+        'rev': 1,
+        'deadline': null,
+        'icon': 'trophy',
       };
 
   static Map<String, dynamic> _defaultCategory() => {
@@ -229,6 +246,11 @@ class FakeBackend implements HttpClientAdapter {
           ],
           'computed_at': _nowIso(),
         });
+      case '/v1/goals':
+        return _json({
+          'items': goals,
+          'count': goals.length,
+        });
       case '/v1/notifications':
         return _json({
           'items': notifications,
@@ -269,6 +291,30 @@ class FakeBackend implements HttpClientAdapter {
       }
       item['read_at'] = _nowIso();
       return _json(item);
+    }
+
+    // PATCH /v1/goals/<id>
+    final goalMatch = RegExp(r'^/v1/goals/([^/]+)$').firstMatch(path);
+    if (goalMatch != null) {
+      final id = goalMatch.group(1);
+      final index = goals.indexWhere((g) => g['id'] == id);
+      if (index < 0) {
+        return _json(
+          {
+            'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy mục tiêu.'},
+          },
+          status: 404,
+        );
+      }
+      final body = (options.data as Map).cast<String, dynamic>();
+      final updated = {...goals[index], ...body};
+      final target = (updated['target_amount'] as num).toInt();
+      final saved = (updated['saved_amount'] as num).toInt();
+      updated['progress_pct'] =
+          target == 0 ? 0.0 : (saved / target * 100).clamp(0, 100).toDouble();
+      updated['rev'] = ((goals[index]['rev'] as num).toInt()) + 1;
+      goals[index] = updated;
+      return _json(updated);
     }
 
     // PATCH/DELETE /v1/wallets/<id>

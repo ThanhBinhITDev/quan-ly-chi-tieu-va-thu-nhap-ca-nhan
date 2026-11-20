@@ -42,7 +42,18 @@ void main() {
     expect(find.text(AppStrings.balance), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.drag(find.byType(ListView).first, const Offset(0, -600));
+    // Trang chủ dài hơn sau khi thêm hàng danh mục nhanh và thẻ thử thách,
+    // nên cuộn tới đúng mục thay vì cuộn một khoảng cố định.
+    await tester.scrollUntilVisible(
+      find.text(AppStrings.recentTransactions),
+      220,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView).first,
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.recentTransactions), findsOneWidget);
     expect(tester.takeException(), isNull);

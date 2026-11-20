@@ -192,6 +192,37 @@ class FinanceApi {
         .toList();
   }
 
+  /// Mục tiêu tiết kiệm, chưa hoàn thành trước.
+  Future<List<GoalDto>> goals() async {
+    final json = await _client.get<Map<String, dynamic>>('/v1/goals');
+    final items = json['items'] as List<dynamic>? ?? const [];
+    return items
+        .map((item) => GoalDto.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Tạo mục tiêu. `id` do client sinh để gọi lại cùng id là idempotent.
+  Future<GoalDto> createGoal(Map<String, dynamic> data) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/goals',
+      data: data,
+    );
+    return GoalDto.fromJson(json);
+  }
+
+  /// Cập nhật mục tiêu. `data` phải có `rev` = rev hiện tại + 1.
+  Future<GoalDto> updateGoal(String id, Map<String, dynamic> data) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/goals/$id',
+      data: data,
+    );
+    return GoalDto.fromJson(json);
+  }
+
+  Future<void> deleteGoal(String id) async {
+    await _client.delete<dynamic>('/v1/goals/$id');
+  }
+
   Future<MonthSummaryDto> monthSummary({
     required int year,
     required int month,

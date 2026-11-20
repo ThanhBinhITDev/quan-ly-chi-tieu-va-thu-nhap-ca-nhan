@@ -21,7 +21,7 @@ class ApiFinanceRepository implements FinanceRepository {
 
   @override
   List<CategoryItem> get categories => _categoryCache
-      .map((c) => CategoryItem(id: c.id, name: c.name))
+      .map((c) => CategoryItem(id: c.id, name: c.name, type: c.type))
       .toList();
 
   /// Tên các ví hiện có (dùng cho ô chọn ví trong form).

@@ -7,7 +7,7 @@ import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
 import 'package:android/ui/common/state_views.dart';
-import 'package:android/ui/transactions/add_transaction_sheet.dart';
+import 'package:android/ui/transactions/record_transaction_screen.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
@@ -46,7 +46,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
               AppSpace.lg,
               AppSpace.sm,
               AppSpace.lg,
-              AppSpace.xxl,
+              AppSpace.fabGutter,
             ),
             children: [
               SingleChildScrollView(
@@ -98,7 +98,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'fab-transactions',
-        onPressed: () => showAddTransactionSheet(context),
+        onPressed: () => openRecordTransaction(context),
         tooltip: AppStrings.addTransaction,
         icon: const Icon(LucideIcons.plus, size: 20),
         label: const Text(AppStrings.addTransaction),

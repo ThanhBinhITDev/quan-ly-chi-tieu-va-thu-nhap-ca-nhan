@@ -1,7 +1,6 @@
-import 'package:android/domain/models.dart';
 import 'package:android/domain/transaction_input.dart';
 import 'package:android/ui/strings.dart';
-import 'package:android/ui/transactions/add_transaction_sheet.dart';
+import 'package:android/ui/transactions/record_transaction_screen.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,6 +21,24 @@ Future<FakeBackend> _pump(WidgetTester tester) async {
 
 Future<void> _openSheet(WidgetTester tester) async {
   await tester.tap(find.byType(FloatingActionButton));
+  await tester.pumpAndSettle();
+}
+
+/// Màn ghi chép dài hơn bottom sheet cũ: nút lưu nằm dưới đáy 360x640.
+Future<void> _tapSave(WidgetTester tester) async {
+  final button = find.text(AppStrings.recordSaveExpense);
+  await tester.scrollUntilVisible(
+    button,
+    180,
+    scrollable: find
+        .descendant(
+          of: find.byType(RecordTransactionScreen),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(button);
   await tester.pumpAndSettle();
 }
 
@@ -47,11 +64,10 @@ void main() {
     final backend = await _pump(tester);
     await _openSheet(tester);
 
-    await tester.tap(find.text(AppStrings.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
-    expect(find.text('Nhập số tiền lớn hơn 0.'), findsOneWidget);
-    expect(find.byType(AddTransactionSheet), findsOneWidget);
+    expect(find.text(AppStrings.recordAmountError), findsOneWidget);
+    expect(find.byType(RecordTransactionScreen), findsOneWidget);
     // Chưa gửi gì lên server: kiểm cả việc không có request thừa.
     expect(
       backend.calls.where((c) => c.startsWith('POST /v1/transactions')),
@@ -63,16 +79,13 @@ void main() {
     final backend = await _pump(tester);
     await _openSheet(tester);
 
-    await tester.enterText(find.byType(TextFormField).first, '42000');
-    await tester.tap(find.byType(DropdownButtonFormField<CategoryItem>));
-    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '42000');
     await tester.tap(find.text('Ăn uống').last);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(AppStrings.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
-    expect(find.byType(AddTransactionSheet), findsNothing);
+    expect(find.byType(RecordTransactionScreen), findsNothing);
     expect(find.text('Ăn uống'), findsWidgets);
 
     // Ghi đúng số tiền và đúng ví lên API, không chỉ hiện trên màn hình.
@@ -100,13 +113,10 @@ void main() {
     await tester.pumpAndSettle();
     await _openSheet(tester);
 
-    await tester.enterText(find.byType(TextFormField).first, '42000');
-    await tester.tap(find.byType(DropdownButtonFormField<CategoryItem>));
-    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '42000');
     await tester.tap(find.text('Ăn uống').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text(AppStrings.save));
-    await tester.pumpAndSettle();
+    await _tapSave(tester);
 
     expect(find.text(AppStrings.pickWallet), findsWidgets);
     expect(backend.lastTransactionBody, isNull);

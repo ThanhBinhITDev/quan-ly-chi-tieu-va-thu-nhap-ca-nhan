@@ -6,13 +6,15 @@ import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/home/quick_category_strip.dart';
+import 'package:android/ui/home/savings_challenge_card.dart';
 import 'package:android/ui/notifications/notifications_screen.dart';
 import 'package:android/ui/profile/avatar_view.dart';
 import 'package:android/ui/profile/profile_screen.dart';
 import 'package:android/ui/settings/settings_sheet.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
-import 'package:android/ui/transactions/add_transaction_sheet.dart';
+import 'package:android/ui/transactions/record_transaction_screen.dart';
 import 'package:android/ui/wallets/wallets_screen.dart';
 
 class HomeTab extends ConsumerWidget {
@@ -46,7 +48,7 @@ class HomeTab extends ConsumerWidget {
                   AppSpace.lg,
                   AppSpace.md,
                   AppSpace.lg,
-                  AppSpace.xxl,
+                  AppSpace.fabGutter,
                 ),
                 children: [
                   const _HomeHeader(),
@@ -63,6 +65,8 @@ class HomeTab extends ConsumerWidget {
                     const SizedBox(height: AppSpace.md),
                     const _NoWalletHint(),
                   ],
+                  const SizedBox(height: AppSpace.lg),
+                  const QuickCategoryStrip(),
                   const SizedBox(height: AppSpace.md),
                   if (hasAnything) PredictionCard(summary: summary),
                   if (hasAnything) ...[
@@ -76,6 +80,8 @@ class HomeTab extends ConsumerWidget {
                         icon: LucideIcons.target,
                         text: AppStrings.emptyBudget,
                       ),
+                    const SizedBox(height: AppSpace.xl),
+                    const SavingsChallengeCard(),
                     const SizedBox(height: AppSpace.xl),
                     _SectionTitle(title: AppStrings.recentTransactions),
                     const SizedBox(height: AppSpace.sm),
@@ -333,7 +339,7 @@ class _HomeFab extends StatelessWidget {
       // Mỗi tab giữ một FAB trong IndexedStack; trùng heroTag thì mọi lần
       // đẩy route mới đều văng "multiple heroes share the same tag".
       heroTag: 'fab-home',
-      onPressed: () => showAddTransactionSheet(context),
+      onPressed: () => openRecordTransaction(context),
       icon: const Icon(LucideIcons.plus, size: 20),
       label: const Text(AppStrings.addTransaction),
     );
