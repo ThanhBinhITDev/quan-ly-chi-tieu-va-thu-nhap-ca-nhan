@@ -241,9 +241,27 @@ Tham số `occurred_at=lt.<mốc>` là cursor: lấy 50 bản ghi trước mốc
 [
   { "id": "t1...", "wallet_id": "w1...", "category_id": "cat_food",
     "type": "expense", "amount": 35000, "note": "Cơm trưa",
-    "occurred_at": "2026-11-13T04:30:00Z", "source": "manual" }
+    "occurred_at": "2026-11-13T04:30:00Z", "occurred_on": "2026-11-13",
+    "source": "manual", "payment_method": "cash", "income_source": null,
+    "receipt_mime": null, "has_receipt": false, "receipt_base64": null,
+    "rev": 1 }
 ]
 ```
+
+Danh sách **không** trả bytes ảnh: chỉ `has_receipt` (và `receipt_mime`). 50 dòng
+kèm ảnh 512KB sẽ thành ~25MB mỗi lần mở tab Giao dịch. Ảnh lấy ở mục 5.2b khi
+người dùng mở chi tiết.
+
+### 5.2b. Chi tiết một giao dịch
+
+```http
+GET /v1/transactions/<tx_id>
+```
+
+**Trả về 200:** đúng bản ghi đó, kèm `receipt_base64` (base64 của ảnh, `null` nếu
+không có) và `has_receipt`. Đây là endpoint duy nhất trả bytes ảnh.
+
+**Mã lỗi:** `NOT_FOUND` khi id không tồn tại hoặc thuộc user khác.
 
 ### 5.2. Tạo giao dịch
 
@@ -260,13 +278,21 @@ POST /v1/transactions
   "amount": 35000,
   "note": "Cơm trưa",
   "occurred_at": "2026-11-13T04:30:00Z",
-  "source": "manual"
+  "source": "manual",
+  "payment_method": "cash",
+  "income_source": null,
+  "receipt_base64": null,
+  "receipt_mime": null
 }
 ```
 
-`occurred_on` không gửi lên — là generated column, server tự tính theo giờ VN.
+`occurred_on` không gửi lên — trigger DB tính theo giờ VN. `payment_method`: `cash|bank_transfer|card|ewallet|other`. `income_source` dùng cho thu nhập. Hóa đơn gửi `receipt_base64` + `receipt_mime` (`image/jpeg|png|webp`, <=512KB; server kiểm chữ ký tệp nên ảnh giả bị `RULE_VIOLATION`, và `receipt_mime` phải khớp ảnh thật); response trả `receipt_base64/receipt_mime/has_receipt`.
 
-**Trả về 201:** bản ghi đầy đủ kèm `occurred_on`, `rev`, `created_at`.
+`remove_receipt` chỉ có ở PATCH, gửi lúc tạo là `VALIDATION_FAILED`.
+
+Body JSON được nhận tới **2MB** (base64 phình ~33% so với 512KB nhị phân).
+
+**Trả về 201:** bản ghi đầy đủ kèm `occurred_on`, `rev`, `created_at`, `payment_method`, `income_source`, `receipt_base64`, `receipt_mime`.
 
 **Mã lỗi đặc thù:**
 
@@ -279,8 +305,28 @@ POST /v1/transactions
 
 ```http
 PATCH /v1/transactions/<tx_id>
-{ "amount": 40000, "rev": 2 }
+{
+  "wallet_id": "w2...",
+  "type": "expense",
+  "amount": 40000,
+  "payment_method": "bank_transfer",
+  "income_source": "Học bổng",
+  "receipt_base64": "...",
+  "receipt_mime": "image/jpeg",
+  "remove_receipt": false,
+  "rev": 2
+}
 ```
+
+`remove_receipt=true` xóa hóa đơn (không gửi cùng receipt mới).
+
+Sửa được cả `wallet_id`, `type`, `to_wallet_id`: ghi nhầm ví hoặc ghi Chi tiêu
+thành Thu nhập là chuyện có thật, bắt xóa rồi tạo lại sẽ mất `created_at`.
+`wallet_id`/`to_wallet_id` được kiểm quyền sở hữu như lúc tạo; đổi `type` khỏi
+`transfer` thì `to_wallet_id` tự về `null`.
+
+Gửi `payment_method: null` hoặc `income_source: null` để xóa trắng — bỏ hẳn khóa
+thì giữ nguyên giá trị cũ. Không gửi `id` (không có trong DTO).
 
 ### 5.4. Xóa giao dịch
 

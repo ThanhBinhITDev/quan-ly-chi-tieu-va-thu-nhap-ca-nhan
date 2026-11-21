@@ -28,6 +28,12 @@ export class TransactionsController {
     return this.transactions.list(req.user.id, query);
   }
 
+  /** Chi tiết một giao dịch, kèm `receipt_base64`. Danh sách cố tình không kèm. */
+  @Get(':id')
+  findOne(@Req() req: AuthedRequest, @Param('id') id: string) {
+    return this.transactions.findOne(req.user.id, id);
+  }
+
   @Post()
   create(@Req() req: AuthedRequest, @Body() dto: CreateTransactionDto) {
     return this.transactions.create(req.user.id, dto);

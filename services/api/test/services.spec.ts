@@ -375,4 +375,237 @@ describe('TransactionsService', () => {
     const rows = await service.list(USER, { limit: 10 });
     expect(rows).toHaveLength(1);
   });
+
+  it('danh sách chỉ báo có hóa đơn, không trả bytes ảnh', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const db = new FakeDatabase().on('FROM transactions', [
+      {
+        id: TX,
+        wallet_id: WALLET,
+        category_id: null,
+        type: 'expense',
+        amount: '35000',
+        to_wallet_id: null,
+        note: null,
+        occurred_at: new Date('2026-11-19T10:00:00Z'),
+        occurred_on: '2026-11-19',
+        source: 'manual',
+        payment_method: 'cash',
+        income_source: null,
+        receipt_mime: 'image/png',
+        receipt_data: png,
+        rev: 1,
+        created_at: new Date('2026-11-19T10:00:00Z'),
+        updated_at: new Date('2026-11-19T10:00:00Z'),
+        deleted_at: null,
+      },
+    ]);
+    const service = new TransactionsService(db);
+
+    const [row] = await service.list(USER, { limit: 10 });
+
+    // 50 dòng kèm ảnh 512KB là ~25MB mỗi lần mở tab Giao dịch.
+    expect(row.has_receipt).toBe(true);
+    expect(row.receipt_mime).toBe('image/png');
+    expect(row.receipt_base64).toBeNull();
+  });
+
+  it('chi tiết giao dịch trả bytes ảnh dạng base64', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const db = new FakeDatabase().on('FROM transactions', [
+      {
+        id: TX,
+        wallet_id: WALLET,
+        category_id: null,
+        type: 'expense',
+        amount: '35000',
+        to_wallet_id: null,
+        note: null,
+        occurred_at: new Date('2026-11-19T10:00:00Z'),
+        occurred_on: '2026-11-19',
+        source: 'manual',
+        payment_method: 'cash',
+        income_source: null,
+        receipt_mime: 'image/png',
+        receipt_data: png,
+        rev: 1,
+        created_at: new Date('2026-11-19T10:00:00Z'),
+        updated_at: new Date('2026-11-19T10:00:00Z'),
+        deleted_at: null,
+      },
+    ]);
+    const service = new TransactionsService(db);
+
+    const row = await service.findOne(USER, TX);
+
+    expect(row.receipt_base64).toBe(png.toString('base64'));
+    expect(row.has_receipt).toBe(true);
+  });
+
+  it('chi tiết giao dịch không tồn tại trả NOT_FOUND', async () => {
+    const db = new FakeDatabase().on('FROM transactions', []);
+    const service = new TransactionsService(db);
+
+    await expect(service.findOne(USER, TX)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    });
+  });
+
+  it('ảnh giả bị từ chối vì không khớp chữ ký tệp', async () => {
+    const db = new FakeDatabase()
+      .on('SELECT id, user_id FROM transactions WHERE id', [])
+      .on('SELECT id FROM wallets', [{ id: WALLET }]);
+    const service = new TransactionsService(db);
+
+    await expect(
+      service.create(USER, {
+        id: TX,
+        wallet_id: WALLET,
+        type: 'expense',
+        amount: 35_000,
+        occurred_at: '2026-11-19T10:00:00Z',
+        receipt_base64: Buffer.from('day khong phai anh').toString('base64'),
+        receipt_mime: 'image/png',
+      }),
+    ).rejects.toMatchObject({ code: 'RULE_VIOLATION' });
+  });
+
+  it('khai mime sai với ảnh thật bị từ chối', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const db = new FakeDatabase()
+      .on('SELECT id, user_id FROM transactions WHERE id', [])
+      .on('SELECT id FROM wallets', [{ id: WALLET }]);
+    const service = new TransactionsService(db);
+
+    await expect(
+      service.create(USER, {
+        id: TX,
+        wallet_id: WALLET,
+        type: 'expense',
+        amount: 35_000,
+        occurred_at: '2026-11-19T10:00:00Z',
+        receipt_base64: png.toString('base64'),
+        receipt_mime: 'image/jpeg',
+      }),
+    ).rejects.toMatchObject({ code: 'RULE_VIOLATION' });
+  });
+
+  it('sửa giao dịch sang ví khác thì kiểm quyền sở hữu ví mới', async () => {
+    const db = new FakeDatabase()
+      .on('SELECT id, user_id FROM transactions WHERE id', [
+        {
+          id: TX,
+          user_id: USER,
+          wallet_id: WALLET,
+          to_wallet_id: null,
+          type: 'expense',
+          rev: 1,
+        },
+      ])
+      .on('SELECT id FROM wallets', []);
+    const service = new TransactionsService(db);
+
+    await expect(
+      service.update(USER, TX, { wallet_id: OTHER_WALLET, rev: 2 }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('đổi khỏi transfer thì ví nhận về null', async () => {
+    const row = {
+      id: TX,
+      wallet_id: WALLET,
+      category_id: null,
+      type: 'expense',
+      amount: '50000',
+      to_wallet_id: null,
+      note: null,
+      occurred_at: new Date('2026-11-19T10:00:00Z'),
+      occurred_on: '2026-11-19',
+      source: 'manual',
+      payment_method: null,
+      income_source: null,
+      receipt_mime: null,
+      receipt_data: null,
+      rev: 2,
+      created_at: new Date('2026-11-19T10:00:00Z'),
+      updated_at: new Date('2026-11-19T10:00:00Z'),
+      deleted_at: null,
+    };
+    let updateParams: unknown[] = [];
+    const db = new FakeDatabase()
+      .on(/FROM transactions[\s\S]*WHERE id = \$1/, [
+        {
+          id: TX,
+          user_id: USER,
+          wallet_id: WALLET,
+          to_wallet_id: OTHER_WALLET,
+          type: 'transfer',
+          category_id: null,
+          amount: '50000',
+          note: null,
+          occurred_at: new Date('2026-11-19T10:00:00Z'),
+          occurred_on: '2026-11-19',
+          source: 'manual',
+          payment_method: null,
+          income_source: null,
+          receipt_mime: null,
+          receipt_data: null,
+          rev: 1,
+          created_at: new Date('2026-11-19T10:00:00Z'),
+          updated_at: new Date('2026-11-19T10:00:00Z'),
+          deleted_at: null,
+        },
+      ])
+      .on('UPDATE transactions', (params) => {
+        updateParams = params;
+        return [row];
+      });
+    const service = new TransactionsService(db);
+
+    const updated = await service.update(USER, TX, { type: 'expense', rev: 2 });
+
+    expect(updated.to_wallet_id).toBeNull();
+    // Câu UPDATE phải nhận nextToWalletId = null, không giữ ví nhận cũ.
+    expect(updateParams).toContain(null);
+  });
+
+  it('vừa xóa vừa gửi hóa đơn mới bị chặn', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const db = new FakeDatabase().on(
+      /FROM transactions[\s\S]*WHERE id = \$1/,
+      [
+        {
+          id: TX,
+          user_id: USER,
+          wallet_id: WALLET,
+          to_wallet_id: null,
+          type: 'expense',
+          category_id: null,
+          amount: '35000',
+          note: null,
+          occurred_at: new Date('2026-11-19T10:00:00Z'),
+          occurred_on: '2026-11-19',
+          source: 'manual',
+          payment_method: null,
+          income_source: null,
+          receipt_mime: null,
+          receipt_data: null,
+          rev: 1,
+          created_at: new Date('2026-11-19T10:00:00Z'),
+          updated_at: new Date('2026-11-19T10:00:00Z'),
+          deleted_at: null,
+        },
+      ],
+    );
+    const service = new TransactionsService(db);
+
+    await expect(
+      service.update(USER, TX, {
+        rev: 2,
+        remove_receipt: true,
+        receipt_base64: png.toString('base64'),
+        receipt_mime: 'image/png',
+      }),
+    ).rejects.toMatchObject({ code: 'RULE_VIOLATION' });
+  });
 });

@@ -1,12 +1,20 @@
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module.js';
 import { ApiExceptionFilter } from './common/errors/api-exception.filter.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: false,
+  });
+
+  // Ảnh hóa đơn đi trong JSON dạng base64 (phình ~33%), trần 512KB thành
+  // ~700KB. Express mặc định 100kb nên ảnh chụp thật bị 413 trước khi tới DTO.
+  app.useBodyParser('json', { limit: '2mb' });
+  app.useBodyParser('urlencoded', { limit: '2mb', extended: true });
 
   // Tắt header `X-Powered-By: Express` để không quảng cáo stack.
   app.getHttpAdapter().getInstance().disable('x-powered-by');

@@ -14,6 +14,7 @@ import {
 
 export const TRANSACTION_TYPES = ['expense', 'income', 'transfer'] as const;
 export const TRANSACTION_SOURCES = ['manual', 'ocr', 'recurring', 'quick'] as const;
+export const PAYMENT_METHODS = ['cash', 'bank_transfer', 'card', 'ewallet', 'other'] as const;
 
 export class CreateTransactionDto {
   @IsUUID('4')
@@ -49,6 +50,24 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsIn(TRANSACTION_SOURCES)
   source?: (typeof TRANSACTION_SOURCES)[number];
+
+  @IsOptional()
+  @IsIn(PAYMENT_METHODS)
+  payment_method?: (typeof PAYMENT_METHODS)[number];
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 120)
+  income_source?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 800_000)
+  receipt_base64?: string;
+
+  @IsOptional()
+  @IsIn(['image/jpeg', 'image/png', 'image/webp'])
+  receipt_mime?: string;
 }
 
 export class UpdateTransactionDto {
@@ -56,6 +75,24 @@ export class UpdateTransactionDto {
   @IsInt()
   @Min(1)
   amount?: number;
+
+  /**
+   * Sửa ví: màn sửa giao dịch cho chọn lại ví, và bỏ trống thì giữ nguyên.
+   * Phải kiểm quyền sở hữu như lúc tạo.
+   */
+  @IsOptional()
+  @IsUUID('4')
+  wallet_id?: string;
+
+  /** Sửa loại: ghi nhầm Chi tiêu thành Thu nhập là chuyện có thật. */
+  @IsOptional()
+  @IsIn(TRANSACTION_TYPES)
+  type?: (typeof TRANSACTION_TYPES)[number];
+
+  /** Chỉ có nghĩa khi type = transfer; bỏ trống thì giữ nguyên ví nhận cũ. */
+  @IsOptional()
+  @IsUUID('4')
+  to_wallet_id?: string;
 
   @IsOptional()
   @IsUUID('4')
@@ -69,6 +106,28 @@ export class UpdateTransactionDto {
   @IsOptional()
   @IsISO8601()
   occurred_at?: string;
+
+  @IsOptional()
+  @IsIn(PAYMENT_METHODS)
+  payment_method?: (typeof PAYMENT_METHODS)[number];
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 120)
+  income_source?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 800_000)
+  receipt_base64?: string;
+
+  @IsOptional()
+  @IsIn(['image/jpeg', 'image/png', 'image/webp'])
+  receipt_mime?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  remove_receipt?: boolean;
 
   /** Xóa mềm: gửi thời điểm xóa thay vì gọi DELETE. */
   @IsOptional()
