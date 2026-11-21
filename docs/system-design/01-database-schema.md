@@ -444,17 +444,17 @@ Dùng để gửi push và để phát hiện sync bất thường.
 
 ---
 
-## 11b. Bảng `photo_notes` — sổ ảnh
+## 11b. Bảng `photo_notes` — ảnh của khoản chi/thu
 
-Mỗi dòng là **một tấm ảnh kèm ghi chú của chính nó**. Đây là đơn vị nội dung
-độc lập, không phải thuộc tính của giao dịch: ảnh có thể gắn vào một khoản
-chi/thu, hoặc đứng rời. Giao dịch thì không bắt buộc phải có ảnh.
+Mỗi dòng là **một tấm ảnh kèm ghi chú của chính nó**, luôn thuộc về một khoản
+chi hoặc khoản thu. Ảnh không tồn tại độc lập. Chiều ngược lại mới tuỳ chọn:
+**một khoản chi không bắt buộc phải có ảnh**.
 
 ```sql
 CREATE TABLE photo_notes (
   id             UUID PRIMARY KEY,
   user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+  transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
   caption        TEXT,           -- ghi chú của tấm ảnh, <=500 ký tự
   taken_at       TIMESTAMPTZ NOT NULL,
   taken_on       DATE NOT NULL,  -- trigger sinh theo giờ VN
@@ -471,10 +471,12 @@ CREATE TABLE photo_notes (
 
 ### Vì sao tách bảng thay vì thêm cột vào `transactions`
 
-1. Ảnh rời không có giao dịch nào để bám vào.
-2. Một giao dịch có thể có nhiều ảnh (ảnh món ăn + ảnh hoá đơn).
-3. Xoá giao dịch không nên xoá kỷ niệm. `ON DELETE SET NULL` giữ ảnh lại,
-   chỉ gỡ liên kết — sửa sổ sách không làm mất ảnh đã chụp.
+1. Một giao dịch có thể có **nhiều** ảnh (ảnh món ăn + ảnh hoá đơn), mỗi ảnh
+   có ghi chú riêng — nhét vào cột thì phải lặp cột hoặc nhồi JSON.
+2. Ảnh có vòng đời riêng: ghi chú riêng, thời điểm riêng (`taken_at`), xoá
+   riêng mà không đụng số tiền.
+3. Xoá hẳn giao dịch thì ảnh đi theo (`ON DELETE CASCADE`) vì ảnh không có
+   chỗ đứng nào khác. Xoá thường ngày vẫn là xoá mềm qua `deleted_at`.
 
 `transactions.receipt_data` / `receipt_mime` giữ nguyên cho dữ liệu cũ; ảnh
 mới đi qua bảng này.
@@ -485,7 +487,7 @@ mới đi qua bảng này.
 CREATE INDEX idx_photo_user_time ON photo_notes(user_id, taken_at DESC)
   WHERE deleted_at IS NULL;                    -- dòng thời gian sổ ảnh
 CREATE INDEX idx_photo_tx ON photo_notes(transaction_id)
-  WHERE transaction_id IS NOT NULL AND deleted_at IS NULL;  -- ảnh của 1 giao dịch
+  WHERE deleted_at IS NULL;                    -- ảnh của 1 giao dịch
 CREATE INDEX idx_photo_sync ON photo_notes(user_id, updated_at);  -- đồng bộ
 ```
 
