@@ -444,6 +444,53 @@ Dùng để gửi push và để phát hiện sync bất thường.
 
 ---
 
+## 11b. Bảng `photo_notes` — sổ ảnh
+
+Mỗi dòng là **một tấm ảnh kèm ghi chú của chính nó**. Đây là đơn vị nội dung
+độc lập, không phải thuộc tính của giao dịch: ảnh có thể gắn vào một khoản
+chi/thu, hoặc đứng rời. Giao dịch thì không bắt buộc phải có ảnh.
+
+```sql
+CREATE TABLE photo_notes (
+  id             UUID PRIMARY KEY,
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  transaction_id UUID REFERENCES transactions(id) ON DELETE SET NULL,
+  caption        TEXT,           -- ghi chú của tấm ảnh, <=500 ký tự
+  taken_at       TIMESTAMPTZ NOT NULL,
+  taken_on       DATE NOT NULL,  -- trigger sinh theo giờ VN
+  photo_mime     TEXT NOT NULL
+    CHECK (photo_mime IN ('image/jpeg','image/png','image/webp')),
+  photo_data     BYTEA NOT NULL
+    CHECK (octet_length(photo_data) <= 524288),
+  rev            INT NOT NULL DEFAULT 1,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at     TIMESTAMPTZ
+);
+```
+
+### Vì sao tách bảng thay vì thêm cột vào `transactions`
+
+1. Ảnh rời không có giao dịch nào để bám vào.
+2. Một giao dịch có thể có nhiều ảnh (ảnh món ăn + ảnh hoá đơn).
+3. Xoá giao dịch không nên xoá kỷ niệm. `ON DELETE SET NULL` giữ ảnh lại,
+   chỉ gỡ liên kết — sửa sổ sách không làm mất ảnh đã chụp.
+
+`transactions.receipt_data` / `receipt_mime` giữ nguyên cho dữ liệu cũ; ảnh
+mới đi qua bảng này.
+
+### Index
+
+```sql
+CREATE INDEX idx_photo_user_time ON photo_notes(user_id, taken_at DESC)
+  WHERE deleted_at IS NULL;                    -- dòng thời gian sổ ảnh
+CREATE INDEX idx_photo_tx ON photo_notes(transaction_id)
+  WHERE transaction_id IS NOT NULL AND deleted_at IS NULL;  -- ảnh của 1 giao dịch
+CREATE INDEX idx_photo_sync ON photo_notes(user_id, updated_at);  -- đồng bộ
+```
+
+---
+
 ## 12. Row Level Security (Supabase)
 
 Bắt buộc bật cho mọi bảng, nếu không dữ liệu tài chính của người này đọc được bởi người khác.
