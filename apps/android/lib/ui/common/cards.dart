@@ -252,12 +252,16 @@ class PredictionCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const Text(
-                        AppStrings.predictionDays,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                      // Cỡ chữ hệ thống lớn làm "ngày nữa" rộng hơn phần còn
+                      // lại của thẻ; cho xuống dòng thay vì tràn ra ngoài.
+                      const Flexible(
+                        child: Text(
+                          AppStrings.predictionDays,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
