@@ -220,3 +220,24 @@ khi Gateway nhả quyền state, hoặc đặt access token) rồi làm 4 bướ
 3. Áp migration, rồi đọc lại `information_schema.columns`,
    `pg_indexes` và `pg_policies` để đối chiếu với local.
 4. Cập nhật mục này thành "đã áp" kèm thời điểm.
+
+## 2026-11-21 — Add transaction detail fields (payment method, income source, receipt attachment)
+
+### Pre-apply handoff
+
+- Date/time (Asia/Ho_Chi_Minh): 2026-11-21 14:56:00 +07 (prepared)
+- Repo/branch: `/Users/thanhbinh/Projects/quan-ly-chi-tieu-sinh-vien`, `dev/android`.
+- Verified Supabase project ref: `ebbqcnnwqeasozmcqigu`.
+- How verified: `supabase_get_project_url` returned `https://ebbqcnnwqeasozmcqigu.supabase.co`; `supabase_list_migrations` returned expected 2 migrations before apply.
+- Existing live schema inspected: `public.transactions` had 19 columns including `occurred_at`, `occurred_on`, `source`, `receipt_url`, `note`, `rev`; no `payment_method`, `income_source`, `receipt_mime`, `receipt_data`. 6 indexes, 2 triggers (`trg_occurred_on`, `trg_updated_at_transactions`), RLS policy `p_transactions_own` present.
+- Planned migration: `infra/migrations/20261121150000_add_transaction_detail_fields.sql`
+- Operation: additive only. No DROP/TRUNCATE/DELETE/data rewrite.
+
+### Apply
+
+- Status: APPLIED and verified.
+- Execution: `supabase_apply_migration` name `20261121150000_add_transaction_detail_fields`, project ref `ebbqcnnwqeasozmcqigu`, returned `{"success":true}`.
+- SQL: additive ALTER TABLE adding nullable `payment_method TEXT` CHECK in (`cash`,`bank_transfer`,`card`,`ewallet`,`other`), `income_source TEXT`, `receipt_mime TEXT` CHECK jpeg/png/webp or null, `receipt_data BYTEA` CHECK null or <=512KB, and `tx_receipt_pair` CHECK receipt mime/data both null or both present.
+- Post-change verification (live SQL): columns exist with expected types/nullability; constraints `transactions_payment_method_check`, `transactions_receipt_mime_check`, `tx_receipt_pair` present with expected definitions. No existing rows modified; no tables/indexes/policies/triggers dropped.
+- Risks/follow-up: `receipt_url` legacy column remains unused by new app flow; API and Android must be updated to read/write new fields; receipt stored in DB (512KB cap) like avatar - acceptable for MVP but may need Storage migration later.
+
