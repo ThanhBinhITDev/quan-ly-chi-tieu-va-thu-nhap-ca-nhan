@@ -38,6 +38,12 @@ class NewTransaction {
     required this.category,
     required this.wallet,
     required this.note,
+    required this.occurredAt,
+    this.paymentMethod,
+    this.incomeSource,
+    this.receiptBase64,
+    this.receiptMime,
+    this.removeReceipt = false,
   });
 
   final int amount;
@@ -45,4 +51,10 @@ class NewTransaction {
   final CategoryItem category;
   final String wallet;
   final String note;
+  final DateTime occurredAt;
+  final String? paymentMethod; // cash|bank_transfer|card|ewallet|other
+  final String? incomeSource;
+  final String? receiptBase64;
+  final String? receiptMime;
+  final bool removeReceipt;
 }

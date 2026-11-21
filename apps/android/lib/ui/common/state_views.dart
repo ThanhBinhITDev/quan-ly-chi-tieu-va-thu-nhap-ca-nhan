@@ -108,10 +108,12 @@ class ErrorView extends StatelessWidget {
     super.key,
     required this.message,
     required this.onRetry,
+    this.onSignOut,
   });
 
   final String message;
   final VoidCallback onRetry;
+  final VoidCallback? onSignOut;
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +160,13 @@ class ErrorView extends StatelessWidget {
               ),
               label: const Text(AppStrings.retry),
             ),
+            if (onSignOut != null) ...[
+              const SizedBox(height: AppSpace.sm),
+              TextButton(
+                onPressed: onSignOut,
+                child: const Text(AppStrings.signOutAction),
+              ),
+            ],
           ],
         ),
       ),
