@@ -76,14 +76,19 @@ class HeroBalanceCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    AppStrings.balance,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  // Nhãn phải co được: ở cỡ chữ lớn cho người mắt kém, chữ
+                  // "Số dư hiện tại" rộng hơn cả thẻ và đẩy tràn hàng.
+                  Flexible(
+                    child: Text(
+                      AppStrings.balance,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: AppSpace.sm),
                   Container(
                     width: 34,
                     height: 34,
@@ -552,23 +557,33 @@ class TransactionTile extends StatelessWidget {
                 const Icon(LucideIcons.camera, size: 14, color: AppColors.textSecondary),
               ],
               const SizedBox(width: AppSpace.sm),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$sign${formatMoney(item.amount)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: color,
+              // Số tiền không được đẩy tràn hàng: ở cỡ chữ lớn, "-45.000 đ"
+              // rộng hơn phần còn lại và Flutter vẽ dải vàng đen. Cho nó co
+              // lại rồi thu nhỏ vừa khung thay vì tràn ra ngoài thẻ.
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '$sign${formatMoney(item.amount)}',
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                        ),
+                      ),
                     ),
-                  ),
-                  if (item.pending) ...[
-                    const SizedBox(height: 4),
-                    const PendingLabel(),
+                    if (item.pending) ...[
+                      const SizedBox(height: 4),
+                      const PendingLabel(),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),

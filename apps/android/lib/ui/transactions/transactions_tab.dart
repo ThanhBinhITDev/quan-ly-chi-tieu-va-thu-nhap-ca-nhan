@@ -34,22 +34,36 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
       appBar: AppBar(
         // Đổi tiêu đề theo chế độ: đang xem lịch mà vẫn đề "Giao dịch" thì
         // người dùng không biết màn này là sổ ảnh hay danh sách.
-        title: Text(switch (_mode) {
-          1 => AppStrings.calendarTitle,
-          2 => AppStrings.photoAllTitle,
-          _ => AppStrings.tabTransactions,
-        }),
+        // `Text` phải nằm trong `Flexible`/`ellipsis` mặc định của AppBar;
+        // chỗ này chỉ cần đảm bảo không đòi bề ngang lớn hơn phần còn lại khi
+        // cỡ chữ hệ thống tăng.
+        title: Text(
+          switch (_mode) {
+            1 => AppStrings.calendarTitle,
+            2 => AppStrings.photoAllTitle,
+            _ => AppStrings.tabTransactions,
+          },
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpace.md),
-            child: SegmentedToggle(
-              value: _mode,
-              segments: const [
-                AppStrings.viewList,
-                AppStrings.viewCalendar,
-                AppStrings.viewPhotos,
-              ],
-              onChanged: (value) => setState(() => _mode = value),
+          // Nút ba chế độ chiếm tối đa một nửa AppBar: rộng hơn nữa là tiêu
+          // đề bị ép về 0 ký tự ở màn hẹp.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.52,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpace.md),
+              child: SegmentedToggle(
+                value: _mode,
+                segments: const [
+                  AppStrings.viewList,
+                  AppStrings.viewCalendar,
+                  AppStrings.viewPhotos,
+                ],
+                onChanged: (value) => setState(() => _mode = value),
+              ),
             ),
           ),
         ],
