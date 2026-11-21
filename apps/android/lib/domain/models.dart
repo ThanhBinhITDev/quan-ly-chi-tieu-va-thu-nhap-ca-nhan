@@ -100,6 +100,44 @@ class MonthSummary {
   final int spent;
 }
 
+/// Một tấm ảnh kèm ghi chú, thuộc về một khoản chi/thu.
+///
+/// Ảnh không đứng một mình: luôn có [transactionId]. Nhưng khoản chi thì
+/// không bắt buộc có ảnh — chiều này mới là tuỳ chọn.
+class PhotoNote {
+  const PhotoNote({
+    required this.id,
+    required this.transactionId,
+    required this.takenAt,
+    required this.rev,
+    this.caption,
+    this.photoMime,
+    this.photoBase64,
+    this.hasPhotoFlag = false,
+  });
+
+  final String id;
+  final String transactionId;
+  final DateTime takenAt;
+  final int rev;
+  final String? caption;
+  final String? photoMime;
+
+  /// Chỉ có khi tải chi tiết; danh sách để trống cho nhẹ.
+  final String? photoBase64;
+  final bool hasPhotoFlag;
+
+  bool get hasPhoto => hasPhotoFlag || (photoBase64?.isNotEmpty ?? false);
+
+  /// Nhãn thay thế khi ảnh chưa có ghi chú. Đặt ở tầng domain để màn sổ ảnh
+  /// và chi tiết giao dịch dùng chung một chuỗi, không lệch nhau.
+  static const noCaption = 'Chưa viết ghi chú';
+
+  /// Ghi chú để hiện: không có thì nói rõ là chưa viết, đừng để ô trống.
+  String get displayCaption =>
+      (caption == null || caption!.trim().isEmpty) ? noCaption : caption!.trim();
+}
+
 class DashboardData {
   const DashboardData({
     required this.summary,

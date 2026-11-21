@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:android/core/error/app_exception.dart';
 import 'package:android/core/utils/uuid.dart';
 import 'package:android/data/remote/dto.dart';
@@ -295,6 +298,67 @@ class ApiFinanceRepository implements FinanceRepository {
   Future<void> deleteTransaction(String id, {required int rev}) async {
     await _api.deleteTransaction(id, rev: rev);
   }
+
+  // ── Sổ ảnh ────────────────────────────────────────────────────────────
+
+  @override
+  Future<List<PhotoNote>> getPhotoNotes({String? transactionId}) async {
+    final rows = await _api.photoNotes(transactionId: transactionId);
+    return rows.map(_toPhotoNote).toList();
+  }
+
+  @override
+  Future<PhotoNote> fetchPhotoNote(String id) async =>
+      _toPhotoNote(await _api.photoNote(id));
+
+  @override
+  Future<PhotoNote> addPhotoNote({
+    required String transactionId,
+    required Uint8List bytes,
+    required String mime,
+    String? caption,
+    DateTime? takenAt,
+  }) async {
+    final created = await _api.createPhotoNote({
+      'id': generateUuidV4(),
+      'transaction_id': transactionId,
+      'photo_base64': base64Encode(bytes),
+      'photo_mime': mime,
+      if (caption != null && caption.trim().isNotEmpty)
+        'caption': caption.trim(),
+      'taken_at': (takenAt ?? DateTime.now()).toUtc().toIso8601String(),
+    });
+    return _toPhotoNote(created);
+  }
+
+  @override
+  Future<PhotoNote> updatePhotoNoteCaption(
+    String id,
+    String caption, {
+    required int rev,
+  }) async {
+    final updated = await _api.updatePhotoNote(id, {
+      'rev': rev + 1,
+      // Chuỗi rỗng = xoá ghi chú. Bỏ hẳn key mới là "giữ nguyên", mà ở đây
+      // người dùng chủ động sửa nên gửi gì cũng là ý định.
+      'caption': caption.trim(),
+    });
+    return _toPhotoNote(updated);
+  }
+
+  @override
+  Future<void> deletePhotoNote(String id) => _api.deletePhotoNote(id);
+
+  PhotoNote _toPhotoNote(PhotoNoteDto dto) => PhotoNote(
+        id: dto.id,
+        transactionId: dto.transactionId,
+        takenAt: dto.takenAt.toLocal(),
+        rev: dto.rev,
+        caption: dto.caption,
+        photoMime: dto.photoMime,
+        photoBase64: dto.photoBase64,
+        hasPhotoFlag: dto.hasPhotoFlag,
+      );
 
   @override
   Future<List<BudgetItem>> getBudgets() async {

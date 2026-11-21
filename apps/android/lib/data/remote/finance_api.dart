@@ -281,4 +281,61 @@ class FinanceApi {
     );
     return MonthSummaryDto.fromJson(json);
   }
+
+  // ── Sổ ảnh ────────────────────────────────────────────────────────────
+  //
+  // Mỗi ảnh là một dòng riêng kèm ghi chú của nó, luôn thuộc một giao dịch.
+  // Danh sách không mang bytes ảnh; bytes chỉ có ở [photoNote].
+
+  /// Dòng thời gian ảnh, mới nhất trước. Lọc được theo một giao dịch.
+  Future<List<PhotoNoteDto>> photoNotes({
+    int limit = 50,
+    DateTime? before,
+    String? transactionId,
+  }) async {
+    final json = await _client.get<Map<String, dynamic>>(
+      '/v1/photo-notes',
+      query: {
+        'limit': limit,
+        if (before != null) 'before': before.toUtc().toIso8601String(),
+        'transaction_id': ?transactionId,
+      },
+    );
+    // API bọc danh sách trong `{items: [...]}` giống mọi module khác; đọc
+    // thẳng mảng trần thì màn sổ ảnh treo ở trạng thái tải mãi.
+    final items = json['items'] as List<dynamic>? ?? const [];
+    return items
+        .map((item) => PhotoNoteDto.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Chi tiết một ảnh — bản duy nhất có `photo_base64`.
+  Future<PhotoNoteDto> photoNote(String id) async {
+    final json = await _client.get<Map<String, dynamic>>('/v1/photo-notes/$id');
+    return PhotoNoteDto.fromJson(json);
+  }
+
+  Future<PhotoNoteDto> createPhotoNote(Map<String, dynamic> body) async {
+    final json = await _client.post<Map<String, dynamic>>(
+      '/v1/photo-notes',
+      data: body,
+    );
+    return PhotoNoteDto.fromJson(json);
+  }
+
+  /// Sửa ghi chú hoặc thay ảnh. `data` phải có `rev` = rev hiện tại + 1.
+  Future<PhotoNoteDto> updatePhotoNote(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/photo-notes/$id',
+      data: data,
+    );
+    return PhotoNoteDto.fromJson(json);
+  }
+
+  Future<void> deletePhotoNote(String id) async {
+    await _client.delete<dynamic>('/v1/photo-notes/$id');
+  }
 }

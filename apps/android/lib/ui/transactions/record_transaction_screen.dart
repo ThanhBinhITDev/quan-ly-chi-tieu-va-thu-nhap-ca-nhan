@@ -1,49 +1,18 @@
-import 'dart:convert';
+import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image/image.dart' as img;
-import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/domain/transaction_input.dart';
 import 'package:android/providers.dart';
+import 'package:android/ui/common/photo_picker_service.dart';
+import 'package:android/ui/common/transaction_photos.dart';
 import 'package:android/ui/format.dart';
 import 'package:android/ui/home/quick_category_strip.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
-
-/// Trần ảnh server chấp nhận là 512KB (cột `receipt_data`, ràng buộc
-/// `tx_receipt_pair`). Nén xuống dưới mức này để ảnh camera thật không bị
-/// từ chối ngay trên máy.
-const int _receiptTargetBytes = 400 * 1024;
-const int _receiptMaxSide = 1440;
-
-/// Nén ảnh chạy trong isolate riêng: ảnh 5MP giải mã + mã hoá lại mất vài
-/// trăm ms, làm trên luồng UI thì khung hình đứng.
-Uint8List _compressReceipt(Uint8List raw) {
-  final decoded = img.decodeImage(raw);
-  if (decoded == null) return raw;
-
-  var image = img.bakeOrientation(decoded);
-  if (image.width > _receiptMaxSide || image.height > _receiptMaxSide) {
-    image = image.width >= image.height
-        ? img.copyResize(image, width: _receiptMaxSide, interpolation: img.Interpolation.average)
-        : img.copyResize(image, height: _receiptMaxSide, interpolation: img.Interpolation.average);
-  }
-
-  var quality = 82;
-  var encoded = img.encodeJpg(image, quality: quality);
-  // Hạ dần chất lượng thay vì thu nhỏ thêm: ở 1440px chất lượng 60 vẫn đọc
-  // được chữ trên hoá đơn, còn thu nhỏ nữa thì mất chi tiết.
-  while (encoded.length > _receiptTargetBytes && quality > 45) {
-    quality -= 10;
-    encoded = img.encodeJpg(image, quality: quality);
-  }
-  return Uint8List.fromList(encoded);
-}
 
 /// Mở màn ghi chép giao dịch. Trả về true nếu đã lưu thành công.
 Future<bool?> openRecordTransaction(
@@ -87,7 +56,7 @@ class _RecordTransactionScreenState
   String _paymentMethod = 'cash';
   Uint8List? _receiptBytes;
   String? _receiptMime;
-  bool _removeExistingReceipt = false;
+  final _photoCaptionController = TextEditingController();
   bool _saving = false;
   String? _error;
 
@@ -106,14 +75,9 @@ class _RecordTransactionScreenState
       _occurredAt = e.occurredAt ?? DateTime.now();
       _paymentMethod = e.paymentMethod ?? 'cash';
       _incomeSourceController.text = e.incomeSource ?? '';
-      // Danh sách chỉ có cờ `hasReceipt`, không có bytes. `base64Decode(null)`
-      // ném lỗi ngay trong initState, tức là mở form sửa từ một dòng chưa
-      // tải ảnh sẽ trắng màn. Chỉ giải mã khi thật sự có dữ liệu.
-      final base64 = e.receiptBase64;
-      if (base64 != null && base64.isNotEmpty) {
-        _receiptBytes = base64Decode(base64);
-        _receiptMime = e.receiptMime;
-      }
+      // Ảnh của giao dịch giờ nằm ở bảng `photo_notes`, không còn là cột
+      // `receipt_data` của giao dịch. Form sửa giao dịch không tải ảnh về nữa:
+      // ảnh được thêm/sửa/xoá ngay trong chi tiết giao dịch.
     } else {
       _category = widget.preselect;
     }
@@ -124,6 +88,7 @@ class _RecordTransactionScreenState
     _amountController.dispose();
     _noteController.dispose();
     _incomeSourceController.dispose();
+    _photoCaptionController.dispose();
     super.dispose();
   }
 
@@ -202,62 +167,25 @@ class _RecordTransactionScreenState
     if (picked != null && mounted) setState(() => _paymentMethod = picked);
   }
 
-  /// Chọn nguồn ảnh. Hai lối, vì "chụp lúc đang ăn" và "lục lại ảnh cũ" là
-  /// hai tình huống khác hẳn nhau — Locket cũng tách đúng hai lối này.
+  /// Chọn ảnh cho khoản đang ghi. Ảnh chỉ được đính sau khi khoản đã có id,
+  /// nên ở đây chỉ giữ ảnh trong bộ nhớ chờ lưu.
   Future<void> _pickReceipt() async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(LucideIcons.camera, color: AppColors.primary),
-              title: const Text(AppStrings.recordPhotoTake),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(LucideIcons.images, color: AppColors.primary),
-              title: const Text(AppStrings.recordPhotoPick),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            const SizedBox(height: AppSpace.sm),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-
+    PickedPhoto? photo;
     try {
-      final picked = await ImagePicker().pickImage(
-        source: source,
-        // Không để image_picker nén: nó trả JPEG chất lượng cố định, còn ta
-        // cần kiểm dung lượng thật rồi hạ dần cho vừa 512KB.
-        maxWidth: 2000,
-      );
-      if (picked == null) return;
-
-      setState(() => _error = null);
-      final raw = await picked.readAsBytes();
-      // Nén ở isolate: ảnh 5MP mất vài trăm ms, đủ để khung hình đứng.
-      final bytes = await compute(_compressReceipt, raw);
-      if (bytes.lengthInBytes > 512 * 1024) {
-        if (!mounted) return;
-        setState(() => _error = AppStrings.recordReceiptTooLarge);
-        return;
-      }
+      photo = await pickAndCompressPhoto(context);
+    } on PhotoTooLargeException {
       if (!mounted) return;
-      setState(() {
-        // Luôn gửi JPEG sau khi nén — khai đúng mime thật, vì server đối
-        // chiếu chữ ký tệp với `receipt_mime` và trả RULE_VIOLATION nếu lệch.
-        _receiptBytes = bytes;
-        _receiptMime = 'image/jpeg';
-        _removeExistingReceipt = false;
-      });
+      setState(() => _error = AppStrings.recordReceiptTooLarge);
+      return;
     } catch (_) {
-      // bỏ qua nếu người dùng hủy/chọn lỗi
+      return;
     }
+    if (photo == null || !mounted) return;
+    setState(() {
+      _error = null;
+      _receiptBytes = photo!.bytes;
+      _receiptMime = photo.mime;
+    });
   }
 
   Future<void> _save() async {
@@ -293,20 +221,33 @@ class _RecordTransactionScreenState
         incomeSource: _type == TransactionType.income
             ? _incomeSourceController.text.trim()
             : null,
-        receiptBase64: _receiptBytes == null ? null : base64Encode(_receiptBytes!),
-        receiptMime: _receiptMime,
-        removeReceipt: _removeExistingReceipt && _receiptBytes == null,
       );
       final repo = ref.read(financeRepositoryProvider);
       final editing = widget.editing;
+      final String transactionId;
       if (editing != null) {
-        await repo.updateTransaction(editing.id, input, rev: editing.rev);
+        final saved = await repo.updateTransaction(editing.id, input, rev: editing.rev);
+        transactionId = saved.id;
       } else {
-        await repo.addTransaction(input);
+        final saved = await repo.addTransaction(input);
+        transactionId = saved.id;
+      }
+      // Khoản chi **không bắt buộc** có ảnh: chỉ đính khi người dùng đã chọn.
+      // Đính sau khi lưu vì ảnh luôn thuộc về một giao dịch đã tồn tại.
+      if (_receiptBytes != null) {
+        await repo.addPhotoNote(
+          transactionId: transactionId,
+          bytes: _receiptBytes!,
+          mime: _receiptMime ?? 'image/jpeg',
+          caption: _photoCaptionController.text.trim().isEmpty
+              ? null
+              : _photoCaptionController.text.trim(),
+        );
       }
       ref.invalidate(transactionsProvider);
       ref.invalidate(dashboardProvider);
       ref.invalidate(budgetProgressProvider);
+      ref.invalidate(allPhotosProvider);
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (_) {
@@ -454,94 +395,122 @@ class _RecordTransactionScreenState
                   ),
                 ),
                 const SizedBox(height: AppSpace.md),
-                // Ảnh là kỷ niệm, không phải bằng chứng: đứng cùng hàng với
-                // ghi chú và không bao giờ chặn nút Lưu.
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_receiptBytes != null) ...[
-                      Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: Image.memory(
-                              _receiptBytes!,
-                              height: 96,
-                              width: 96,
-                              fit: BoxFit.cover,
-                              // Ảnh đã nén ở isolate, giải mã lại lần nữa cũng
-                              // không được để khung hình nhấp nháy.
-                              gaplessPlayback: true,
-                              errorBuilder: (_, _, _) => Container(
+                // Ảnh là kỷ niệm, không phải bằng chứng — không bao giờ chặn
+                // nút Lưu. Sửa giao dịch đã có id thì quản lý ảnh ngay tại
+                // chỗ; tạo mới thì giữ ảnh trong bộ nhớ, đính sau khi lưu.
+                if (_isEditing) ...[
+                  Text(
+                    AppStrings.photoSectionTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  TransactionPhotos(transactionId: widget.editing!.id),
+                  const SizedBox(height: AppSpace.sm),
+                ] else ...[
+                  if (_receiptBytes != null) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: Image.memory(
+                                _receiptBytes!,
                                 height: 96,
                                 width: 96,
-                                color: AppColors.neutralSoft,
-                                child: const Icon(
-                                  LucideIcons.imageOff,
-                                  size: 18,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(AppSpace.xs),
-                            child: Material(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => setState(() {
-                                  _receiptBytes = null;
-                                  _receiptMime = null;
-                                  _removeExistingReceipt = true;
-                                }),
-                                child: const SizedBox(
-                                  width: 28,
-                                  height: 28,
-                                  child: Icon(
-                                    LucideIcons.x,
-                                    size: 16,
-                                    color: Colors.white,
+                                fit: BoxFit.cover,
+                                // Ảnh đã nén ở isolate, giải mã lại lần nữa
+                                // cũng không được để khung hình nhấp nháy.
+                                gaplessPlayback: true,
+                                errorBuilder: (_, _, _) => Container(
+                                  height: 96,
+                                  width: 96,
+                                  color: AppColors.neutralSoft,
+                                  child: const Icon(
+                                    LucideIcons.imageOff,
+                                    size: 18,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          OutlinedButton.icon(
-                            onPressed: _pickReceipt,
-                            icon: Icon(
-                              _receiptBytes == null
-                                  ? LucideIcons.camera
-                                  : LucideIcons.refreshCw,
-                              size: 18,
+                            Padding(
+                              padding: const EdgeInsets.all(AppSpace.xs),
+                              child: Material(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                shape: const CircleBorder(),
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => setState(() {
+                                    _receiptBytes = null;
+                                    _receiptMime = null;
+                                  }),
+                                  child: const SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: Icon(
+                                      LucideIcons.x,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                            label: Text(
-                              _receiptBytes == null
-                                  ? AppStrings.recordReceiptAdd
-                                  : AppStrings.recordPhotoChange,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.xs),
-                          Text(
-                            AppStrings.recordPhotoHint,
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    TextField(
+                      controller: _photoCaptionController,
+                      maxLength: 500,
+                      maxLines: 2,
+                      minLines: 1,
+                      buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                      decoration: const InputDecoration(
+                        labelText: AppStrings.photoCaptionLabel,
+                        hintText: AppStrings.photoCaptionHint,
+                        border: OutlineInputBorder(),
                       ),
                     ),
+                    const SizedBox(height: AppSpace.sm),
                   ],
-                ),
-                const SizedBox(height: AppSpace.sm),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _pickReceipt,
+                              icon: Icon(
+                                _receiptBytes == null
+                                    ? LucideIcons.camera
+                                    : LucideIcons.refreshCw,
+                                size: 18,
+                              ),
+                              label: Text(
+                                _receiptBytes == null
+                                    ? AppStrings.recordReceiptAdd
+                                    : AppStrings.recordPhotoChange,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpace.xs),
+                            Text(
+                              AppStrings.recordPhotoHint,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                ],
               ],
             ),
           ),

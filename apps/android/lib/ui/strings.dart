@@ -151,7 +151,7 @@ class AppStrings {
   // ── Sổ ảnh: lịch tháng + danh sách theo ngày ────────────────────────────
   static const viewList = 'Danh sách';
   static const viewCalendar = 'Lịch';
-  static const calendarTitle = 'Sổ ảnh chi tiêu';
+  static const calendarTitle = 'Lịch chi tiêu';
   static const calendarToday = 'Hôm nay';
   static const calendarEmptyMonth = 'Tháng này chưa có khoản chi nào.';
   static const calendarNoPhotoHint =
@@ -162,6 +162,27 @@ class AppStrings {
   static const calendarWeekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
   static String calendarMonthLabel(int month, int year) => 'Tháng $month, $year';
   static String calendarPhotoCount(int count) => '$count ảnh';
+
+  // ── Ảnh ghi chú của khoản chi ───────────────────────────────────────────
+  static const photoSectionTitle = 'Ảnh của khoản này';
+  static const photoNoneYet = 'Chưa có ảnh. Thêm một tấm để sau này nhớ.';
+  static const photoAdd = 'Thêm ảnh';
+  static const photoEditCaption = 'Ghi chú cho ảnh';
+  static const photoCaptionLabel = 'Ghi chú cho ảnh';
+  static const photoCaptionHint = 'Hôm nay ăn gì, ở đâu, với ai';
+  static const photoSaveCaption = 'Lưu ghi chú';
+  static const photoDelete = 'Xoá ảnh';
+  static const photoDeleteConfirm = 'Xoá tấm ảnh này?';
+  static const photoDeleteConfirmNote =
+      'Ảnh mất khỏi sổ, khoản chi vẫn còn nguyên.';
+  static const photoLoadFailed = 'Không tải được ảnh';
+  static const txPhotoAdded = 'Đã thêm ảnh';
+  static const photoAllTitle = 'Sổ ảnh';
+  static const viewPhotos = 'Sổ ảnh';
+  static const photoAllEmpty =
+      'Chưa có ảnh nào. Chụp một tấm khi ghi khoản chi để bắt đầu.';
+  static const photoCaptionSaved = 'Đã lưu ghi chú';
+  static String photoCountOf(int count) => '$count ảnh';
 
   static const totalExpense = 'Tổng chi';
   static const categories = 'Cơ cấu chi tiêu';

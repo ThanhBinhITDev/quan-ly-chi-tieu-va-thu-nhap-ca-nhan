@@ -537,3 +537,45 @@ class GoalDto {
     return left < 0 ? 0 : left;
   }
 }
+
+/// Một ảnh kèm ghi chú của nó, thuộc về một khoản chi/thu.
+///
+/// Danh sách trả `has_photo` mà không kèm bytes; bytes chỉ có ở chi tiết.
+class PhotoNoteDto {
+  const PhotoNoteDto({
+    required this.id,
+    required this.transactionId,
+    required this.takenAt,
+    required this.takenOn,
+    required this.rev,
+    this.caption,
+    this.photoMime,
+    this.photoBase64,
+    this.hasPhotoFlag = false,
+  });
+
+  factory PhotoNoteDto.fromJson(Map<String, dynamic> json) => PhotoNoteDto(
+        id: json['id'] as String,
+        transactionId: json['transaction_id'] as String,
+        takenAt: DateTime.parse(json['taken_at'] as String),
+        takenOn: json['taken_on'] as String,
+        rev: (json['rev'] as num?)?.toInt() ?? 1,
+        caption: json['caption'] as String?,
+        photoMime: json['photo_mime'] as String?,
+        photoBase64: json['photo_base64'] as String?,
+        hasPhotoFlag: json['has_photo'] as bool? ?? false,
+      );
+
+  final String id;
+  final String transactionId;
+  final DateTime takenAt;
+  final String takenOn;
+  final int rev;
+  final String? caption;
+  final String? photoMime;
+  final String? photoBase64;
+  final bool hasPhotoFlag;
+
+  /// Có ảnh hay không, dù danh sách không mang bytes.
+  bool get hasPhoto => hasPhotoFlag || (photoBase64?.isNotEmpty ?? false);
+}

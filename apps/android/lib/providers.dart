@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:android/data/api_finance_repository.dart';
 import 'package:android/data/finance_repository.dart';
 import 'package:android/data/remote/dto.dart';
@@ -64,6 +67,29 @@ final monthTransactionsProvider =
   return ref
       .watch(financeRepositoryProvider)
       .getTransactionsInMonth(key.year, key.month);
+});
+
+/// Ảnh của một giao dịch. Khoá theo id giao dịch để mở lại chi tiết không
+/// phải tải lại; `invalidate` sau khi thêm/xoá ảnh.
+final transactionPhotosProvider =
+    FutureProvider.family<List<PhotoNote>, String>((ref, transactionId) {
+  return ref
+      .watch(financeRepositoryProvider)
+      .getPhotoNotes(transactionId: transactionId);
+});
+
+/// Toàn bộ sổ ảnh, mới nhất trước.
+final allPhotosProvider = FutureProvider<List<PhotoNote>>((ref) {
+  return ref.watch(financeRepositoryProvider).getPhotoNotes();
+});
+
+/// Bytes một ảnh để hiển thị. Danh sách không mang ảnh nên phải tải riêng.
+final photoBytesProvider =
+    FutureProvider.family<Uint8List?, String>((ref, photoId) async {
+  final note = await ref.watch(financeRepositoryProvider).fetchPhotoNote(photoId);
+  final raw = note.photoBase64;
+  if (raw == null || raw.isEmpty) return null;
+  return base64Decode(raw);
 });
 
 final budgetsProvider = FutureProvider<List<BudgetItem>>((ref) {

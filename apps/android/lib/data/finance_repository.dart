@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:android/domain/models.dart';
 import 'package:android/domain/transaction_input.dart';
 
@@ -32,6 +34,35 @@ abstract class FinanceRepository {
   /// Chi tiết một giao dịch, kèm ảnh hóa đơn. Danh sách không kèm ảnh nên
   /// mở chi tiết mới tải.
   Future<TransactionItem> fetchTransaction(String id);
+
+  // ── Sổ ảnh ────────────────────────────────────────────────────────────
+
+  /// Ảnh của các khoản chi/thu, mới nhất trước.
+  ///
+  /// Ảnh luôn thuộc một giao dịch, nên không có "ảnh rời". Chiều ngược lại
+  /// mới tuỳ chọn: giao dịch không cần ảnh.
+  Future<List<PhotoNote>> getPhotoNotes({String? transactionId});
+
+  /// Chi tiết một ảnh, kèm bytes để hiển thị.
+  Future<PhotoNote> fetchPhotoNote(String id);
+
+  /// Gắn một ảnh mới vào giao dịch. Trả bản đã lưu.
+  Future<PhotoNote> addPhotoNote({
+    required String transactionId,
+    required Uint8List bytes,
+    required String mime,
+    String? caption,
+    DateTime? takenAt,
+  });
+
+  /// Sửa ghi chú của ảnh (rev+1).
+  Future<PhotoNote> updatePhotoNoteCaption(
+    String id,
+    String caption, {
+    required int rev,
+  });
+
+  Future<void> deletePhotoNote(String id);
 
   List<CategoryItem> get categories;
 

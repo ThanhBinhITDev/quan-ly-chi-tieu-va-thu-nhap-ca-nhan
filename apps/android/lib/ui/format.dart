@@ -32,3 +32,19 @@ String formatMoneyShort(int amount) {
       : value.toStringAsFixed(1).replaceAll('.', ',');
   return '$sign$text tr';
 }
+
+/// Nhãn ngày cho dòng thời gian ảnh: "Hôm nay", "Hôm qua", "21/11", hoặc
+/// "21/11/2025" khi khác năm — sổ ảnh có thể kéo dài nhiều năm nên chỉ ghi
+/// ngày/tháng sẽ nhập nhằng.
+String formatDayLabel(DateTime when) {
+  final local = when.toLocal();
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(local.year, local.month, local.day);
+  final diff = today.difference(day).inDays;
+  if (diff == 0) return 'Hôm nay';
+  if (diff == 1) return 'Hôm qua';
+  final dm = '${day.day.toString().padLeft(2, '0')}/'
+      '${day.month.toString().padLeft(2, '0')}';
+  return day.year == today.year ? dm : '$dm/${day.year}';
+}

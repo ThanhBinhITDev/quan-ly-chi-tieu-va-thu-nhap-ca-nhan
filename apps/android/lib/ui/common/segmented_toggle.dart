@@ -2,19 +2,19 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:android/ui/theme.dart';
 
-/// Nút chuyển hai chế độ dạng viên thuốc, đặt trong AppBar.
+/// Nút chuyển chế độ dạng viên thuốc, đặt trong AppBar.
 ///
 /// Không dùng `SegmentedButton` của M3: nó có chiều cao tối thiểu 40px và
-/// padding ngang lớn, nhét hai nhãn tiếng Việt vào AppBar là tràn tiêu đề.
+/// padding ngang lớn, nhét vài nhãn tiếng Việt vào AppBar là tràn tiêu đề.
 class SegmentedToggle extends StatelessWidget {
   const SegmentedToggle({
     super.key,
     required this.value,
     required this.segments,
     required this.onChanged,
-  }) : assert(segments.length == 2, 'Chỉ hỗ trợ hai chế độ');
+  }) : assert(segments.length >= 2, 'Cần ít nhất hai chế độ');
 
-  /// 0 hoặc 1 — chỉ số của đoạn đang chọn.
+  /// Chỉ số của đoạn đang chọn, tính từ 0.
   final int value;
   final List<String> segments;
   final ValueChanged<int> onChanged;

@@ -34,7 +34,9 @@ class FakeBackend implements HttpClientAdapter {
     List<Map<String, dynamic>>? goals,
     List<Map<String, dynamic>>? budgets,
     Map<String, int>? expenseByCategory,
-  }) : wallets = wallets ?? [_defaultWallet()],
+    List<Map<String, dynamic>>? photoNotes,
+  }) : photoNotes = photoNotes ?? [],
+       wallets = wallets ?? [_defaultWallet()],
        expenseByCategory = expenseByCategory ?? {},
        budgets = budgets ?? [_defaultBudget(budgetTotal)],
        categories = categories ?? [_defaultCategory()],
@@ -86,6 +88,13 @@ class FakeBackend implements HttpClientAdapter {
 
   /// Chi tiêu theo danh mục để hũ danh mục có số riêng.
   final Map<String, int> expenseByCategory;
+
+  /// Ảnh ghi chú. Ảnh **luôn** thuộc một giao dịch, đúng như ràng buộc NOT
+  /// NULL ở bảng `photo_notes`.
+  final List<Map<String, dynamic>> photoNotes;
+
+  /// Body của lần POST ảnh gần nhất, để khẳng định đúng hợp đồng.
+  Map<String, dynamic>? lastPhotoBody;
 
   Map<String, int> get _expenseByCategory => expenseByCategory;
 
@@ -190,6 +199,69 @@ class FakeBackend implements HttpClientAdapter {
         return _json({'ok': true});
       }
       return _json(transactions[index]);
+    }
+
+    // Ảnh ghi chú: danh sách, chi tiết (kèm bytes), tạo, sửa, xoá.
+    if (path == '/v1/photo-notes' || path.startsWith('/v1/photo-notes/')) {
+      if (path == '/v1/photo-notes') {
+        if (options.method == 'POST') {
+          final body = (options.data as Map).cast<String, dynamic>();
+          lastPhotoBody = body;
+          final created = {
+            ...body,
+            // Danh sách chỉ trả cờ, bytes chỉ ở endpoint chi tiết.
+            'photo_base64': null,
+            'has_photo': body['photo_base64'] != null,
+            'taken_at': _nowIso(),
+            'taken_on': _todayIso(),
+            'rev': 1,
+            'deleted_at': null,
+          };
+          photoNotes.insert(0, created);
+          return _json(created);
+        }
+        final txFilter = options.queryParameters['transaction_id'];
+        final rows = txFilter == null
+            ? photoNotes
+            : photoNotes.where((p) => p['transaction_id'] == txFilter).toList();
+        // API thật bọc danh sách trong `{items: [...]}` — trả mảng trần thì
+        // test xanh mà app thật treo ở trạng thái tải.
+        return _json({
+          'items': [
+            for (final row in rows)
+              {
+                ...row,
+                // Server thật không trả bytes trong danh sách.
+                'photo_base64': null,
+                'has_photo': true,
+              },
+          ],
+        });
+      }
+
+      final id = path.substring('/v1/photo-notes/'.length);
+      final index = photoNotes.indexWhere((p) => p['id'] == id);
+      if (index < 0) {
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy ảnh'},
+        }, status: 404);
+      }
+      if (options.method == 'DELETE') {
+        photoNotes.removeAt(index);
+        return _json({'ok': true});
+      }
+      if (options.method == 'PATCH') {
+        final body = (options.data as Map).cast<String, dynamic>();
+        final current = photoNotes[index];
+        photoNotes[index] = {
+          ...current,
+          for (final entry in body.entries)
+            if (entry.key != 'rev') entry.key: entry.value,
+          'rev': ((current['rev'] as num?) ?? 1).toInt() + 1,
+        };
+        return _json(photoNotes[index]);
+      }
+      return _json(photoNotes[index]);
     }
 
     switch (path) {

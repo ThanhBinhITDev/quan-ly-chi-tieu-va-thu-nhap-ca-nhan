@@ -11,6 +11,7 @@ import 'package:android/ui/common/segmented_toggle.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 import 'package:android/ui/transactions/calendar_tab.dart';
+import 'package:android/ui/transactions/photo_journal_screen.dart';
 
 class TransactionsTab extends ConsumerStatefulWidget {
   const TransactionsTab({super.key});
@@ -21,7 +22,10 @@ class TransactionsTab extends ConsumerStatefulWidget {
 
 class _TransactionsTabState extends ConsumerState<TransactionsTab> {
   TransactionType? _filter;
-  bool _calendarMode = false;
+
+  /// 0 = danh sách, 1 = lịch, 2 = sổ ảnh. Ba chế độ chứ không thêm tab thứ
+  /// năm: `NavigationBar` M3 phải đúng bốn tab.
+  int _mode = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -30,25 +34,32 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
       appBar: AppBar(
         // Đổi tiêu đề theo chế độ: đang xem lịch mà vẫn đề "Giao dịch" thì
         // người dùng không biết màn này là sổ ảnh hay danh sách.
-        title: Text(
-          _calendarMode ? AppStrings.calendarTitle : AppStrings.tabTransactions,
-        ),
+        title: Text(switch (_mode) {
+          1 => AppStrings.calendarTitle,
+          2 => AppStrings.photoAllTitle,
+          _ => AppStrings.tabTransactions,
+        }),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: AppSpace.md),
             child: SegmentedToggle(
-              value: _calendarMode ? 1 : 0,
-              segments: const [AppStrings.viewList, AppStrings.viewCalendar],
-              onChanged: (value) =>
-                  setState(() => _calendarMode = value == 1),
+              value: _mode,
+              segments: const [
+                AppStrings.viewList,
+                AppStrings.viewCalendar,
+                AppStrings.viewPhotos,
+              ],
+              onChanged: (value) => setState(() => _mode = value),
             ),
           ),
         ],
       ),
       // Lịch tự quản lý trạng thái tải của nó và không dùng bộ lọc chi/thu,
       // nên tách hẳn nhánh thay vì nhét điều kiện vào giữa `when`.
-      body: _calendarMode
+      body: _mode == 1
           ? const CalendarView()
+          : _mode == 2
+          ? const PhotoJournalScreen()
           : async.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(

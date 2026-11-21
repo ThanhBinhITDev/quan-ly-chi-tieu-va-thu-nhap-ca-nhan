@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +8,7 @@ import 'package:android/core/error/app_exception.dart';
 import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/common/transaction_photos.dart';
 import 'package:android/ui/format.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
@@ -604,41 +603,6 @@ class _TransactionDetailSheet extends ConsumerStatefulWidget {
 
 class _TransactionDetailSheetState
     extends ConsumerState<_TransactionDetailSheet> {
-  TransactionItem? _detailed;
-  bool _loadingReceipt = false;
-  bool _receiptFailed = false;
-
-  bool get _needsReceiptFetch =>
-      widget.item.hasReceipt && widget.item.receiptBase64 == null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (_needsReceiptFetch) {
-      _loadingReceipt = true;
-      _loadReceipt();
-    }
-  }
-
-  Future<void> _loadReceipt() async {
-    try {
-      final full = await ref
-          .read(financeRepositoryProvider)
-          .fetchTransaction(widget.item.id);
-      if (!mounted) return;
-      setState(() {
-        _detailed = full;
-        _loadingReceipt = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      // Không có ảnh thì vẫn phải xem được phần còn lại của giao dịch.
-      setState(() {
-        _loadingReceipt = false;
-        _receiptFailed = true;
-      });
-    }
-  }
 
   Future<void> _edit(TransactionItem item) async {
     // Lấy container trước khi đóng sheet: sau `pop` State này bị hủy.
@@ -694,7 +658,7 @@ class _TransactionDetailSheetState
 
   @override
   Widget build(BuildContext context) {
-    final item = _detailed ?? widget.item;
+    final item = widget.item;
     final isIncome = item.type == TransactionType.income;
     final sign = isIncome ? '+' : '-';
     final color = isIncome ? AppColors.income : AppColors.expense;
@@ -741,15 +705,13 @@ class _TransactionDetailSheetState
                 _detailRow(AppStrings.txIncomeSourceLabel, item.incomeSource!),
               if (item.note.isNotEmpty)
                 _detailRow(AppStrings.noteLabel, item.note),
-              if (item.hasReceipt) ...[
-                const SizedBox(height: AppSpace.md),
-                Text(
-                  AppStrings.txReceiptLabel,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: AppSpace.sm),
-                _receipt(item),
-              ],
+              const SizedBox(height: AppSpace.md),
+              Text(
+                AppStrings.photoSectionTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppSpace.sm),
+              TransactionPhotos(transactionId: item.id),
               const SizedBox(height: AppSpace.lg),
               Row(
                 children: [
@@ -780,49 +742,6 @@ class _TransactionDetailSheetState
     );
   }
 
-  Widget _receipt(TransactionItem item) {
-    if (_receiptFailed) {
-      return Text(
-        AppStrings.txReceiptLoadFailed,
-        style: const TextStyle(color: AppColors.textSecondary),
-      );
-    }
-    final data = item.receiptBase64;
-    if (_loadingReceipt || data == null || data.isEmpty) {
-      return const SizedBox(
-        height: 220,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-    Uint8List bytes;
-    try {
-      bytes = base64Decode(data);
-    } catch (_) {
-      return Text(
-        AppStrings.txReceiptLoadFailed,
-        style: const TextStyle(color: AppColors.textSecondary),
-      );
-    }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Image.memory(
-        bytes,
-        height: 220,
-        width: double.infinity,
-        fit: BoxFit.cover,
-        // Ảnh hỏng thì hiện lời nhắc, không để Flutter vẽ chuỗi ngoại lệ.
-        errorBuilder: (_, _, _) => SizedBox(
-          height: 120,
-          child: Center(
-            child: Text(
-              AppStrings.txReceiptLoadFailed,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 Widget _detailRow(String label, String value) {
