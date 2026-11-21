@@ -1,25 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose';
 
 export interface AuthUser {
   id: string;
   email?: string;
+  phone?: string;
   role?: string;
 }
 
 /**
  * Xác thực Bearer JWT do Supabase Auth phát hành.
  *
- * - Ưu tiên xác thực chữ ký qua JWKS: `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
- * - Hỗ trợ `SUPABASE_JWT_SECRET` (HS256) cho môi trường local/self-host
- * - Nếu chưa cấu hình gì, chỉ chấp nhận ở chế độ dev (`AUTH_ALLOW_UNVERIFIED=true`)
- *   để không vô tình mở API ở production.
+ * - Ưu tiên `SUPABASE_JWT_SECRET` (HS256) khi chạy local/self-host
+ * - Nếu không, xác thực chữ ký qua JWKS: `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
+ * - Không cấu hình cả hai: **từ chối mọi token**. Không có chế độ "bỏ qua
+ *   chữ ký" nào, kể cả khi đặt biến môi trường.
  *
  * Server không bao giờ tin `user_id` do client gửi; luôn lấy từ `sub` của token.
  */
 @Injectable()
 export class SupabaseAuthService {
-  private readonly logger = new Logger(SupabaseAuthService.name);
   private jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
 
   constructor() {
@@ -40,6 +40,7 @@ export class SupabaseAuthService {
     return {
       id: sub,
       email: typeof payload.email === 'string' ? payload.email : undefined,
+      phone: typeof payload.phone === 'string' ? payload.phone : undefined,
       role: typeof payload.role === 'string' ? payload.role : undefined,
     };
   }
@@ -50,6 +51,7 @@ export class SupabaseAuthService {
       const { payload } = await jwtVerify(
         token,
         new TextEncoder().encode(secret),
+        { algorithms: ['HS256'] },
       );
       return payload;
     }
@@ -57,24 +59,9 @@ export class SupabaseAuthService {
       const { payload } = await jwtVerify(token, this.jwks);
       return payload;
     }
-    if (process.env.AUTH_ALLOW_UNVERIFIED === 'true') {
-      this.logger.warn(
-        'AUTH_ALLOW_UNVERIFIED=true: chỉ dùng cho phát triển, không dùng ở production.',
-      );
-      const { payload } = await jwtVerify(token, new TextEncoder().encode('dev'), {
-        algorithms: ['HS256'],
-      }).catch(() => {
-        // Không xác thực được chữ ký: đọc payload để test local.
-        const parts = token.split('.');
-        if (parts.length !== 3) throw new Error('Token không hợp lệ');
-        return {
-          payload: JSON.parse(
-            Buffer.from(parts[1], 'base64url').toString('utf8'),
-          ) as JWTPayload,
-        };
-      });
-      return payload;
-    }
+    // Không có cách xác thực nào: từ chối, không đoán payload.
+    // (Trước đây có nhánh AUTH_ALLOW_UNVERIFIED đọc payload mà không kiểm
+    // chữ ký, khiến token ký bằng bất kỳ secret nào cũng qua được — đã bỏ.)
     throw new Error('Chưa cấu hình SUPABASE_URL hoặc SUPABASE_JWT_SECRET');
   }
 }

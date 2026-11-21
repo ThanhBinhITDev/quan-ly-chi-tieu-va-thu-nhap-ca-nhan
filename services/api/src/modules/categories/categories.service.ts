@@ -15,10 +15,12 @@ export interface CategoryRow {
   is_system: boolean;
   sort_order: number;
   rev: number;
+  /** null khi chưa xoá; ISO string khi đã xoá mềm. */
+  deleted_at?: string | null;
 }
 
 const COLUMNS = `id, user_id, name, type, icon, color, parent_id, is_system,
-       sort_order, rev`;
+       sort_order, rev, deleted_at`;
 
 @Injectable()
 export class CategoriesService {
@@ -28,21 +30,25 @@ export class CategoriesService {
    * Danh mục hệ thống (user_id IS NULL) dùng chung cho mọi người,
    * cộng danh mục riêng của người dùng.
    */
-  async list(userId: string, type?: string): Promise<CategoryRow[]> {
+  async list(
+    userId: string,
+    type?: string,
+    includeDeleted = false,
+  ): Promise<CategoryRow[]> {
     const params: unknown[] = [userId];
     let filter = '';
     if (type) {
       params.push(type);
       filter = ` AND type = $${params.length}`;
     }
-    return this.db.query<CategoryRow>(
+    const rows = await this.db.query<CategoryRow>(
       `SELECT ${COLUMNS}
          FROM categories
-        WHERE (user_id IS NULL OR user_id = $1)
-          AND deleted_at IS NULL${filter}
+        WHERE (user_id IS NULL OR user_id = $1)${includeDeleted ? '' : ' AND deleted_at IS NULL'}${filter}
         ORDER BY is_system DESC, sort_order, name`,
       params,
     );
+    return rows.map(toCategory);
   }
 
   async create(userId: string, dto: CreateCategoryDto): Promise<CategoryRow> {
@@ -92,7 +98,7 @@ export class CategoriesService {
       ],
     );
     if (!row) throw new ApiError('INTERNAL', 'Không tạo được danh mục');
-    return row;
+    return toCategory(row);
   }
 
   async update(
@@ -130,18 +136,64 @@ export class CategoriesService {
       ],
     );
     if (!row) throw new ApiError('NOT_FOUND', 'Không tìm thấy danh mục');
+    return toCategory(row);
+  }
+
+  /**
+   * Xoá mềm danh mục riêng của người dùng. Danh mục hệ thống (user_id NULL)
+   * không xoá được vì ảnh hưởng mọi người.
+   */
+  async remove(
+    userId: string,
+    id: string,
+    rev?: number,
+  ): Promise<CategoryRow> {
+    const current = await this.findById(userId, id);
+    if (!current) throw new ApiError('NOT_FOUND', 'Không tìm thấy danh mục');
+    if (current.is_system) {
+      throw new ApiError('FORBIDDEN', 'Danh mục hệ thống không xoá được');
+    }
+    if (rev !== undefined && rev !== current.rev + 1) {
+      throw new ApiError('SYNC_CONFLICT', 'Phiên bản không khớp', {
+        details: { server_rev: current.rev, server_data: current },
+      });
+    }
+
+    await this.db.query(
+      `UPDATE categories
+          SET deleted_at = now(), rev = rev + 1
+        WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+      [id, userId],
+    );
+    const row = await this.findById(userId, id, true);
+    if (!row) throw new ApiError('NOT_FOUND', 'Không tìm thấy danh mục');
     return row;
   }
 
   private async findById(
     userId: string,
     id: string,
+    includeDeleted = false,
   ): Promise<CategoryRow | null> {
-    return this.db.one<CategoryRow>(
+    const row = await this.db.one<CategoryRow>(
       `SELECT ${COLUMNS}
          FROM categories
-        WHERE id = $1 AND (user_id IS NULL OR user_id = $2) AND deleted_at IS NULL`,
+        WHERE id = $1 AND (user_id IS NULL OR user_id = $2)${
+          includeDeleted ? '' : ' AND deleted_at IS NULL'
+        }`,
       [id, userId],
     );
+    return row ? toCategory(row) : null;
   }
+}
+
+function toCategory(row: CategoryRow): CategoryRow {
+  // Postgres trả timestamptz thành Date; API luôn trả ISO string để client
+  // parse được (Dart: DateTime.parse).
+  return {
+    ...row,
+    deleted_at: row.deleted_at
+      ? new Date(row.deleted_at as unknown as string).toISOString()
+      : null,
+  };
 }

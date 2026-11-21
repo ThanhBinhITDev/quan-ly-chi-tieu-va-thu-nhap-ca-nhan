@@ -1,3 +1,5 @@
+import { createHmac } from 'node:crypto';
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
@@ -10,22 +12,57 @@ import { FakeDatabase } from './fake-database.js';
 
 const USER = '11111111-1111-4111-8111-111111111111';
 const WALLET = '22222222-2222-4222-8222-222222222222';
+const OTHER_WALLET = '33333333-3333-4333-8333-333333333333';
+const CATEGORY = 'aaaa1111-1111-4111-8111-111111111111';
 
-/** Token HS256 ký bằng 'dev'; chỉ dùng cho test. */
-function devToken(): string {
+/** Dòng ví như `WalletsService.COLUMNS` trả về (đã có `balance`). */
+function walletRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: WALLET,
+    name: 'Tiền mặt',
+    type: 'cash',
+    initial_balance: '0',
+    balance: '0',
+    color: null,
+    icon: null,
+    is_archived: false,
+    rev: 1,
+    deleted_at: null,
+    ...overrides,
+  };
+}
+
+const TEST_SECRET = 'test-secret-khong-dung-production';
+
+/** Ký JWT HS256 thật để API phải xác thực chữ ký như production. */
+function signToken(
+  // Supabase luôn kèm email hoặc phone trong token; API dựa vào đó để tạo
+  // hồ sơ (`users_contact` yêu cầu ít nhất một trong hai).
+  payload: Record<string, unknown> = {
+    sub: USER,
+    role: 'authenticated',
+    email: 'binh@example.com',
+  },
+  secret: string = TEST_SECRET,
+): string {
   const enc = (value: unknown) =>
     Buffer.from(JSON.stringify(value)).toString('base64url');
   const header = enc({ alg: 'HS256', typ: 'JWT' });
-  const payload = enc({ sub: USER, role: 'authenticated' });
-  return `${header}.${payload}.signature-khong-kiem-tra`;
+  const body = enc(payload);
+  const signature = createHmac('sha256', secret)
+    .update(`${header}.${body}`)
+    .digest('base64url');
+  return `${header}.${body}.${signature}`;
 }
+
+const devToken = (): string => signToken();
 
 describe('API (e2e)', () => {
   let app: INestApplication<App>;
   let db: FakeDatabase;
 
   beforeEach(async () => {
-    process.env.AUTH_ALLOW_UNVERIFIED = 'true';
+    process.env.SUPABASE_JWT_SECRET = TEST_SECRET;
     db = new FakeDatabase().on('SELECT 1 AS ok', [{ ok: 1 }]);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -49,7 +86,7 @@ describe('API (e2e)', () => {
 
   afterEach(async () => {
     await app.close();
-    delete process.env.AUTH_ALLOW_UNVERIFIED;
+    delete process.env.SUPABASE_JWT_SECRET;
   });
 
   it('GET /health báo database hoạt động', async () => {
@@ -76,18 +113,8 @@ describe('API (e2e)', () => {
   it('tạo ví hợp lệ với token hợp lệ', async () => {
     db.on('SELECT id, user_id FROM wallets WHERE id', [])
       .on('count(*)', [{ count: '0' }])
-      .on('INSERT INTO wallets', [
-        {
-          id: WALLET,
-          name: 'Tiền mặt',
-          type: 'cash',
-          initial_balance: '0',
-          color: null,
-          icon: null,
-          is_archived: false,
-          rev: 1,
-        },
-      ]);
+      .on('INSERT INTO wallets', [])
+      .on('FROM wallets w', [walletRow()]);
 
     const res = await request(app.getHttpServer())
       .post('/v1/wallets')
@@ -95,7 +122,105 @@ describe('API (e2e)', () => {
       .send({ id: WALLET, name: 'Tiền mặt', type: 'cash' })
       .expect(201);
 
-    expect(res.body).toMatchObject({ id: WALLET, name: 'Tiền mặt' });
+    expect(res.body).toMatchObject({
+      id: WALLET,
+      name: 'Tiền mặt',
+      balance: 0,
+    });
+  });
+
+  it('GET /v1/wallets trả số dư tính từ giao dịch', async () => {
+    db.on('FROM wallets w', [
+      walletRow({ id: WALLET, balance: '1700000' }),
+      walletRow({ id: OTHER_WALLET, type: 'bank', balance: '-100000' }),
+    ]);
+
+    const res = await request(app.getHttpServer())
+      .get('/v1/wallets')
+      .set('Authorization', `Bearer ${devToken()}`)
+      .expect(200);
+
+    expect(res.body).toHaveLength(2);
+    expect(res.body[0]).toMatchObject({ id: WALLET, balance: 1_700_000 });
+    // Truy vấn phải lọc ví đã xoá mềm.
+    expect(db.lastSql).toContain('deleted_at IS NULL');
+  });
+
+  it('GET /v1/wallets/summary tổng hợp số dư theo ví và loại', async () => {
+    db.on('FROM wallets w', [
+      walletRow({ id: WALLET, type: 'cash', balance: '150000' }),
+      walletRow({ id: OTHER_WALLET, type: 'bank', balance: '-50000' }),
+    ]);
+
+    const res = await request(app.getHttpServer())
+      .get('/v1/wallets/summary')
+      .set('Authorization', `Bearer ${devToken()}`)
+      .expect(200);
+
+    expect(res.body.total_balance).toBe(100000);
+    expect(res.body.by_type).toEqual({ cash: 150000, bank: -50000 });
+    expect(res.body.wallets).toHaveLength(2);
+  });
+
+  it('DELETE /v1/wallets/:id xoá mềm và trả deleted_at', async () => {
+    // Đọc lần 1 thấy ví còn sống (rev 1), sau UPDATE đọc lại thấy bản đã xoá.
+    db.query = async <T,>(sql: string) => {
+      db.executed.push(sql);
+      if (sql.includes('UPDATE wallets')) return [] as T[];
+      if (sql.includes('FROM wallets w')) {
+        return [
+          sql.includes('w.deleted_at IS NULL')
+            ? walletRow({ rev: 1 })
+            : walletRow({ rev: 2, deleted_at: '2026-11-20T00:00:00.000Z' }),
+        ] as T[];
+      }
+      return [] as T[];
+    };
+
+    const res = await request(app.getHttpServer())
+      .delete(`/v1/wallets/${WALLET}?rev=2`)
+      .set('Authorization', `Bearer ${devToken()}`)
+      .expect(200);
+
+    expect(res.body.deleted_at).toBe('2026-11-20T00:00:00.000Z');
+    expect(db.executed.some((sql) => sql.includes('deleted_at = now()'))).toBe(
+      true,
+    );
+  });
+
+  it('DELETE /v1/categories/:id xoá mềm danh mục của mình', async () => {
+    const categoryRow = (rev: number, deletedAt: string | null) => ({
+      id: CATEGORY,
+      user_id: USER,
+      name: 'Cà phê',
+      type: 'expense',
+      icon: null,
+      color: null,
+      parent_id: null,
+      is_system: false,
+      sort_order: 0,
+      rev,
+      deleted_at: deletedAt,
+    });
+    db.query = async <T,>(sql: string) => {
+      db.executed.push(sql);
+      if (sql.includes('UPDATE categories')) return [] as T[];
+      if (sql.includes('FROM categories')) {
+        return [
+          sql.includes('deleted_at IS NULL')
+            ? categoryRow(1, null)
+            : categoryRow(2, '2026-11-20T00:00:00.000Z'),
+        ] as T[];
+      }
+      return [] as T[];
+    };
+
+    const res = await request(app.getHttpServer())
+      .delete(`/v1/categories/${CATEGORY}?rev=2`)
+      .set('Authorization', `Bearer ${devToken()}`)
+      .expect(200);
+
+    expect(res.body.deleted_at).toBe('2026-11-20T00:00:00.000Z');
   });
 
   it('báo cáo tháng trả công thức daily_limit đúng', async () => {
