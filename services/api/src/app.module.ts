@@ -7,6 +7,7 @@ import { AuthModule } from './common/auth/auth.module.js';
 import { DatabaseModule } from './common/db/database.module.js';
 import { HealthController } from './common/http/health.controller.js';
 import { MeModule } from './modules/auth/me.module.js';
+import { BudgetJarsModule } from './modules/budget-jars/budget-jars.module.js';
 import { BudgetsModule } from './modules/budgets/budgets.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { DevModule } from './modules/dev/dev.module.js';
@@ -40,6 +41,7 @@ import { WalletsModule } from './modules/wallets/wallets.module.js';
     CategoriesModule,
     TransactionsModule,
     BudgetsModule,
+    BudgetJarsModule,
     ReportsModule,
     DevicesModule,
     GoalsModule,
