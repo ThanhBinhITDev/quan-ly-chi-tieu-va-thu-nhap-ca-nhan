@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsOptional, IsString, Length, MinLength } from 'class-validator';
 
 import { DevLoginService } from './dev-login.service.js';
 
@@ -10,6 +10,13 @@ export class DevLoginDto {
   @IsString()
   @MinLength(1)
   password!: string;
+}
+
+export class DevRegisterDto extends DevLoginDto {
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  display_name?: string;
 }
 
 /**
@@ -30,5 +37,14 @@ export class DevLoginController {
   @Post('login')
   login(@Body() dto: DevLoginDto) {
     return this.devLogin.login(dto.email, dto.password);
+  }
+
+  /**
+   * Tạo tài khoản local để thử luồng đăng ký. Không có trên Supabase Auth:
+   * màn đăng ký thật đi qua `/auth/v1/signup` của Supabase.
+   */
+  @Post('register')
+  register(@Body() dto: DevRegisterDto) {
+    return this.devLogin.register(dto.email, dto.password, dto.display_name);
   }
 }

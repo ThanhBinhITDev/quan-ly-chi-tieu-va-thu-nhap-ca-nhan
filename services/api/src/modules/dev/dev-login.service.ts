@@ -92,6 +92,60 @@ export class DevLoginService {
     };
   }
 
+  /**
+   * Tạo tài khoản local. Chỉ để thử luồng đăng ký của app trên máy dev;
+   * trên Supabase Auth việc này do `/auth/v1/signup` lo, kèm xác nhận email.
+   *
+   * Không nhận mật khẩu của người dùng: cột `users` không có mật khẩu, API
+   * xác thực bằng JWT. Mật khẩu ở đây chỉ là cổng `DEV_LOGIN_PASSWORD`.
+   */
+  async register(
+    email: string,
+    password: string,
+    displayName?: string,
+  ): Promise<DevLoginResult> {
+    this.assertEnabled();
+
+    if (!timingSafeEqual(password, this.password)) {
+      throw new ApiError('UNAUTHENTICATED', 'Email hoặc mật khẩu không đúng');
+    }
+
+    const normalized = email.trim().toLowerCase();
+    const existing = await this.db.one<{ id: string }>(
+      `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`,
+      [normalized],
+    );
+    if (existing) {
+      // Trả cùng mã với đăng nhập sai? Không: người dùng cần biết để đăng nhập.
+      throw new ApiError('VALIDATION_FAILED', 'Email này đã có tài khoản', {
+        field: 'email',
+      });
+    }
+
+    const name = displayName?.trim() || normalized.split('@')[0] || 'Student';
+    const row = await this.db.one<UserRow>(
+      `INSERT INTO users (email, display_name)
+            VALUES ($1, $2)
+         RETURNING id, email, phone, display_name`,
+      [normalized, name],
+    );
+    if (!row) throw new ApiError('INTERNAL', 'Không tạo được tài khoản dev');
+
+    const token = await this.mint(row);
+
+    return {
+      access_token: token,
+      token_type: 'bearer',
+      expires_in: TOKEN_TTL_SECONDS,
+      user: {
+        id: row.id,
+        email: row.email,
+        display_name: row.display_name,
+      },
+      dev_mode: true,
+    };
+  }
+
   private async mint(row: UserRow): Promise<string> {
     const secret = process.env.SUPABASE_JWT_SECRET;
     if (!secret) {
