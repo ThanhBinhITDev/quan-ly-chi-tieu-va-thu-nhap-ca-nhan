@@ -5,6 +5,9 @@
          intent ACTION_IMAGE_CAPTURE của app camera hệ thống, nên app không
          cần quyền camera trực tiếp. Khai báo thừa sẽ khiến Android bắt xin
          quyền vô ích ngay cả khi người dùng chỉ muốn chọn ảnh từ thư viện. -->
+    <!-- Không khai báo android:usesCleartextTraffic ở đây: bản release chỉ gọi
+         HTTPS. Bản debug bật lại trong src/debug/AndroidManifest.xml để gọi
+         http://10.0.2.2:3000 của máy dev. -->
     <application
         android:label="Student Finance"
         android:name="${applicationName}"

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
+import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
 import 'package:android/ui/common/state_views.dart';
@@ -42,6 +43,7 @@ class StatsTab extends ConsumerWidget {
         error: (error, _) => ErrorView(
           message: error.toString(),
           onRetry: () => ref.invalidate(statsProvider),
+          onSignOut: () => ref.read(authControllerProvider.notifier).signOut(),
         ),
         data: (data) {
           // Bộ chọn kỳ luôn hiển thị, kể cả khi kỳ đang xem trống. Nếu ẩn

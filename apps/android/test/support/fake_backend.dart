@@ -77,6 +77,10 @@ class FakeBackend implements HttpClientAdapter {
   /// Body của lần POST giao dịch gần nhất, để kiểm dữ liệu gửi lên.
   Map<String, dynamic>? lastTransactionBody;
 
+  /// Body của lần PATCH giao dịch gần nhất. Tách khỏi [lastTransactionBody]
+  /// để test khẳng định đúng hợp đồng của từng endpoint.
+  Map<String, dynamic>? lastTransactionPatchBody;
+
   /// Body của lần POST/PATCH ngân sách gần nhất.
   Map<String, dynamic>? lastBudgetBody;
 
@@ -155,6 +159,37 @@ class FakeBackend implements HttpClientAdapter {
       return _json({
         'error': {'code': 'INTERNAL', 'message': 'Máy chủ gặp sự cố.'},
       }, status: failStatus);
+    }
+
+    // Chi tiết / sửa / xóa một giao dịch. Đặt trước `switch` vì đường dẫn có id.
+    if (path.startsWith('/v1/transactions/')) {
+      final id = path.substring('/v1/transactions/'.length);
+      final index = transactions.indexWhere((t) => t['id'] == id);
+      if (index < 0) {
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy giao dịch'},
+        }, status: 404);
+      }
+      if (options.method == 'PATCH') {
+        final body = (options.data as Map).cast<String, dynamic>();
+        lastTransactionBody = body;
+        lastTransactionPatchBody = body;
+        final current = transactions[index];
+        transactions[index] = {
+          ...current,
+          // `null` gửi rõ ràng = xóa trắng, giống COALESCE phía server.
+          for (final entry in body.entries)
+            if (entry.key != 'rev') entry.key: entry.value,
+          'rev': ((current['rev'] as num?) ?? 1).toInt() + 1,
+          'updated_at': _nowIso(),
+        };
+        return _json(transactions[index]);
+      }
+      if (options.method == 'DELETE') {
+        transactions.removeAt(index);
+        return _json({'ok': true});
+      }
+      return _json(transactions[index]);
     }
 
     switch (path) {

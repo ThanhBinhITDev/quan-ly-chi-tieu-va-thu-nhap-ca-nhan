@@ -20,25 +20,15 @@ Future<FakeBackend> _pump(WidgetTester tester) async {
 }
 
 Future<void> _openSheet(WidgetTester tester) async {
-  await tester.tap(find.byType(FloatingActionButton));
+  // Shell mới bỏ FAB: tab "Thêm" ở giữa (index 2) mở màn ghi chép.
+  await tester.tap(find.text(AppStrings.tabAdd));
   await tester.pumpAndSettle();
 }
 
-/// Màn ghi chép dài hơn bottom sheet cũ: nút lưu nằm dưới đáy 360x640.
+/// Nút Lưu nằm ở `bottomNavigationBar` nên luôn nhìn thấy; trước đây nó ở
+/// cuối `ListView` và phải cuộn mới bấm được.
 Future<void> _tapSave(WidgetTester tester) async {
-  final button = find.text(AppStrings.recordSaveExpense);
-  await tester.scrollUntilVisible(
-    button,
-    180,
-    scrollable: find
-        .descendant(
-          of: find.byType(RecordTransactionScreen),
-          matching: find.byType(Scrollable),
-        )
-        .first,
-  );
-  await tester.pumpAndSettle();
-  await tester.tap(button);
+  await tester.tap(find.text(AppStrings.recordSaveExpense));
   await tester.pumpAndSettle();
 }
 

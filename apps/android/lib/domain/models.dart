@@ -25,6 +25,13 @@ class TransactionItem {
     required this.wallet,
     required this.note,
     required this.dayLabel,
+    required this.rev,
+    this.occurredAt,
+    this.paymentMethod,
+    this.incomeSource,
+    this.receiptMime,
+    this.receiptBase64,
+    this.hasReceiptFlag = false,
     this.pending = false,
   });
 
@@ -35,7 +42,22 @@ class TransactionItem {
   final String wallet;
   final String note;
   final String dayLabel;
+  final int rev;
+  final DateTime? occurredAt;
+  final String? paymentMethod;
+  final String? incomeSource;
+  final String? receiptMime;
+  final String? receiptBase64;
+  /// Danh sách chỉ biết "có ảnh hay không"; bytes ảnh chỉ có khi tải chi tiết.
+  final bool hasReceiptFlag;
   final bool pending;
+
+  bool get hasReceipt =>
+      hasReceiptFlag ||
+      (receiptBase64 != null &&
+          receiptBase64!.isNotEmpty &&
+          receiptMime != null &&
+          receiptMime!.isNotEmpty);
 }
 
 class BudgetItem {

@@ -1,6 +1,10 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/domain/transaction_input.dart';
@@ -11,28 +15,28 @@ import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
 /// Mở màn ghi chép giao dịch. Trả về true nếu đã lưu thành công.
-///
-/// [preselect] dùng cho hàng icon danh mục nhanh: mở màn với danh mục đã
-/// chọn sẵn để ghi khoản chi chỉ tốn hai lần chạm.
 Future<bool?> openRecordTransaction(
   BuildContext context, {
   CategoryItem? preselect,
+  TransactionItem? editing,
 }) {
   return Navigator.of(context).push<bool>(
     MaterialPageRoute(
-      builder: (_) => RecordTransactionScreen(preselect: preselect),
+      builder: (_) => RecordTransactionScreen(
+        preselect: preselect,
+        editing: editing,
+      ),
     ),
   );
 }
 
-/// Màn ghi chép giao dịch riêng (không phải bottom sheet):
-/// chọn Thu nhập/Chi tiêu, nhập số tiền lớn, chọn danh mục bằng lưới icon,
-/// chọn ví, ghi chú.
+/// Màn ghi chép/sửa giao dịch.
 class RecordTransactionScreen extends ConsumerStatefulWidget {
-  const RecordTransactionScreen({super.key, this.preselect});
+  const RecordTransactionScreen({super.key, this.preselect, this.editing});
 
   /// Danh mục chọn sẵn khi mở từ hàng icon nhanh.
   final CategoryItem? preselect;
+  final TransactionItem? editing;
 
   @override
   ConsumerState<RecordTransactionScreen> createState() =>
@@ -43,23 +47,48 @@ class _RecordTransactionScreenState
     extends ConsumerState<RecordTransactionScreen> {
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  final _incomeSourceController = TextEditingController();
 
   TransactionType _type = TransactionType.expense;
   CategoryItem? _category;
   String? _wallet;
+  DateTime _occurredAt = DateTime.now();
+  String _paymentMethod = 'cash';
+  Uint8List? _receiptBytes;
+  String? _receiptMime;
+  bool _removeExistingReceipt = false;
   bool _saving = false;
   String? _error;
+
+  bool get _isEditing => widget.editing != null;
 
   @override
   void initState() {
     super.initState();
-    _category = widget.preselect;
+    final e = widget.editing;
+    if (e != null) {
+      _type = e.type;
+      _category = e.category.id.isEmpty ? null : e.category;
+      _wallet = e.wallet.isEmpty ? null : e.wallet;
+      _amountController.text = e.amount.toString();
+      _noteController.text = e.note;
+      _occurredAt = e.occurredAt ?? DateTime.now();
+      _paymentMethod = e.paymentMethod ?? 'cash';
+      _incomeSourceController.text = e.incomeSource ?? '';
+      if (e.hasReceipt) {
+        _receiptBytes = base64Decode(e.receiptBase64!);
+        _receiptMime = e.receiptMime;
+      }
+    } else {
+      _category = widget.preselect;
+    }
   }
 
   @override
   void dispose() {
     _amountController.dispose();
     _noteController.dispose();
+    _incomeSourceController.dispose();
     super.dispose();
   }
 
@@ -69,6 +98,105 @@ class _RecordTransactionScreenState
     final wanted = _type == TransactionType.income ? 'income' : 'expense';
     final filtered = all.where((c) => c.type == wanted).toList();
     return filtered.isEmpty ? all : filtered;
+  }
+
+  Future<void> _pickDateTime() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _occurredAt,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_occurredAt),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _occurredAt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    });
+  }
+
+  Future<void> _pickWalletSheet(List<String> wallets, String? current) async {
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final name in wallets)
+              ListTile(
+                title: Text(name),
+                trailing: name == current ? const Icon(LucideIcons.check, color: AppColors.primary) : null,
+                onTap: () => Navigator.pop(ctx, name),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _wallet = picked);
+  }
+
+  Future<void> _pickPaymentSheet() async {
+    const items = [
+      ('cash', AppStrings.paymentCash),
+      ('bank_transfer', AppStrings.paymentTransfer),
+      ('card', AppStrings.paymentCard),
+      ('ewallet', AppStrings.paymentEwallet),
+      ('other', AppStrings.paymentOther),
+    ];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            for (final e in items)
+              ListTile(
+                title: Text(e.$2),
+                trailing: e.$1 == _paymentMethod ? const Icon(LucideIcons.check, color: AppColors.primary) : null,
+                onTap: () => Navigator.pop(ctx, e.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _paymentMethod = picked);
+  }
+
+  Future<void> _pickReceipt() async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 80,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      if (bytes.lengthInBytes > 512 * 1024) {
+        if (!mounted) return;
+        setState(() => _error = AppStrings.recordReceiptTooLarge);
+        return;
+      }
+      final name = picked.name.toLowerCase();
+      final mime = name.endsWith('.png')
+          ? 'image/png'
+          : name.endsWith('.webp')
+              ? 'image/webp'
+              : 'image/jpeg';
+      if (!mounted) return;
+      setState(() {
+        _receiptBytes = bytes;
+        _receiptMime = mime;
+        _removeExistingReceipt = false;
+        _error = null;
+      });
+    } catch (_) {
+      // bỏ qua nếu người dùng hủy/chọn lỗi
+    }
   }
 
   Future<void> _save() async {
@@ -93,17 +221,28 @@ class _RecordTransactionScreenState
       _error = null;
     });
     try {
-      await ref
-          .read(financeRepositoryProvider)
-          .addTransaction(
-            NewTransaction(
-              amount: amount,
-              type: _type,
-              category: category,
-              wallet: wallet,
-              note: _noteController.text.trim(),
-            ),
-          );
+      final input = NewTransaction(
+        amount: amount,
+        type: _type,
+        category: category,
+        wallet: wallet,
+        note: _noteController.text.trim(),
+        occurredAt: _occurredAt,
+        paymentMethod: _paymentMethod,
+        incomeSource: _type == TransactionType.income
+            ? _incomeSourceController.text.trim()
+            : null,
+        receiptBase64: _receiptBytes == null ? null : base64Encode(_receiptBytes!),
+        receiptMime: _receiptMime,
+        removeReceipt: _removeExistingReceipt && _receiptBytes == null,
+      );
+      final repo = ref.read(financeRepositoryProvider);
+      final editing = widget.editing;
+      if (editing != null) {
+        await repo.updateTransaction(editing.id, input, rev: editing.rev);
+      } else {
+        await repo.addTransaction(input);
+      }
       ref.invalidate(transactionsProvider);
       ref.invalidate(dashboardProvider);
       ref.invalidate(budgetProgressProvider);
@@ -129,131 +268,159 @@ class _RecordTransactionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.recordTitle),
+        title: Text(_isEditing ? AppStrings.txEditTitle : AppStrings.recordTitle),
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
           tooltip: AppStrings.backLabel,
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(
           AppSpace.lg,
-          AppSpace.md,
+          AppSpace.sm,
           AppSpace.lg,
-          AppSpace.xxl,
+          AppSpace.lg,
         ),
+        // Lỗi nằm ngay trên nút Lưu: người dùng bấm Lưu ở đáy màn, nên thông
+        // báo phải ở đó. Đặt cuối ListView thì form dài sẽ đẩy nó ra ngoài
+        // vùng nhìn và người dùng tưởng nút không làm gì.
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (_error != null) ...[
+              Text(
+                _error!,
+                style: const TextStyle(color: AppColors.expense, fontSize: 13),
+              ),
+              const SizedBox(height: AppSpace.sm),
+            ],
+            FilledButton(
+              onPressed: _saving ? null : _save,
+              style: FilledButton.styleFrom(
+                backgroundColor: accent,
+                minimumSize: const Size.fromHeight(52),
+              ),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _isEditing
+                          ? AppStrings.txSaveChanges
+                          : (isExpense
+                                ? AppStrings.recordSaveExpense
+                                : AppStrings.recordSaveIncome),
+                    ),
+            ),
+          ],
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.xl),
         children: [
           _TypePicker(
             type: _type,
             onChanged: (value) => setState(() {
               _type = value;
-              // Danh mục đã chọn thuộc loại cũ, bỏ để không lưu sai loại.
               _category = null;
               _error = null;
             }),
           ),
-          const SizedBox(height: AppSpace.xl),
+          const SizedBox(height: AppSpace.lg),
           _AmountField(
             controller: _amountController,
             accent: accent,
-            onClear: () => setState(() {
-              _amountController.clear();
-              _error = null;
-            }),
-          ),
-          const SizedBox(height: AppSpace.xl),
-          Text(
-            AppStrings.recordCategoryTitle,
-            style: Theme.of(context).textTheme.titleMedium,
+            onClear: () => setState(() { _amountController.clear(); _error = null; }),
           ),
           const SizedBox(height: AppSpace.md),
+          _QuickMetaRow(
+            occurredAt: _occurredAt,
+            wallet: wallet,
+            paymentMethod: _paymentMethod,
+            onPickDate: _pickDateTime,
+            onPickWallet: wallets.isEmpty ? null : () => _pickWalletSheet(wallets, wallet),
+            onPickPayment: () => _pickPaymentSheet(),
+          ),
+          const SizedBox(height: AppSpace.lg),
+          Text(AppStrings.recordCategoryTitle, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSpace.sm),
           if (categories.isEmpty)
-            Text(
-              AppStrings.recordNoCategory,
-              style: Theme.of(context).textTheme.bodyMedium,
-            )
+            Text(AppStrings.recordNoCategory, style: Theme.of(context).textTheme.bodyMedium)
           else
             _CategoryGrid(
               categories: categories,
               selected: _category,
               accent: accent,
-              onPick: (category) => setState(() {
-                _category = category;
-                _error = null;
-              }),
+              onPick: (category) => setState(() { _category = category; _error = null; }),
             ),
-          const SizedBox(height: AppSpace.xl),
-          Text(
-            AppStrings.walletLabel,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpace.sm),
-          if (wallets.isEmpty)
-            Text(
-              AppStrings.pickWallet,
-              style: const TextStyle(color: AppColors.expense, fontSize: 13),
-            )
-          else
-            Wrap(
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.sm,
+          const SizedBox(height: AppSpace.md),
+          Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              title: Text(AppStrings.recordMoreDetails, style: Theme.of(context).textTheme.titleMedium),
+              subtitle: Text(AppStrings.recordMoreDetailsHint, style: Theme.of(context).textTheme.bodySmall),
               children: [
-                for (final name in wallets)
-                  ChoiceChip(
-                    label: Text(name),
-                    selected: wallet == name,
-                    onSelected: (_) => setState(() => _wallet = name),
+                if (!isExpense) ...[
+                  TextField(
+                    controller: _incomeSourceController,
+                    maxLength: 120,
+                    buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.recordIncomeSource,
+                      hintText: AppStrings.recordIncomeSourceHint,
+                      border: OutlineInputBorder(),
+                    ),
                   ),
+                  const SizedBox(height: AppSpace.md),
+                ],
+                TextField(
+                  controller: _noteController,
+                  maxLength: 120,
+                  buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                  decoration: const InputDecoration(
+                    labelText: AppStrings.noteLabel,
+                    helperText: AppStrings.recordNoteHelper,
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _receiptBytes != null
+                      ? Stack(
+                          alignment: Alignment.topRight,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              child: Image.memory(_receiptBytes!, height: 120, width: 160, fit: BoxFit.cover),
+                            ),
+                            IconButton.filledTonal(
+                              onPressed: () => setState(() {
+                                _receiptBytes = null; _receiptMime = null; _removeExistingReceipt = true;
+                              }),
+                              icon: const Icon(LucideIcons.x, size: 16),
+                              tooltip: AppStrings.recordReceiptRemove,
+                            ),
+                          ],
+                        )
+                      : OutlinedButton.icon(
+                          onPressed: _pickReceipt,
+                          icon: const Icon(LucideIcons.paperclip, size: 18),
+                          label: const Text(AppStrings.recordReceiptAdd),
+                        ),
+                ),
+                const SizedBox(height: AppSpace.sm),
               ],
             ),
-          const SizedBox(height: AppSpace.xl),
-          TextField(
-            controller: _noteController,
-            maxLength: 120,
-            // Mặc định Flutter đếm bằng tiếng Anh ("120 characters
-            // remaining"). Bỏ bộ đếm, chỉ nói giới hạn ở nhãn phụ.
-            buildCounter: (
-              _, {
-              required int currentLength,
-              required bool isFocused,
-              int? maxLength,
-            }) =>
-                null,
-            decoration: const InputDecoration(
-              labelText: AppStrings.noteLabel,
-              helperText: AppStrings.recordNoteHelper,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: AppSpace.sm),
-            Text(
-              _error!,
-              style: const TextStyle(color: AppColors.expense, fontSize: 13),
-            ),
-          ],
-          const SizedBox(height: AppSpace.lg),
-          FilledButton(
-            onPressed: _saving ? null : _save,
-            style: FilledButton.styleFrom(
-              backgroundColor: accent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-            child: _saving
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(
-                    isExpense
-                        ? AppStrings.recordSaveExpense
-                        : AppStrings.recordSaveIncome,
-                  ),
           ),
         ],
       ),
@@ -504,4 +671,126 @@ class _CategoryGrid extends StatelessWidget {
 String amountPreview(String raw) {
   final parsed = parseAmount(raw);
   return parsed == null ? '' : formatMoney(parsed);
+}
+
+class _QuickMetaRow extends StatelessWidget {
+  const _QuickMetaRow({
+    required this.occurredAt,
+    required this.wallet,
+    required this.paymentMethod,
+    required this.onPickDate,
+    required this.onPickWallet,
+    required this.onPickPayment,
+  });
+
+  final DateTime occurredAt;
+  final String? wallet;
+  final String paymentMethod;
+  final VoidCallback onPickDate;
+  final VoidCallback? onPickWallet;
+  final VoidCallback onPickPayment;
+
+  @override
+  Widget build(BuildContext context) {
+    final date =
+        '${occurredAt.day.toString().padLeft(2, '0')}/${occurredAt.month.toString().padLeft(2, '0')}/${occurredAt.year} '
+        '${occurredAt.hour.toString().padLeft(2, '0')}:${occurredAt.minute.toString().padLeft(2, '0')}';
+    final paymentLabel = AppStrings.paymentMethodLabel(paymentMethod);
+    final walletLabel = wallet ?? AppStrings.pickWallet;
+    return Column(
+      children: [
+        _MetaTile(
+          icon: LucideIcons.calendarClock,
+          label: 'Thời gian',
+          value: date,
+          onTap: onPickDate,
+        ),
+        const SizedBox(height: AppSpace.sm),
+        _MetaTile(
+          icon: LucideIcons.wallet,
+          label: AppStrings.recordWalletTileLabel,
+          value: walletLabel,
+          onTap: onPickWallet,
+        ),
+        const SizedBox(height: AppSpace.sm),
+        _MetaTile(
+          icon: LucideIcons.creditCard,
+          label: AppStrings.recordPaymentMethodTile,
+          value: paymentLabel,
+          onTap: onPickPayment,
+        ),
+      ],
+    );
+  }
+}
+
+class _MetaTile extends StatelessWidget {
+  const _MetaTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpace.md, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.textSecondary),
+            const SizedBox(width: AppSpace.sm),
+            // Nhãn "Phương thức thanh toán" dài hơn 302px của màn 360dp khi
+            // cộng thêm icon và giá trị, nên cả hai vế phải co được.
+            Flexible(
+              flex: 4,
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpace.md),
+            Flexible(
+              flex: 5,
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 2),
+            const Icon(
+              LucideIcons.chevronRight,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

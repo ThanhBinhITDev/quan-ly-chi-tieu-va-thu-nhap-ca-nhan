@@ -174,6 +174,35 @@ class FinanceApi {
     return TransactionDto.fromJson(json);
   }
 
+  /// Chi tiết một giao dịch — bản duy nhất có `receipt_base64`.
+  Future<TransactionDto> transaction(String id) async {
+    final json = await _client.get<Map<String, dynamic>>('/v1/transactions/$id');
+    return TransactionDto.fromJson(json);
+  }
+
+  Future<TransactionDto> updateTransaction(
+    String id,
+    Map<String, dynamic> body,
+  ) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/transactions/$id',
+      data: body,
+    );
+    return TransactionDto.fromJson(json);
+  }
+
+  /// Xóa mềm: server yêu cầu PATCH deleted_at + rev+1.
+  Future<TransactionDto> deleteTransaction(String id, {required int rev}) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/transactions/$id',
+      data: {
+        'rev': rev + 1,
+        'deleted_at': DateTime.now().toUtc().toIso8601String(),
+      },
+    );
+    return TransactionDto.fromJson(json);
+  }
+
   Future<List<BudgetDto>> budgets({bool active = false}) async {
     final json = await _client.get<List<dynamic>>(
       '/v1/budgets',

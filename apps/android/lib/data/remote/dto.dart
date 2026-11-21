@@ -175,6 +175,12 @@ class TransactionDto {
     this.toWalletId,
     this.note,
     this.occurredOn,
+    this.source,
+    this.paymentMethod,
+    this.incomeSource,
+    this.receiptMime,
+    this.receiptBase64,
+    this.hasReceiptFlag = false,
     this.deletedAt,
   });
 
@@ -189,6 +195,12 @@ class TransactionDto {
         toWalletId: json['to_wallet_id'] as String?,
         note: json['note'] as String?,
         occurredOn: json['occurred_on'] as String?,
+        source: json['source'] as String?,
+        paymentMethod: json['payment_method'] as String?,
+        incomeSource: json['income_source'] as String?,
+        receiptMime: json['receipt_mime'] as String?,
+        receiptBase64: json['receipt_base64'] as String?,
+        hasReceiptFlag: json['has_receipt'] as bool? ?? false,
         deletedAt: json['deleted_at'] == null
             ? null
             : DateTime.parse(json['deleted_at'] as String),
@@ -204,9 +216,18 @@ class TransactionDto {
   final String? toWalletId;
   final String? note;
   final String? occurredOn;
+  final String? source;
+  final String? paymentMethod;
+  final String? incomeSource;
+  final String? receiptMime;
+  final String? receiptBase64;
+  /// Danh sách chỉ trả cờ này, không trả bytes ảnh.
+  final bool hasReceiptFlag;
   final DateTime? deletedAt;
 
   bool get isDeleted => deletedAt != null;
+  bool get hasReceipt =>
+      hasReceiptFlag || (receiptBase64 != null && receiptMime != null);
 }
 
 class BudgetDto {

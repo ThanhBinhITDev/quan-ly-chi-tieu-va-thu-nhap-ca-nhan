@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:android/data/remote/dto.dart';
 import 'package:android/ui/budget/budget_sheet.dart';
 import 'package:android/providers.dart';
+import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/state_views.dart';
 import 'package:android/ui/format.dart';
@@ -27,6 +28,7 @@ class BudgetTab extends ConsumerWidget {
         error: (error, _) => ErrorView(
           message: error.toString(),
           onRetry: () => ref.invalidate(budgetProgressProvider),
+          onSignOut: () => ref.read(authControllerProvider.notifier).signOut(),
         ),
         data: (items) {
           if (items.isEmpty) {

@@ -18,6 +18,7 @@ class ApiClient {
     AuthApi? authApi,
     Dio? dio,
     this.forcedToken,
+    this.onUnauthenticated,
   })  : _store = store,
         _authApi = authApi ?? AuthApi(store: store),
         _dio = dio ??
@@ -55,8 +56,12 @@ class ApiClient {
               handler.resolve(response);
               return;
             } catch (_) {
-              // Làm mới thất bại: để lỗi 401 đi tiếp, UI sẽ đưa về đăng nhập.
+              await _store.clear();
+              await onUnauthenticated?.call();
             }
+          } else if (isAuthError) {
+            await _store.clear();
+            await onUnauthenticated?.call();
           }
           handler.next(error);
         },
@@ -71,6 +76,9 @@ class ApiClient {
   /// Token tiêm tường minh cho dev (xem `AppConfig.devAccessToken`).
   /// Có giá trị thì bỏ qua secure storage, không đọc/ghi gì thêm.
   final String? forcedToken;
+
+  /// Gọi khi phiên không còn hợp lệ để app quay về màn đăng nhập.
+  final Future<void> Function()? onUnauthenticated;
 
   Future<String?> _validAccessToken() async {
     if (forcedToken != null && forcedToken!.isNotEmpty) return forcedToken;
@@ -99,7 +107,8 @@ class ApiClient {
       // Token dev không gia hạn được; gọi lại API sẽ ra lỗi 401 thật.
       throw const AppException(
         code: ApiErrorCode.unauthenticated,
-        message: 'Token dev không có refresh token.',
+        message:
+            'Token dev đã hết hạn hoặc không hợp lệ. Đăng nhập lại hoặc chạy lại với DEV_ACCESS_TOKEN mới.',
       );
     }
     final session = await _store.read();

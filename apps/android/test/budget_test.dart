@@ -17,7 +17,9 @@ Future<FakeBackend> _openBudgetTab(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(testApp(fake));
   await tester.pumpAndSettle();
-  await tester.tap(find.text(AppStrings.tabBudget).first);
+  await tester.tap(find.text(AppStrings.tabAccount).last);
+  await tester.pumpAndSettle();
+  await tester.tap(find.textContaining(AppStrings.tabBudget).last);
   await tester.pumpAndSettle();
   return fake;
 }

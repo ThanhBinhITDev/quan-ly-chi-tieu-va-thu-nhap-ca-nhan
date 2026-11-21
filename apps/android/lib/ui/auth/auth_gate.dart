@@ -3,10 +3,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/app.dart';
-import 'package:android/core/config/app_config.dart';
 import 'package:android/core/error/app_exception.dart';
 import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/auth/animated_background.dart';
+import 'package:android/ui/auth/app_logo.dart';
+import 'package:android/ui/auth/register_screen.dart';
 import 'package:android/ui/legal/consent_checkbox.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
@@ -58,9 +59,7 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  final _displayName = TextEditingController();
 
-  bool _isSignUp = false;
   bool _obscure = true;
   bool _consent = false;
   bool _consentError = false;
@@ -71,12 +70,10 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
   void dispose() {
     _email.dispose();
     _password.dispose();
-    _displayName.dispose();
     super.dispose();
   }
 
-  /// Ghi nhận đồng ý điều khoản. Chỉ gọi **sau khi** đăng nhập/đăng ký thành
-  /// công: người dùng đồng ý để dùng dịch vụ, không phải để thử bấm nút.
+  /// Ghi nhận đồng ý điều khoản. Chỉ gọi **sau khi** đăng nhập thành công.
   Future<void> _recordConsent() async {
     if (!_consent) return;
     await recordConsent(ref);
@@ -95,28 +92,10 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
       _consentError = !_consent;
     });
     final formOk = _formKey.currentState?.validate() ?? false;
-    // Chặn cả khi form đúng nhưng chưa đồng ý điều khoản: đây là điều kiện
-    // pháp lý, không phải gợi ý.
     if (!_consent) return;
     if (!formOk) return;
 
     final controller = ref.read(authControllerProvider.notifier);
-    if (_isSignUp) {
-      final hasSession = await controller.signUp(
-        email: _email.text.trim(),
-        password: _password.text,
-        displayName: _displayName.text.trim(),
-      );
-      if (!mounted) return;
-      if (!hasSession) {
-        setState(() => _info = AppStrings.signUpNeedsConfirm);
-        setState(() => _isSignUp = false);
-        return;
-      }
-      await _recordConsent();
-      return;
-    }
-
     await controller.signIn(
       email: _email.text.trim(),
       password: _password.text,
@@ -150,8 +129,6 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 430),
                 child: TweenAnimationBuilder<double>(
-                  // Một lần trượt nhẹ khi mở màn hình: đủ để mắt bắt được
-                  // chuyển cảnh, không đủ để phải chờ.
                   tween: Tween(begin: 0, end: 1),
                   duration: const Duration(milliseconds: 420),
                   curve: Curves.easeOutCubic,
@@ -166,8 +143,6 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
                     formKey: _formKey,
                     email: _email,
                     password: _password,
-                    displayName: _displayName,
-                    isSignUp: _isSignUp,
                     obscure: _obscure,
                     isLoading: isLoading,
                     consent: _consent,
@@ -180,11 +155,7 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
                       if (value) _consentError = false;
                     }),
                     onSubmit: _submit,
-                    onToggleMode: () => setState(() {
-                      _isSignUp = !_isSignUp;
-                      _error = null;
-                      _info = null;
-                    }),
+                    onOpenRegister: () => RegisterScreen.open(context),
                   ),
                 ),
               ),
@@ -196,15 +167,12 @@ class _LoginScreenState extends ConsumerState<_LoginScreen> {
   }
 }
 
-/// Thẻ trắng chứa toàn bộ form. Tách khỏi `_LoginScreen` để phần hiệu ứng
-/// chuyển cảnh ở trên không phải dựng lại mỗi lần gõ phím.
+/// Thẻ trắng chứa toàn bộ form đăng nhập.
 class _LoginCard extends StatelessWidget {
   const _LoginCard({
     required this.formKey,
     required this.email,
     required this.password,
-    required this.displayName,
-    required this.isSignUp,
     required this.obscure,
     required this.isLoading,
     required this.consent,
@@ -212,7 +180,7 @@ class _LoginCard extends StatelessWidget {
     required this.onToggleObscure,
     required this.onConsentChanged,
     required this.onSubmit,
-    required this.onToggleMode,
+    required this.onOpenRegister,
     this.error,
     this.info,
   });
@@ -220,8 +188,6 @@ class _LoginCard extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController email;
   final TextEditingController password;
-  final TextEditingController displayName;
-  final bool isSignUp;
   final bool obscure;
   final bool isLoading;
   final bool consent;
@@ -229,7 +195,7 @@ class _LoginCard extends StatelessWidget {
   final VoidCallback onToggleObscure;
   final ValueChanged<bool> onConsentChanged;
   final VoidCallback onSubmit;
-  final VoidCallback onToggleMode;
+  final VoidCallback onOpenRegister;
   final String? error;
   final String? info;
 
@@ -262,7 +228,7 @@ class _LoginCard extends StatelessWidget {
             const Center(child: AppLogo(size: 76)),
             const SizedBox(height: AppSpace.lg),
             Text(
-              isSignUp ? AppStrings.signUpAction : AppStrings.appTitle,
+              AppStrings.appTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
@@ -271,9 +237,7 @@ class _LoginCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpace.sm),
             Text(
-              isSignUp
-                  ? AppStrings.signUpSubtitle
-                  : AppStrings.loginSubtitle,
+              AppStrings.loginSubtitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
@@ -281,21 +245,6 @@ class _LoginCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpace.xl),
-
-            if (isSignUp) ...[
-              TextFormField(
-                controller: displayName,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: AppStrings.displayNameLabel,
-                  prefixIcon: Icon(LucideIcons.user),
-                ),
-                validator: (value) => (value ?? '').trim().isEmpty
-                    ? AppStrings.nameRequired
-                    : null,
-              ),
-              const SizedBox(height: AppSpace.lg),
-            ],
 
             TextFormField(
               controller: email,
@@ -380,69 +329,15 @@ class _LoginCard extends StatelessWidget {
                         color: Colors.white,
                       ),
                     )
-                  : Text(
-                      isSignUp
-                          ? AppStrings.signUpAction
-                          : AppStrings.signInAction,
-                    ),
+                  : const Text(AppStrings.signInAction),
             ),
 
-            // Dev login chỉ đăng nhập được tài khoản đã có, nên ẩn đăng ký.
-            if (!AppConfig.hasDevLogin) ...[
-              const SizedBox(height: AppSpace.sm),
-              TextButton(
-                onPressed: isLoading ? null : onToggleMode,
-                child: Text(
-                  isSignUp
-                      ? AppStrings.switchToSignIn
-                      : AppStrings.switchToSignUp,
-                ),
-              ),
-            ],
+            const SizedBox(height: AppSpace.sm),
+            TextButton(
+              onPressed: isLoading ? null : onOpenRegister,
+              child: const Text(AppStrings.switchToSignUp),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Logo app. Ảnh là icon 1024×1024 trong `assets/brand/`; nếu asset hỏng thì
-/// hiện biểu tượng ví để màn hình không bị trống.
-class AppLogo extends StatelessWidget {
-  const AppLogo({super.key, this.size = 72});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.26),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.22),
-            blurRadius: size * 0.28,
-            offset: Offset(0, size * 0.09),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(size * 0.26),
-        child: Image.asset(
-          'assets/brand/app-icon-round.png',
-          width: size,
-          height: size,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (_, _, _) => Container(
-            width: size,
-            height: size,
-            color: AppColors.primarySoft,
-            child: Icon(
-              LucideIcons.wallet,
-              size: size * 0.5,
-              color: AppColors.primaryDark,
-            ),
-          ),
         ),
       ),
     );

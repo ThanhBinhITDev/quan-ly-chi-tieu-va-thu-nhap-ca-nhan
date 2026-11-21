@@ -37,18 +37,32 @@ class AuthApi {
   final Dio _apiDio;
 
   /// Đăng nhập qua `POST /v1/dev/login` — endpoint chỉ mở ở server dev.
-  ///
-  /// Dùng khi chưa có anon key Supabase: vẫn đăng nhập được bằng tài khoản
-  /// thật trong DB, thay vì phải xem dữ liệu mẫu.
   Future<AuthSession> signInDev({
     required String email,
     required String password,
   }) async {
+    return _postDev('/v1/dev/login', {
+      'email': email,
+      'password': password,
+    });
+  }
+
+  /// Đăng ký dev local qua `POST /v1/dev/register` — chỉ server dev.
+  Future<AuthSession> signUpDev({
+    required String email,
+    required String password,
+    String? displayName,
+  }) async {
+    return _postDev('/v1/dev/register', {
+      'email': email,
+      'password': password,
+      'display_name': ?displayName,
+    });
+  }
+
+  Future<AuthSession> _postDev(String path, Map<String, dynamic> data) async {
     try {
-      final response = await _apiDio.post<Map<String, dynamic>>(
-        '/v1/dev/login',
-        data: {'email': email, 'password': password},
-      );
+      final response = await _apiDio.post<Map<String, dynamic>>(path, data: data);
       return await _saveSession(response.data ?? const {});
     } on DioException catch (error) {
       final body = error.response?.data;

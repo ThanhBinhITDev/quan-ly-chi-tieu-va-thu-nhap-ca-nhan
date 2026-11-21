@@ -168,10 +168,28 @@ class ApiFinanceRepository implements FinanceRepository {
     return rows.map(_toTransactionItem).toList();
   }
 
-  @override
-  Future<TransactionItem> addTransaction(NewTransaction input) async {
-    if (_walletCache.isEmpty) await warmUp();
+  /// Body cho `POST /v1/transactions`. Chỉ gồm trường `CreateTransactionDto`
+  /// khai báo — server bật `forbidNonWhitelisted` nên gửi thừa là 400.
+  Map<String, dynamic> _createBody(NewTransaction input, String id) {
+    return {
+      'id': id,
+      ..._editableFields(input, isUpdate: false),
+    };
+  }
 
+  /// Body cho `PATCH /v1/transactions/:id`. `UpdateTransactionDto` không có
+  /// `id`; các trường còn lại dùng chung với create.
+  Map<String, dynamic> _updateBody(NewTransaction input, {required int rev}) {
+    return {
+      ..._editableFields(input, isUpdate: true),
+      'rev': rev + 1,
+    };
+  }
+
+  Map<String, dynamic> _editableFields(
+    NewTransaction input, {
+    required bool isUpdate,
+  }) {
     final wallet = _walletCache.firstWhere(
       (w) => w.name == input.wallet,
       orElse: () => _walletCache.first,
@@ -179,27 +197,60 @@ class ApiFinanceRepository implements FinanceRepository {
     final category = _categoryCache.firstWhere(
       (c) => c.name == input.category.name || c.id == input.category.id,
       orElse: () => _categoryCache.isEmpty
-          ? const CategoryDto(
-              id: '',
-              name: '',
-              type: 'expense',
-              isSystem: false,
-              rev: 1,
-            )
+          ? const CategoryDto(id: '', name: '', type: 'expense', isSystem: false, rev: 1)
           : _categoryCache.first,
     );
-
-    final created = await _api.createTransaction({
-      'id': generateUuidV4(),
+    return {
       'wallet_id': wallet.id,
       if (category.id.isNotEmpty) 'category_id': category.id,
       'type': _apiTypeValue(input.type),
       'amount': input.amount,
-      if (input.note.isNotEmpty) 'note': input.note,
-      'occurred_at': DateTime.now().toUtc().toIso8601String(),
-    });
+      'note': input.note,
+      'occurred_at': input.occurredAt.toUtc().toIso8601String(),
+      'payment_method': ?input.paymentMethod,
+      // Gửi `null` rõ ràng = xóa trắng; bỏ hẳn key = giữ nguyên.
+      'income_source': input.incomeSource?.trim().isNotEmpty == true
+          ? input.incomeSource!.trim()
+          : null,
+      'receipt_base64': ?input.receiptBase64,
+      'receipt_mime': ?input.receiptMime,
+      // `remove_receipt` chỉ tồn tại ở DTO sửa; gửi kèm lúc tạo là 400.
+      if (isUpdate && input.removeReceipt) 'remove_receipt': true,
+    };
+  }
 
+  @override
+  Future<TransactionItem> addTransaction(NewTransaction input) async {
+    if (_walletCache.isEmpty) await warmUp();
+    final created = await _api.createTransaction(
+      _createBody(input, generateUuidV4()),
+    );
     return _toTransactionItem(created);
+  }
+
+  @override
+  Future<TransactionItem> updateTransaction(
+    String id,
+    NewTransaction input, {
+    required int rev,
+  }) async {
+    if (_walletCache.isEmpty || _categoryCache.isEmpty) await warmUp();
+    final updated = await _api.updateTransaction(
+      id,
+      _updateBody(input, rev: rev),
+    );
+    return _toTransactionItem(updated);
+  }
+
+  @override
+  Future<TransactionItem> fetchTransaction(String id) async {
+    await _ensureCaches();
+    return _toTransactionItem(await _api.transaction(id));
+  }
+
+  @override
+  Future<void> deleteTransaction(String id, {required int rev}) async {
+    await _api.deleteTransaction(id, rev: rev);
   }
 
   @override
@@ -268,6 +319,13 @@ class ApiFinanceRepository implements FinanceRepository {
       wallet: wallet ?? '',
       note: dto.note ?? '',
       dayLabel: _dayLabel(dto.occurredOn ?? dto.occurredAt.toIso8601String()),
+      rev: dto.rev,
+      occurredAt: dto.occurredAt.toLocal(),
+      paymentMethod: dto.paymentMethod,
+      incomeSource: dto.incomeSource,
+      receiptMime: dto.receiptMime,
+      receiptBase64: dto.receiptBase64,
+      hasReceiptFlag: dto.hasReceiptFlag,
     );
   }
 

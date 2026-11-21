@@ -1,13 +1,12 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
+import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
 import 'package:android/ui/common/state_views.dart';
-import 'package:android/ui/transactions/record_transaction_screen.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
@@ -33,6 +32,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
         error: (error, _) => ErrorView(
           message: error.toString(),
           onRetry: () => ref.invalidate(transactionsProvider),
+          onSignOut: () => ref.read(authControllerProvider.notifier).signOut(),
         ),
         data: (items) {
           if (items.isEmpty) {
@@ -46,7 +46,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
               AppSpace.lg,
               AppSpace.sm,
               AppSpace.lg,
-              AppSpace.fabGutter,
+              AppSpace.xl,
             ),
             children: [
               SingleChildScrollView(
@@ -95,13 +95,6 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab-transactions',
-        onPressed: () => openRecordTransaction(context),
-        tooltip: AppStrings.addTransaction,
-        icon: const Icon(LucideIcons.plus, size: 20),
-        label: const Text(AppStrings.addTransaction),
       ),
     );
   }

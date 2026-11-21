@@ -4,6 +4,10 @@ class AppStrings {
   static const tabTransactions = 'Giao dịch';
   static const tabBudget = 'Ngân sách';
   static const tabStats = 'Thống kê';
+  static const tabAccount = 'Tài khoản';
+  static const tabAdd = 'Thêm';
+  static const accountTitle = 'Tài khoản';
+  static const categoriesTitle = 'Danh mục';
 
   static const scenarioLabel = 'Trạng thái dữ liệu';
 
@@ -77,6 +81,43 @@ class AppStrings {
   static const recordNoteHelper = 'Tối đa 120 ký tự';
   static const recordSaveExpense = 'Lưu khoản chi';
   static const recordSaveIncome = 'Lưu khoản thu';
+  static const recordWhenLabel = 'Thời gian';
+  static const recordPaymentMethod = 'Phương thức';
+  static const recordIncomeSource = 'Nguồn thu';
+  static const recordIncomeSourceHint = 'Ví dụ: Lương, Học bổng, Ba mẹ chuyển';
+  static const recordReceipt = 'Hóa đơn';
+  static const recordReceiptAdd = 'Đính kèm hóa đơn';
+  static const recordReceiptRemove = 'Xóa hóa đơn';
+  static const recordReceiptTooLarge = 'Ảnh hóa đơn quá lớn, chọn ảnh dưới 512KB.';
+  static const paymentCash = 'Tiền mặt';
+  static const paymentTransfer = 'Chuyển khoản';
+  static const paymentCard = 'Thẻ';
+  static const paymentEwallet = 'Ví điện tử';
+  static const paymentOther = 'Khác';
+  static String paymentMethodLabel(String? method) => switch (method) {
+        'cash' => paymentCash,
+        'bank_transfer' => paymentTransfer,
+        'card' => paymentCard,
+        'ewallet' => paymentEwallet,
+        'other' => paymentOther,
+        _ => paymentOther,
+      };
+  static const txDetailTitle = 'Chi tiết giao dịch';
+  static const txEditTitle = 'Sửa giao dịch';
+  static const txSaveChanges = 'Lưu thay đổi';
+  static const txEditAction = 'Sửa';
+  static const txDeleteAction = 'Xóa';
+  static const txDeleteConfirm = 'Xóa giao dịch này? Bạn có thể ghi lại nếu cần.';
+  static const txDeleted = 'Đã xóa giao dịch';
+  static const txIncomeSourceLabel = 'Nguồn thu';
+  static const txTimeLabel = 'Thời gian';
+  static const txReceiptLabel = 'Hóa đơn';
+  static const recordMoreDetails = 'Thêm chi tiết';
+  static const recordMoreDetailsHint = 'Ghi chú, nguồn thu, hóa đơn';
+  static const recordWalletTileLabel = 'Tài khoản/Ví';
+  static const recordPaymentMethodTile = 'Phương thức thanh toán';
+  static const txReceiptLoadFailed = 'Không tải được ảnh hóa đơn.';
+  static const txDeleteFailed = 'Không xóa được giao dịch. Vui lòng thử lại.';
   static const backLabel = 'Quay lại';
   static const emptyHome =
       'Chưa có dữ liệu chi tiêu. Hãy thêm khoản chi đầu tiên.';

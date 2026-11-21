@@ -21,6 +21,9 @@ final apiClientProvider = Provider<ApiClient>((ref) {
     authApi: ref.watch(authApiProvider),
     // Chỉ debug build mới nhận token tiêm từ `--dart-define`.
     forcedToken: kDebugMode ? AppConfig.devAccessToken : null,
+    onUnauthenticated: () async {
+      ref.read(authControllerProvider.notifier).invalidateSession();
+    },
   );
 });
 
@@ -78,7 +81,7 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     );
   }
 
-  /// Trả về `true` nếu Supabase đã trả phiên ngay (không cần xác nhận email).
+  /// Trả về `true` nếu đã có phiên ngay (dev login/Supabase không cần xác nhận).
   Future<bool> signUp({
     required String email,
     required String password,
@@ -86,11 +89,21 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final session = await ref.read(authApiProvider).signUp(
-            email: email,
-            password: password,
-            displayName: displayName,
-          );
+      final api = ref.read(authApiProvider);
+      if (AppConfig.hasDevLogin) {
+        final session = await api.signUpDev(
+          email: email,
+          password: password,
+          displayName: displayName,
+        );
+        state = AsyncValue.data(session);
+        return true;
+      }
+      final session = await api.signUp(
+        email: email,
+        password: password,
+        displayName: displayName,
+      );
       state = AsyncValue.data(session);
       return session != null;
     } catch (error, stackTrace) {
@@ -101,6 +114,12 @@ class AuthController extends AsyncNotifier<AuthSession?> {
 
   Future<void> signOut() async {
     await ref.read(authApiProvider).signOut();
+    state = const AsyncValue.data(null);
+  }
+
+  /// Dùng khi API báo 401 không thể khôi phục (token hết hạn/sai).
+  void invalidateSession() {
+    if (state.value == null) return;
     state = const AsyncValue.data(null);
   }
 }

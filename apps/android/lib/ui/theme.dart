@@ -44,13 +44,6 @@ class AppSpace {
   static const double lg = 16;
   static const double xl = 24;
   static const double xxl = 32;
-
-  /// Chừa chỗ cho FAB mở rộng khi cuộn hết danh sách.
-  ///
-  /// `xxl` (32) không đủ: FAB cao ~48 và cách đáy 16, nên phần tử cuối bị
-  /// che và chạm vào nó lại trúng FAB — đúng lỗi gặp ở nút "Thêm vào mục
-  /// tiêu" của thẻ thử thách tiết kiệm.
-  static const double fabGutter = 96;
 }
 
 ThemeData buildAppTheme() {

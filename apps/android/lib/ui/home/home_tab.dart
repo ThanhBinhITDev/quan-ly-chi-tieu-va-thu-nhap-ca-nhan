@@ -14,8 +14,8 @@ import 'package:android/ui/profile/profile_screen.dart';
 import 'package:android/ui/settings/settings_sheet.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
-import 'package:android/ui/transactions/record_transaction_screen.dart';
 import 'package:android/ui/wallets/wallets_screen.dart';
+import 'package:android/core/session/auth_controller.dart';
 
 class HomeTab extends ConsumerWidget {
   const HomeTab({super.key});
@@ -33,6 +33,7 @@ class HomeTab extends ConsumerWidget {
           error: (error, _) => ErrorView(
             message: error.toString(),
             onRetry: () => ref.invalidate(dashboardProvider),
+            onSignOut: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
           data: (data) {
             final summary = data.summary;
@@ -48,7 +49,7 @@ class HomeTab extends ConsumerWidget {
                   AppSpace.lg,
                   AppSpace.md,
                   AppSpace.lg,
-                  AppSpace.fabGutter,
+                  AppSpace.xl,
                 ),
                 children: [
                   const _HomeHeader(),
@@ -113,7 +114,6 @@ class HomeTab extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: const _HomeFab(),
     );
   }
 }
@@ -326,22 +326,6 @@ class _EmptyRow extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _HomeFab extends StatelessWidget {
-  const _HomeFab();
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      // Mỗi tab giữ một FAB trong IndexedStack; trùng heroTag thì mọi lần
-      // đẩy route mới đều văng "multiple heroes share the same tag".
-      heroTag: 'fab-home',
-      onPressed: () => openRecordTransaction(context),
-      icon: const Icon(LucideIcons.plus, size: 20),
-      label: const Text(AppStrings.addTransaction),
     );
   }
 }

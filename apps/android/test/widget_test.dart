@@ -22,15 +22,16 @@ Future<FakeBackend> _pump(
 }
 
 void main() {
-  testWidgets('bottom navigation shows the four required tabs',
+  testWidgets('bottom navigation shows the required tabs',
       (WidgetTester tester) async {
     await _pump(tester);
 
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.text(AppStrings.tabHome), findsWidgets);
     expect(find.text(AppStrings.tabTransactions), findsWidgets);
-    expect(find.text(AppStrings.tabBudget), findsWidgets);
+    expect(find.text(AppStrings.tabAdd), findsWidgets);
     expect(find.text(AppStrings.tabStats), findsWidgets);
+    expect(find.text(AppStrings.tabAccount), findsWidgets);
   });
 
   testWidgets('home shows real data on a small 360x640 phone',
@@ -64,10 +65,10 @@ void main() {
     await _pump(tester);
     for (final label in [
       AppStrings.tabTransactions,
-      AppStrings.tabBudget,
       AppStrings.tabStats,
+      AppStrings.tabAccount,
     ]) {
-      await tester.tap(find.text(label).first);
+      await tester.tap(find.text(label).last);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'overflow on $label');
     }

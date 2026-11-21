@@ -16,6 +16,16 @@ abstract class FinanceRepository {
   /// Ghi giao dịch lên server. Trả bản ghi đã lưu để UI hiện ngay.
   Future<TransactionItem> addTransaction(NewTransaction input);
 
+  /// Sửa giao dịch (rev+1). Trả bản ghi đã lưu.
+  Future<TransactionItem> updateTransaction(String id, NewTransaction input, {required int rev});
+
+  /// Xóa mềm giao dịch.
+  Future<void> deleteTransaction(String id, {required int rev});
+
+  /// Chi tiết một giao dịch, kèm ảnh hóa đơn. Danh sách không kèm ảnh nên
+  /// mở chi tiết mới tải.
+  Future<TransactionItem> fetchTransaction(String id);
+
   List<CategoryItem> get categories;
 
   Future<List<BudgetItem>> getBudgets();

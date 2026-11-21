@@ -6,6 +6,8 @@ import 'package:android/data/remote/api_client.dart';
 import 'package:android/data/remote/auth_api.dart';
 import 'package:android/data/remote/finance_api.dart';
 import 'package:android/data/session/session_store.dart';
+import 'package:android/domain/models.dart';
+import 'package:android/domain/transaction_input.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -264,5 +266,92 @@ void main() {
     expect(repo.wallets, ['Tiền mặt']);
     expect(backend.calls.where((c) => c.startsWith('DELETE /v1/wallets/')),
         isNotEmpty);
+  });
+
+  test('sửa giao dịch gửi body PATCH đúng hợp đồng UpdateTransactionDto',
+      () async {
+    // Lỗi thật đã xảy ra: create và update dùng chung một body, nên PATCH gửi
+    // `id` và `remove_receipt` — hai khóa `UpdateTransactionDto` không có.
+    // Server bật `forbidNonWhitelisted`, nên mọi lần bấm "Lưu" ở màn sửa đều
+    // 400 và người dùng chỉ thấy "lưu thất bại".
+    final backend = FakeBackend(
+      transactions: [
+        {
+          'id': '5d000000-0000-4000-8000-0000000000aa',
+          'wallet_id': '5a000000-0000-4000-8000-000000000001',
+          'category_id': '5b000000-0000-4000-8000-000000000001',
+          'type': 'expense',
+          'amount': 35000,
+          'note': 'Cà phê',
+          'to_wallet_id': null,
+          'occurred_at': '2026-11-20T01:15:00.000Z',
+          'occurred_on': '2026-11-20',
+          'rev': 1,
+          'deleted_at': null,
+        },
+      ],
+    );
+    final store = MemorySessionStore();
+    final dio = Dio(BaseOptions(baseUrl: 'http://127.0.0.1:3000'))
+      ..httpClientAdapter = backend;
+    final repo = ApiFinanceRepository(
+      FinanceApi(
+        ApiClient(store: store, authApi: AuthApi(store: store), dio: dio),
+      ),
+    );
+
+    final items = await repo.getTransactions();
+    await repo.updateTransaction(
+      items.single.id,
+      NewTransaction(
+        amount: 42000,
+        type: TransactionType.expense,
+        category: items.single.category,
+        wallet: items.single.wallet,
+        note: 'Cà phê sửa',
+        occurredAt: items.single.occurredAt!,
+      ),
+      rev: items.single.rev,
+    );
+
+    final patch = backend.lastTransactionPatchBody;
+    expect(patch, isNotNull);
+    // `id` không có trong UpdateTransactionDto.
+    expect(patch!.containsKey('id'), isFalse);
+    expect(patch.containsKey('remove_receipt'), isFalse);
+    expect(patch['amount'], 42000);
+    expect(patch['note'], 'Cà phê sửa');
+    expect(patch['rev'], items.single.rev + 1);
+  });
+
+  test('tạo giao dịch không gửi remove_receipt, nhưng gửi id do client sinh',
+      () async {
+    final backend = FakeBackend();
+    final store = MemorySessionStore();
+    final dio = Dio(BaseOptions(baseUrl: 'http://127.0.0.1:3000'))
+      ..httpClientAdapter = backend;
+    final repo = ApiFinanceRepository(
+      FinanceApi(
+        ApiClient(store: store, authApi: AuthApi(store: store), dio: dio),
+      ),
+    );
+    await repo.warmUp();
+
+    await repo.addTransaction(
+      NewTransaction(
+        amount: 20000,
+        type: TransactionType.expense,
+        category: const CategoryItem(id: '5b000000-0000-4000-8000-000000000001', name: 'Ăn uống'),
+        wallet: 'Tiền mặt',
+        note: 'Bún',
+        occurredAt: DateTime(2026, 11, 21, 8),
+        removeReceipt: true,
+      ),
+    );
+
+    final body = backend.lastTransactionBody!;
+    expect(body['id'], isA<String>());
+    expect(body.containsKey('remove_receipt'), isFalse);
+    expect(body['amount'], 20000);
   });
 }
