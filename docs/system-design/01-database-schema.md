@@ -182,7 +182,11 @@ CREATE TABLE transactions (
   source        TEXT NOT NULL DEFAULT 'manual'
                 CHECK (source IN ('manual','ocr','recurring','quick')),
 
-  receipt_url   TEXT,                                -- ảnh hóa đơn (Supabase Storage)
+  receipt_url   TEXT,                                -- legacy/Storage tương lai
+  payment_method TEXT CHECK (payment_method IN ('cash','bank_transfer','card','ewallet','other')),
+  income_source TEXT,                                -- nguồn thu (Lương/Học bổng...)
+  receipt_mime  TEXT CHECK (receipt_mime IS NULL OR receipt_mime IN ('image/jpeg','image/png','image/webp')),
+  receipt_data  BYTEA,                               -- ảnh hóa đơn nhỏ, <=512KB (MVP)
   ai_confidence REAL,                                -- 0..1, chỉ khi source = 'ocr'
 
   rev           INT NOT NULL DEFAULT 1,
@@ -193,7 +197,9 @@ CREATE TABLE transactions (
   CONSTRAINT tx_transfer_needs_target
     CHECK (type <> 'transfer' OR to_wallet_id IS NOT NULL),
   CONSTRAINT tx_transfer_distinct
-    CHECK (type <> 'transfer' OR to_wallet_id <> wallet_id)
+    CHECK (type <> 'transfer' OR to_wallet_id <> wallet_id),
+  CONSTRAINT tx_receipt_pair
+    CHECK ((receipt_data IS NULL) = (receipt_mime IS NULL))
 );
 ```
 
