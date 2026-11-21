@@ -13,6 +13,13 @@ abstract class FinanceRepository {
 
   Future<List<TransactionItem>> getTransactions();
 
+  /// Giao dịch của một tháng, tải đủ mọi trang.
+  ///
+  /// [getTransactions] chỉ lấy 100 khoản gần nhất — đủ cho danh sách, nhưng
+  /// lịch mà lùi về tháng trước sẽ trống dù tháng đó có chi tiêu. Màn lịch
+  /// phải hỏi theo tháng thay vì lọc mảng đã tải.
+  Future<List<TransactionItem>> getTransactionsInMonth(int year, int month);
+
   /// Ghi giao dịch lên server. Trả bản ghi đã lưu để UI hiện ngay.
   Future<TransactionItem> addTransaction(NewTransaction input);
 

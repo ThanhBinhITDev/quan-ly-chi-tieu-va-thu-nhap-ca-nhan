@@ -7,8 +7,10 @@ import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/common/segmented_toggle.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
+import 'package:android/ui/transactions/calendar_tab.dart';
 
 class TransactionsTab extends ConsumerStatefulWidget {
   const TransactionsTab({super.key});
@@ -19,15 +21,35 @@ class TransactionsTab extends ConsumerStatefulWidget {
 
 class _TransactionsTabState extends ConsumerState<TransactionsTab> {
   TransactionType? _filter;
+  bool _calendarMode = false;
 
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(transactionsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.tabTransactions),
+        // Đổi tiêu đề theo chế độ: đang xem lịch mà vẫn đề "Giao dịch" thì
+        // người dùng không biết màn này là sổ ảnh hay danh sách.
+        title: Text(
+          _calendarMode ? AppStrings.calendarTitle : AppStrings.tabTransactions,
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpace.md),
+            child: SegmentedToggle(
+              value: _calendarMode ? 1 : 0,
+              segments: const [AppStrings.viewList, AppStrings.viewCalendar],
+              onChanged: (value) =>
+                  setState(() => _calendarMode = value == 1),
+            ),
+          ),
+        ],
       ),
-      body: async.when(
+      // Lịch tự quản lý trạng thái tải của nó và không dùng bộ lọc chi/thu,
+      // nên tách hẳn nhánh thay vì nhét điều kiện vào giữa `when`.
+      body: _calendarMode
+          ? const CalendarView()
+          : async.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
           message: error.toString(),

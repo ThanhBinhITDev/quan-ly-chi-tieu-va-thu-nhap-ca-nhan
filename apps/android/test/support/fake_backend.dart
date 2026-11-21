@@ -292,7 +292,27 @@ class FakeBackend implements HttpClientAdapter {
           transactions.insert(0, created);
           return _json(created);
         }
-        return _json(transactions);
+        // Tôn trọng `limit` và `before` như server thật: lịch phân trang theo
+        // tháng, nếu máy giả trả hết một lượt thì test phân trang không có
+        // nghĩa gì — nó sẽ xanh dù code phân trang sai.
+        final rawLimit = options.queryParameters['limit'];
+        final limit = int.tryParse('$rawLimit') ?? 50;
+        final rawBefore = options.queryParameters['before'];
+        final before = rawBefore == null ? null : DateTime.tryParse('$rawBefore');
+        final sorted = [...transactions]..sort((a, b) {
+            final at = '${a['occurred_at']}';
+            final bt = '${b['occurred_at']}';
+            return bt.compareTo(at);
+          });
+        final page = sorted
+            .where(
+              (row) =>
+                  before == null ||
+                  DateTime.parse('${row['occurred_at']}').isBefore(before),
+            )
+            .take(limit)
+            .toList();
+        return _json(page);
       case '/v1/reports/month-summary':
         monthSummaryQueries.add({
           'year': int.tryParse('${options.queryParameters['year']}') ?? 0,

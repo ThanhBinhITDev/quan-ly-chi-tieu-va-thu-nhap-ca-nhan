@@ -550,7 +550,7 @@ class TransactionTile extends StatelessWidget {
               ),
               if (item.hasReceipt) ...[
                 const SizedBox(width: AppSpace.xs),
-                const Icon(LucideIcons.paperclip, size: 14, color: AppColors.textSecondary),
+                const Icon(LucideIcons.camera, size: 14, color: AppColors.textSecondary),
               ],
               const SizedBox(width: AppSpace.sm),
               Column(
@@ -590,7 +590,7 @@ void showTransactionDetail(BuildContext context, TransactionItem item) {
 
 /// Chi tiết giao dịch.
 ///
-/// Danh sách giao dịch cố tình không kèm ảnh hóa đơn (50 dòng × 512KB sẽ
+/// Danh sách giao dịch cố tình không kèm ảnh kỷ niệm (50 dòng × 512KB sẽ
 /// thành chục MB mỗi lần mở tab), nên ảnh chỉ được tải khi mở sheet này.
 class _TransactionDetailSheet extends ConsumerStatefulWidget {
   const _TransactionDetailSheet({required this.item});
@@ -810,6 +810,16 @@ class _TransactionDetailSheetState
         height: 220,
         width: double.infinity,
         fit: BoxFit.cover,
+        // Ảnh hỏng thì hiện lời nhắc, không để Flutter vẽ chuỗi ngoại lệ.
+        errorBuilder: (_, _, _) => SizedBox(
+          height: 120,
+          child: Center(
+            child: Text(
+              AppStrings.txReceiptLoadFailed,
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+        ),
       ),
     );
   }

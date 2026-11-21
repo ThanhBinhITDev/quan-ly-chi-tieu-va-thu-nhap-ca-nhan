@@ -85,10 +85,19 @@ class AppStrings {
   static const recordPaymentMethod = 'Phương thức';
   static const recordIncomeSource = 'Nguồn thu';
   static const recordIncomeSourceHint = 'Ví dụ: Lương, Học bổng, Ba mẹ chuyển';
-  static const recordReceipt = 'Hóa đơn';
-  static const recordReceiptAdd = 'Đính kèm hóa đơn';
-  static const recordReceiptRemove = 'Xóa hóa đơn';
-  static const recordReceiptTooLarge = 'Ảnh hóa đơn quá lớn, chọn ảnh dưới 512KB.';
+  // Ảnh ở đây là để nhớ khoản chi, không phải để chứng minh hoá đơn. Chữ trên
+  // giao diện theo nghĩa đó: "kỷ niệm" gợi mở, "hoá đơn" gợi giấy tờ.
+  static const recordReceipt = 'Ảnh kỷ niệm';
+  static const recordReceiptAdd = 'Thêm ảnh';
+  static const recordReceiptRemove = 'Xóa ảnh';
+  static const recordReceiptTooLarge = 'Ảnh quá lớn, chọn ảnh khác.';
+  static const recordPhotoTake = 'Chụp ảnh';
+  static const recordPhotoPick = 'Chọn từ thư viện';
+  static const recordPhotoSheetTitle = 'Thêm ảnh cho khoản chi';
+  static const recordPhotoChange = 'Đổi ảnh';
+  static const recordPhotoOptional = 'Không bắt buộc';
+  static const recordPhotoHint = 'Một tấm ảnh để sau này nhớ lúc đó mình đã chi gì.';
+  static const recordCameFromCamera = 'vừa chụp';
   static const paymentCash = 'Tiền mặt';
   static const paymentTransfer = 'Chuyển khoản';
   static const paymentCard = 'Thẻ';
@@ -111,12 +120,12 @@ class AppStrings {
   static const txDeleted = 'Đã xóa giao dịch';
   static const txIncomeSourceLabel = 'Nguồn thu';
   static const txTimeLabel = 'Thời gian';
-  static const txReceiptLabel = 'Hóa đơn';
+  static const txReceiptLabel = 'Ảnh kỷ niệm';
   static const recordMoreDetails = 'Thêm chi tiết';
-  static const recordMoreDetailsHint = 'Ghi chú, nguồn thu, hóa đơn';
+  static const recordMoreDetailsHint = 'Ghi chú, nguồn thu, ảnh kỷ niệm';
   static const recordWalletTileLabel = 'Tài khoản/Ví';
   static const recordPaymentMethodTile = 'Phương thức thanh toán';
-  static const txReceiptLoadFailed = 'Không tải được ảnh hóa đơn.';
+  static const txReceiptLoadFailed = 'Không tải được ảnh.';
   static const txDeleteFailed = 'Không xóa được giao dịch. Vui lòng thử lại.';
   static const backLabel = 'Quay lại';
   static const emptyHome =
@@ -138,6 +147,21 @@ class AppStrings {
   static const filterIncome = 'Thu';
   static const rangeCurrent = 'Tháng này';
   static const rangePrevious = 'Tháng trước';
+
+  // ── Sổ ảnh: lịch tháng + danh sách theo ngày ────────────────────────────
+  static const viewList = 'Danh sách';
+  static const viewCalendar = 'Lịch';
+  static const calendarTitle = 'Sổ ảnh chi tiêu';
+  static const calendarToday = 'Hôm nay';
+  static const calendarEmptyMonth = 'Tháng này chưa có khoản chi nào.';
+  static const calendarNoPhotoHint =
+      'Khoản chi chưa có ảnh. Thêm ảnh để tháng này thành cuốn nhật ký.';
+  static const calendarPhotosCount = 'khoản có ảnh';
+  static const calendarDayTotal = 'Tổng ngày';
+  static const calendarDayEmpty = 'Ngày này chưa ghi khoản nào.';
+  static const calendarWeekdays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  static String calendarMonthLabel(int month, int year) => 'Tháng $month, $year';
+  static String calendarPhotoCount(int count) => '$count ảnh';
 
   static const totalExpense = 'Tổng chi';
   static const categories = 'Cơ cấu chi tiêu';

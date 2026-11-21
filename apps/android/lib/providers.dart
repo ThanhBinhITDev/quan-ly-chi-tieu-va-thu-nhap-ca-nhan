@@ -51,6 +51,21 @@ final transactionsProvider = FutureProvider<List<TransactionItem>>((ref) {
   return ref.watch(financeRepositoryProvider).getTransactions();
 });
 
+/// Giao dịch của một tháng cụ thể, cho màn lịch.
+///
+/// Khoá là `(năm, tháng)` nên mỗi tháng được cache riêng: bấm qua lại giữa
+/// hai tháng không tải lại, mà cũng không phải tải cả năm một lần.
+///
+/// Cố ý **không** `autoDispose`: đổi sang chế độ Danh sách rồi quay lại Lịch
+/// là widget lịch bị dựng lại, `autoDispose` sẽ xoá cache và tải lại tháng
+/// vừa xem — người dùng thấy vòng xoay ở đúng chỗ vừa rời.
+final monthTransactionsProvider =
+    FutureProvider.family<List<TransactionItem>, ({int year, int month})>((ref, key) {
+  return ref
+      .watch(financeRepositoryProvider)
+      .getTransactionsInMonth(key.year, key.month);
+});
+
 final budgetsProvider = FutureProvider<List<BudgetItem>>((ref) {
   return ref.watch(financeRepositoryProvider).getBudgets();
 });

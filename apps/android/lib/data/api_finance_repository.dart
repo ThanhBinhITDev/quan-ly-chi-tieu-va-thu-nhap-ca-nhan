@@ -249,6 +249,49 @@ class ApiFinanceRepository implements FinanceRepository {
   }
 
   @override
+  Future<List<TransactionItem>> getTransactionsInMonth(
+    int year,
+    int month,
+  ) async {
+    await _ensureCaches();
+    final monthStart = DateTime(year, month);
+    // `before` là mốc loại trừ: lấy mọi bản ghi có `occurred_at` nhỏ hơn mốc.
+    // Đầu tháng sau là mốc đúng để gồm trọn tháng này.
+    final monthEnd = DateTime(year, month + 1);
+    // Khoá theo id: nhiều giao dịch cùng một mốc `occurred_at` làm cursor
+    // không tiến, trang sau trả lại đúng các bản ghi vừa nhận. Không chặn
+    // thì tiền của ngày đó bị cộng hai lần trên lịch.
+    final collected = <String, TransactionDto>{};
+    var cursor = monthEnd;
+
+    // Trần 200 là giới hạn server cho `limit`; một tháng nhiều khoản hơn thì
+    // phải đi tiếp bằng cursor, nếu không lịch sẽ thiếu tiền mà không báo gì.
+    for (var page = 0; page < 20; page++) {
+      final rows = await _api.transactions(limit: 200, before: cursor);
+      if (rows.isEmpty) break;
+      var reachedOlderMonth = false;
+      for (final row in rows) {
+        final at = row.occurredAt.toLocal();
+        // Chặn cả hai đầu: server đã lọc theo `before` nên phía trên hiếm khi
+        // lọt, nhưng bản ghi đúng ngày cuối tháng rơi vào tháng sau nếu chỉ
+        // so một phía.
+        if (!at.isBefore(monthStart) && at.isBefore(monthEnd)) {
+          collected[row.id] = row;
+        } else if (at.isBefore(monthStart)) {
+          reachedOlderMonth = true;
+        }
+      }
+      if (reachedOlderMonth) break;
+      // Cursor mới là bản ghi cũ nhất vừa nhận, không phải `now`: server sắp
+      // xếp giảm dần theo `occurred_at`.
+      final oldest = rows.last.occurredAt;
+      if (!oldest.isBefore(cursor)) break;
+      cursor = oldest;
+    }
+    return collected.values.map(_toTransactionItem).toList();
+  }
+
+  @override
   Future<void> deleteTransaction(String id, {required int rev}) async {
     await _api.deleteTransaction(id, rev: rev);
   }
