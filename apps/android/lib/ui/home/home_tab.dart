@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
+import 'package:android/ui/budget/jar_screen.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/state_views.dart';
 import 'package:android/ui/home/quick_category_strip.dart';
@@ -72,7 +73,31 @@ class HomeTab extends ConsumerWidget {
                   if (hasAnything) PredictionCard(summary: summary),
                   if (hasAnything) ...[
                     const SizedBox(height: AppSpace.xl),
-                    _SectionTitle(title: AppStrings.budgetSection),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: _SectionTitle(title: AppStrings.budgetSection),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.sm,
+                            ),
+                            minimumSize: const Size(48, 40),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const JarScreen(),
+                            ),
+                          ),
+                          child: const Text(
+                            AppStrings.jarTitle,
+                            style: TextStyle(fontSize: 12.5),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: AppSpace.md),
                     if (budget != null)
                       BudgetProgressCard(budget: budget)

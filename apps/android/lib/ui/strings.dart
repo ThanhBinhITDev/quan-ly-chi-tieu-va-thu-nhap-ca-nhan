@@ -1,3 +1,5 @@
+import 'package:android/ui/format.dart';
+
 class AppStrings {
   static const appTitle = 'Student Finance';
   static const tabHome = 'Trang chủ';
@@ -370,4 +372,47 @@ class AppStrings {
   static String notificationMinutesAgo(int minutes) => '$minutes phút trước';
   static String notificationHoursAgo(int hours) => '$hours giờ trước';
   static String notificationDaysAgo(int days) => '$days ngày trước';
+
+  // Chia hủ ngân sách
+  static const jarTitle = 'Chia hủ';
+  static const jarEmptyTitle = 'Chưa chia hủ nào';
+  static const jarEmptyBody =
+      'Chia ngân sách tháng thành từng hũ để biết tiền đi đâu: Ăn uống 40%, '
+      'Đi lại 15%, Để dành 20%…';
+  static const jarCreate = 'Chia hũ đầu tiên';
+  static const jarAdd = 'Thêm hũ';
+  static const jarNewTitle = 'Hũ mới';
+  static const jarEditTitle = 'Sửa hũ';
+  static const jarNameLabel = 'Tên hũ';
+  static const jarNameHint = 'Ví dụ: Ăn uống, Đi lại, Để dành';
+  static const jarNameEmpty = 'Đặt tên cho hũ đã.';
+  static const jarNameTooLong = 'Tên hũ tối đa 40 ký tự.';
+  static const jarShareLabel = 'Tỷ lệ ngân sách';
+  static const jarShareHint = 'Phần trăm của ngân sách tháng.';
+  static const jarShareInvalid = 'Tỷ lệ phải từ 1 đến 100.';
+  static const jarShareOver =
+      'Tổng tỷ lệ các hũ không được vượt 100%. Giảm bớt hũ khác trước.';
+  static const jarCategoryLabel = 'Gắn danh mục';
+  static const jarCategoryHint =
+      'Gắn danh mục để tính được đã dùng bao nhiêu trong hũ.';
+  static const jarCategoryNone = 'Chưa gắn danh mục nào';
+  static const jarCategoryTaken = 'Danh mục này đã thuộc hũ khác.';
+  static const jarSuggestCategory = 'Gắn danh mục để theo dõi chi tiêu';
+  static String jarRemaining(int pct) => 'Còn chia được $pct% nữa';
+  static String jarShareOfBudget(int pct) => '$pct% ngân sách';
+  static String jarAllocated(int pct) => 'Đã chia $pct%';
+  static String jarUnallocated(int pct) => 'Còn $pct% chưa chia';
+  static const jarNoBudget =
+      'Chưa đặt ngân sách tháng nên chưa tính được số tiền cho mỗi hũ.';
+  static const jarNoBudgetShort = 'Chưa có ngân sách tháng';
+  static const jarNoBudgetAction = 'Đặt ngân sách tháng';
+  static const jarSave = 'Lưu hũ';
+  static const jarDelete = 'Xoá hũ';
+  static const jarDeleteConfirm =
+      'Xoá hũ này? Tiền đã chi vẫn còn trong sổ, chỉ mất cách chia.';
+  static const jarDeleteConfirmAction = 'Xoá';
+  static const jarNoCategorySpend =
+      'Hũ chưa gắn danh mục nên chưa tính được đã dùng bao nhiêu.';
+  static String jarLeft(int amount) => 'Còn ${formatMoney(amount)}';
+  static String jarOver(int amount) => 'Vượt ${formatMoney(amount)}';
 }

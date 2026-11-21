@@ -121,6 +121,14 @@ final activeBudgetsProvider = FutureProvider<List<BudgetDto>>((ref) {
   return ref.watch(financeApiProvider).budgets(active: true);
 });
 
+/// Chia hủ của tháng hiện tại: hạn mức từng hũ tính từ ngân sách tháng.
+///
+/// Tách khỏi [budgetProgressProvider] vì hũ là cách *chia* ngân sách, không
+/// phải hạn mức của danh mục — hai bảng, hai cách tính.
+final budgetJarsProvider = FutureProvider<BudgetJarSummaryDto>((ref) {
+  return ref.watch(financeApiProvider).budgetJars();
+});
+
 /// Mục tiêu tiết kiệm cho thẻ thử thách ở trang chủ.
 final goalsProvider = FutureProvider<List<GoalDto>>((ref) {
   return ref.watch(financeApiProvider).goals();

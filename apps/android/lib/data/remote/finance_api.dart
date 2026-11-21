@@ -240,6 +240,41 @@ class FinanceApi {
         .toList();
   }
 
+  // ── Hũ ngân sách ──────────────────────────────────────────────────────
+
+  /// Tiến độ chia hủ của tháng hiện tại: hạn mức, đã tiêu, còn lại từng hũ.
+  Future<BudgetJarSummaryDto> budgetJars() async {
+    final json =
+        await _client.get<Map<String, dynamic>>('/v1/budget-jars/progress');
+    return BudgetJarSummaryDto.fromJson(json);
+  }
+
+  /// Tạo hũ. `id` do client sinh để gọi lại cùng id không sinh hũ trùng khi
+  /// đồng bộ offline gửi lại.
+  Future<BudgetJarDto> createBudgetJar(Map<String, dynamic> data) async {
+    final json =
+        await _client.post<Map<String, dynamic>>('/v1/budget-jars', data: data);
+    return BudgetJarDto.fromJson(json);
+  }
+
+  /// Sửa hũ. `data` phải có `rev` = rev hiện tại + 1.
+  Future<BudgetJarDto> updateBudgetJar(
+    String id,
+    Map<String, dynamic> data,
+  ) async {
+    final json = await _client.patch<Map<String, dynamic>>(
+      '/v1/budget-jars/$id',
+      data: data,
+    );
+    return BudgetJarDto.fromJson(json);
+  }
+
+  Future<void> deleteBudgetJar(String id, {required int rev}) async {
+    await _client.delete<Map<String, dynamic>>(
+      '/v1/budget-jars/$id?rev=$rev',
+    );
+  }
+
   /// Mục tiêu tiết kiệm, chưa hoàn thành trước.
   Future<List<GoalDto>> goals() async {
     final json = await _client.get<Map<String, dynamic>>('/v1/goals');

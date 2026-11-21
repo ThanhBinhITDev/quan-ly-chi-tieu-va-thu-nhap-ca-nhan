@@ -579,3 +579,101 @@ class PhotoNoteDto {
   /// Có ảnh hay không, dù danh sách không mang bytes.
   bool get hasPhoto => hasPhotoFlag || (photoBase64?.isNotEmpty ?? false);
 }
+
+/// Một hũ ngân sách — cách chia ngân sách tháng theo tỷ lệ phần trăm.
+///
+/// Hũ khác ngân sách danh mục ở chỗ: ngân sách là *hạn mức của một danh mục*,
+/// còn hũ là *cách người dùng chia ngân sách tổng* cho nhiều mục đích. Một hũ
+/// gom được nhiều danh mục, và tổng tỷ lệ các hũ không vượt 100%.
+class BudgetJarDto {
+  const BudgetJarDto({
+    required this.id,
+    required this.name,
+    required this.sharePct,
+    required this.rev,
+    this.color,
+    this.sortOrder = 0,
+    this.categoryIds = const [],
+    this.amount = 0,
+    this.spent = 0,
+    this.remaining = 0,
+    this.usedPct = 0,
+    this.status = 'ok',
+    this.daysLeft = 0,
+  });
+
+  factory BudgetJarDto.fromJson(Map<String, dynamic> json) => BudgetJarDto(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        sharePct: (json['share_pct'] as num).toInt(),
+        rev: (json['rev'] as num?)?.toInt() ?? 1,
+        color: json['color'] as String?,
+        sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+        categoryIds: (json['category_ids'] as List<dynamic>? ?? const [])
+            .map((item) => item as String)
+            .toList(),
+        amount: (json['amount'] as num?)?.toInt() ?? 0,
+        spent: (json['spent'] as num?)?.toInt() ?? 0,
+        remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+        usedPct: (json['used_pct'] as num?)?.toDouble() ?? 0,
+        status: json['status'] as String? ?? 'ok',
+        daysLeft: (json['days_left'] as num?)?.toInt() ?? 0,
+      );
+
+  final String id;
+  final String name;
+  final int sharePct;
+  final int rev;
+  final String? color;
+  final int sortOrder;
+  final List<String> categoryIds;
+
+  // Số liệu tiến độ, chỉ có khi đọc từ /v1/budget-jars/progress.
+  final int amount;
+  final int spent;
+  final int remaining;
+  final double usedPct;
+  final String status;
+  final int daysLeft;
+
+  bool get hasProgress => amount > 0;
+
+  /// Hạn mức hiển thị; chưa đặt ngân sách tháng thì nói thẳng thay vì "0 ₫".
+  String get limitLabel => amount > 0 ? '' : 'Chưa có ngân sách tháng';
+}
+
+/// Tổng quan chia hủ của tháng hiện tại.
+class BudgetJarSummaryDto {
+  const BudgetJarSummaryDto({
+    required this.asOf,
+    required this.budgetAmount,
+    required this.allocatedPct,
+    required this.unallocatedPct,
+    required this.unallocatedAmount,
+    required this.totalSpent,
+    required this.items,
+  });
+
+  factory BudgetJarSummaryDto.fromJson(Map<String, dynamic> json) =>
+      BudgetJarSummaryDto(
+        asOf: json['as_of'] as String,
+        budgetAmount: (json['budget_amount'] as num).toInt(),
+        allocatedPct: (json['allocated_pct'] as num).toInt(),
+        unallocatedPct: (json['unallocated_pct'] as num).toInt(),
+        unallocatedAmount: (json['unallocated_amount'] as num).toInt(),
+        totalSpent: (json['total_spent'] as num).toInt(),
+        items: (json['items'] as List<dynamic>? ?? const [])
+            .map((item) => BudgetJarDto.fromJson(item as Map<String, dynamic>))
+            .toList(),
+      );
+
+  final String asOf;
+  final int budgetAmount;
+  final int allocatedPct;
+  final int unallocatedPct;
+  final int unallocatedAmount;
+  final int totalSpent;
+  final List<BudgetJarDto> items;
+
+  bool get isEmpty => items.isEmpty;
+}

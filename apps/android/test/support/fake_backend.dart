@@ -35,7 +35,9 @@ class FakeBackend implements HttpClientAdapter {
     List<Map<String, dynamic>>? budgets,
     Map<String, int>? expenseByCategory,
     List<Map<String, dynamic>>? photoNotes,
+    List<Map<String, dynamic>>? budgetJars,
   }) : photoNotes = photoNotes ?? [],
+       budgetJars = budgetJars ?? [],
        wallets = wallets ?? [_defaultWallet()],
        expenseByCategory = expenseByCategory ?? {},
        budgets = budgets ?? [_defaultBudget(budgetTotal)],
@@ -96,6 +98,13 @@ class FakeBackend implements HttpClientAdapter {
   /// Body của lần POST ảnh gần nhất, để khẳng định đúng hợp đồng.
   Map<String, dynamic>? lastPhotoBody;
 
+  /// Hũ ngân sách. Máy chủ giả tự kiểm tổng tỷ lệ ≤ 100 như API thật, để
+  /// test bắt được trường hợp giao diện cho lưu một tổng sai.
+  final List<Map<String, dynamic>> budgetJars;
+
+  /// Body của lần POST/PATCH/DELETE hũ gần nhất.
+  Map<String, dynamic>? lastJarBody;
+
   Map<String, int> get _expenseByCategory => expenseByCategory;
 
   String _categoryName(String? id) {
@@ -130,6 +139,66 @@ class FakeBackend implements HttpClientAdapter {
     'deadline': null,
     'icon': 'trophy',
   };
+
+  /// Tổng quan chia hủ, tính giống API thật: hạn mức = ngân sách tháng × tỷ lệ.
+  Map<String, dynamic> _jarSummary() {
+    // Chưa đặt ngân sách tháng thì hạn mức bằng 0, đúng như API thật — nếu
+    // vẫn dùng budgetTotal thì màn hình sẽ hiện số tiền không có thật.
+    final budget = hasBudget ? budgetTotal : 0;
+    final allocated = budgetJars.fold<int>(
+      0,
+      (sum, jar) => sum + (jar['share_pct'] as num).toInt(),
+    );
+    final unallocated = 100 - allocated;
+    final items = [
+      for (final jar in budgetJars)
+        () {
+          final share = (jar['share_pct'] as num).toInt();
+          final amount = budget * share ~/ 100;
+          final ids = (jar['category_ids'] as List<dynamic>? ?? const [])
+              .map((id) => id as String)
+              .toList();
+          final spent = ids.fold<int>(
+            0,
+            (sum, id) => sum + (_expenseByCategory[id] ?? 0),
+          );
+          return {
+            'id': jar['id'],
+            'name': jar['name'],
+            'share_pct': share,
+            'color': jar['color'],
+            'sort_order': jar['sort_order'] ?? 0,
+            'category_ids': ids,
+            'rev': jar['rev'] ?? 1,
+            'amount': amount,
+            'spent': spent,
+            'remaining': amount - spent,
+            'used_pct': amount == 0 ? 0.0 : spent / amount * 100,
+            'status': amount == 0
+                ? 'ok'
+                : spent >= amount
+                ? 'exceeded'
+                : spent / amount >= 0.9
+                ? 'warning'
+                : spent / amount >= 0.7
+                ? 'notice'
+                : 'ok',
+            'days_left': daysLeft,
+          };
+        }(),
+    ];
+    return {
+      'as_of': _todayIso(),
+      'budget_amount': budget,
+      'allocated_pct': allocated,
+      'unallocated_pct': unallocated < 0 ? 0 : unallocated,
+      'unallocated_amount': unallocated <= 0
+          ? 0
+          : budget * unallocated ~/ 100,
+      'total_spent': expense,
+      'items': items,
+    };
+  }
 
   static Map<String, dynamic> _defaultBudget(int amount) => {
     'id': '5c000000-0000-4000-8000-000000000001',
@@ -320,6 +389,35 @@ class FakeBackend implements HttpClientAdapter {
           return _json(created);
         }
         return _json(budgets);
+      case '/v1/budget-jars/progress':
+        return _json(_jarSummary());
+      case '/v1/budget-jars':
+        if (options.method == 'POST') {
+          final body = (options.data as Map).cast<String, dynamic>();
+          final share = (body['share_pct'] as num).toInt();
+          final used = budgetJars.fold<int>(
+            0,
+            (sum, jar) => sum + (jar['share_pct'] as num).toInt(),
+          );
+          if (used + share > 100) {
+            return _json({
+              'error': {
+                'code': 'RULE_VIOLATION',
+                'message': 'Tổng tỷ lệ các hũ không được vượt 100%.',
+              },
+            }, status: 422);
+          }
+          lastJarBody = body;
+          final created = {
+            ...body,
+            'rev': 1,
+            'sort_order': body['sort_order'] ?? budgetJars.length,
+            'category_ids': body['category_ids'] ?? <String>[],
+          };
+          budgetJars.add(created);
+          return _json(created);
+        }
+        return _json(budgetJars);
       case '/v1/budgets/progress':
         // Sinh từ danh sách ngân sách, giống server: hũ danh mục chỉ tính chi
         // của đúng danh mục đó, hũ "Tổng" tính toàn bộ chi trong tháng.
@@ -461,6 +559,49 @@ class FakeBackend implements HttpClientAdapter {
       }
       item['read_at'] = _nowIso();
       return _json(item);
+    }
+
+    // PATCH /v1/budget-jars/<id> và DELETE /v1/budget-jars/<id>?rev=n
+    final jarMatch = RegExp(r'^/v1/budget-jars/([^/]+)$').firstMatch(path);
+    if (jarMatch != null) {
+      final id = jarMatch.group(1);
+      final index = budgetJars.indexWhere((jar) => jar['id'] == id);
+      if (index < 0) {
+        return _json({
+          'error': {'code': 'NOT_FOUND', 'message': 'Không tìm thấy hũ.'},
+        }, status: 404);
+      }
+      if (options.method == 'DELETE') {
+        lastJarBody = {'id': id, 'rev': options.uri.queryParameters['rev']};
+        budgetJars.removeAt(index);
+        return _json({'ok': true});
+      }
+      final body = (options.data as Map).cast<String, dynamic>();
+      final share = (body['share_pct'] as num?)?.toInt();
+      if (share != null) {
+        final used = budgetJars.fold<int>(
+          0,
+          (sum, jar) => jar['id'] == id
+              ? sum
+              : sum + (jar['share_pct'] as num).toInt(),
+        );
+        if (used + share > 100) {
+          return _json({
+            'error': {
+              'code': 'RULE_VIOLATION',
+              'message': 'Tổng tỷ lệ các hũ không được vượt 100%.',
+            },
+          }, status: 422);
+        }
+      }
+      lastJarBody = body;
+      final updated = {
+        ...budgetJars[index],
+        ...body,
+        'rev': (budgetJars[index]['rev'] as num).toInt() + 1,
+      };
+      budgetJars[index] = updated;
+      return _json(updated);
     }
 
     // PATCH /v1/budgets/<id>

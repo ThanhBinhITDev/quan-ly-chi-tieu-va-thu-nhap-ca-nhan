@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/data/remote/dto.dart';
 import 'package:android/ui/budget/budget_sheet.dart';
+import 'package:android/ui/budget/jar_screen.dart';
 import 'package:android/providers.dart';
 import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
@@ -22,7 +23,18 @@ class BudgetTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(budgetProgressProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.tabBudget)),
+      appBar: AppBar(
+        title: const Text(AppStrings.tabBudget),
+        actions: [
+          IconButton(
+            tooltip: AppStrings.jarTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const JarScreen()),
+            ),
+            icon: const Icon(LucideIcons.pieChart, size: 20),
+          ),
+        ],
+      ),
       body: async.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
