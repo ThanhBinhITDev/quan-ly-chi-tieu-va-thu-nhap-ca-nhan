@@ -79,6 +79,32 @@ Có `DEV_LOGIN_PASSWORD` thì app ẩn nút "Tạo tài khoản" và dùng form 
 hiện có để gọi dev login. Mật khẩu chỉ nằm trong `--dart-define`, không nằm
 trong repo (`services/api/.env` bị gitignore).
 
+### Hai bản cài song song (flavor)
+
+App có hai product flavor, khác `applicationId` nên cài cùng lúc trên một máy:
+
+| Flavor | applicationId | Tên hiển thị | Trỏ tới |
+|---|---|---|---|
+| `prod` | `com.studentfinance.android` | Student Finance | API + Supabase test qua HTTPS |
+| `dev` | `com.studentfinance.android.dev` | Student Finance Dev | API local `http://10.0.2.2:3000` |
+
+Cấu hình từng bản nằm ở `tool/env.prod.json` và `tool/env.dev.json`, truyền vào
+bằng `--dart-define-from-file`. File `env.prod.json` chứa anon key nên **bị
+gitignore**; bản mẫu là `env.prod.json.example`.
+
+```bash
+cp tool/env.prod.json.example tool/env.prod.json   # điền anon key thật
+tool/build_both.sh
+
+# APK ra ở:
+#   build/app/outputs/flutter-apk/app-prod-release.apk
+#   build/app/outputs/flutter-apk/app-dev-debug.apk
+```
+
+Bản `prod` là release nên Android 9+ chặn cleartext: nó chỉ gọi được HTTPS,
+đúng như thiết kế. Muốn đổi endpoint thì sửa `API_BASE_URL` trong
+`tool/env.prod.json` rồi build lại, không cần sửa mã.
+
 ### Ảnh đại diện
 
 `image_picker` cần hai khai báo `<queries>` trong `AndroidManifest.xml`

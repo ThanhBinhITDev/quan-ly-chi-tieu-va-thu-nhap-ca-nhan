@@ -9,7 +9,7 @@
          HTTPS. Bản debug bật lại trong src/debug/AndroidManifest.xml để gọi
          http://10.0.2.2:3000 của máy dev. -->
     <application
-        android:label="Student Finance"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
