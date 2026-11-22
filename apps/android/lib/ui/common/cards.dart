@@ -1,12 +1,18 @@
+
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:android/core/error/app_exception.dart';
 import 'package:android/domain/models.dart';
+import 'package:android/providers.dart';
 import 'package:android/ui/common/state_views.dart';
+import 'package:android/ui/common/transaction_photos.dart';
 import 'package:android/ui/format.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
+import 'package:android/ui/transactions/record_transaction_screen.dart';
 
 class SoftCard extends StatelessWidget {
   const SoftCard({
@@ -70,14 +76,19 @@ class HeroBalanceCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    AppStrings.balance,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.72),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                  // Nhãn phải co được: ở cỡ chữ lớn cho người mắt kém, chữ
+                  // "Số dư hiện tại" rộng hơn cả thẻ và đẩy tràn hàng.
+                  Flexible(
+                    child: Text(
+                      AppStrings.balance,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: AppSpace.sm),
                   Container(
                     width: 34,
                     height: 34,
@@ -241,12 +252,16 @@ class PredictionCard extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const Text(
-                        AppStrings.predictionDays,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                      // Cỡ chữ hệ thống lớn làm "ngày nữa" rộng hơn phần còn
+                      // lại của thẻ; cho xuống dòng thay vì tràn ra ngoài.
+                      const Flexible(
+                        child: Text(
+                          AppStrings.predictionDays,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
                     ],
@@ -484,76 +499,286 @@ class TransactionTile extends StatelessWidget {
         ? LucideIcons.trendingUp
         : LucideIcons.trendingDown;
     final sign = isIncome ? '+' : '-';
+    final detailParts = <String>[
+      item.dayLabel,
+      if (item.wallet.isNotEmpty) item.wallet,
+      if (item.paymentMethod != null)
+        AppStrings.paymentMethodLabel(item.paymentMethod),
+      if (item.note.isNotEmpty) item.note,
+    ];
 
     return Semantics(
+      button: true,
       label: '${item.category.name} $sign${formatMoney(item.amount)}, '
-          '${item.dayLabel} · ${item.wallet} · ${item.note}'
+          '${detailParts.join(' · ')}'
           '${item.pending ? ' (chờ đồng bộ)' : ''}',
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.sm,
-          vertical: AppSpace.sm,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: background,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(width: AppSpace.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.category.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${item.dayLabel} · ${item.wallet} · ${item.note}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpace.sm),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$sign${formatMoney(item.amount)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: color,
-                  ),
+      child: InkWell(
+        onTap: () => showTransactionDetail(context, item),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.sm,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: background,
+                  shape: BoxShape.circle,
                 ),
-                if (item.pending) ...[
-                  const SizedBox(height: 4),
-                  const PendingLabel(),
-                ],
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.category.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detailParts.join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              if (item.hasReceipt) ...[
+                const SizedBox(width: AppSpace.xs),
+                const Icon(LucideIcons.camera, size: 14, color: AppColors.textSecondary),
               ],
-            ),
-          ],
+              const SizedBox(width: AppSpace.sm),
+              // Số tiền không được đẩy tràn hàng: ở cỡ chữ lớn, "-45.000 đ"
+              // rộng hơn phần còn lại và Flutter vẽ dải vàng đen. Cho nó co
+              // lại rồi thu nhỏ vừa khung thay vì tràn ra ngoài thẻ.
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '$sign${formatMoney(item.amount)}',
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: color,
+                        ),
+                      ),
+                    ),
+                    if (item.pending) ...[
+                      const SizedBox(height: 4),
+                      const PendingLabel(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+void showTransactionDetail(BuildContext context, TransactionItem item) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (context) => _TransactionDetailSheet(item: item),
+  );
+}
+
+/// Chi tiết giao dịch.
+///
+/// Danh sách giao dịch cố tình không kèm ảnh kỷ niệm (50 dòng × 512KB sẽ
+/// thành chục MB mỗi lần mở tab), nên ảnh chỉ được tải khi mở sheet này.
+class _TransactionDetailSheet extends ConsumerStatefulWidget {
+  const _TransactionDetailSheet({required this.item});
+
+  final TransactionItem item;
+
+  @override
+  ConsumerState<_TransactionDetailSheet> createState() =>
+      _TransactionDetailSheetState();
+}
+
+class _TransactionDetailSheetState
+    extends ConsumerState<_TransactionDetailSheet> {
+
+  Future<void> _edit(TransactionItem item) async {
+    // Lấy container trước khi đóng sheet: sau `pop` State này bị hủy.
+    final container = ProviderScope.containerOf(context, listen: false);
+    Navigator.of(context).pop();
+    final ok = await openRecordTransaction(context, editing: item);
+    if (ok != true) return;
+    container.invalidate(transactionsProvider);
+    container.invalidate(dashboardProvider);
+    container.invalidate(budgetProgressProvider);
+  }
+
+  Future<void> _delete(TransactionItem item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(AppStrings.txDeleteAction),
+        content: const Text(AppStrings.txDeleteConfirm),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(AppStrings.cancelLabel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(AppStrings.txDeleteAction),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await container
+          .read(financeRepositoryProvider)
+          .deleteTransaction(item.id, rev: item.rev);
+      container.invalidate(transactionsProvider);
+      container.invalidate(dashboardProvider);
+      container.invalidate(budgetProgressProvider);
+      navigator.pop();
+      messenger.showSnackBar(
+        const SnackBar(content: Text(AppStrings.txDeleted)),
+      );
+    } catch (e) {
+      // Trước đây lỗi xóa bị nuốt im lặng, sheet đóng mà dữ liệu vẫn còn.
+      if (!mounted) return;
+      final message = e is AppException ? e.message : AppStrings.txDeleteFailed;
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final isIncome = item.type == TransactionType.income;
+    final sign = isIncome ? '+' : '-';
+    final color = isIncome ? AppColors.income : AppColors.expense;
+    final time = item.occurredAt;
+    final timeLabel = time == null
+        ? item.dayLabel
+        : '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year} '
+            '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg,
+          0,
+          AppSpace.lg,
+          AppSpace.xl,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppStrings.txDetailTitle,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppSpace.md),
+              Text(
+                '$sign${formatMoney(item.amount)}',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: AppSpace.md),
+              _detailRow(AppStrings.categoryLabel, item.category.name),
+              _detailRow(AppStrings.walletLabel, item.wallet),
+              _detailRow(AppStrings.txTimeLabel, timeLabel),
+              _detailRow(
+                AppStrings.recordPaymentMethod,
+                AppStrings.paymentMethodLabel(item.paymentMethod),
+              ),
+              if (isIncome && (item.incomeSource ?? '').isNotEmpty)
+                _detailRow(AppStrings.txIncomeSourceLabel, item.incomeSource!),
+              if (item.note.isNotEmpty)
+                _detailRow(AppStrings.noteLabel, item.note),
+              const SizedBox(height: AppSpace.md),
+              Text(
+                AppStrings.photoSectionTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppSpace.sm),
+              TransactionPhotos(transactionId: item.id),
+              const SizedBox(height: AppSpace.lg),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _edit(item),
+                      icon: const Icon(LucideIcons.pencil, size: 16),
+                      label: const Text(AppStrings.txEditAction),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.expense,
+                      ),
+                      onPressed: () => _delete(item),
+                      icon: const Icon(LucideIcons.trash2, size: 16),
+                      label: const Text(AppStrings.txDeleteAction),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+}
+
+Widget _detailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+        ),
+        Expanded(
+          child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ),
+      ],
+    ),
+  );
 }
 
 class SummaryCard extends StatelessWidget {

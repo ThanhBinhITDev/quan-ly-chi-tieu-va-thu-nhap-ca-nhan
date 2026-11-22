@@ -1,16 +1,17 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:android/domain/models.dart';
 import 'package:android/providers.dart';
+import 'package:android/core/session/auth_controller.dart';
 import 'package:android/ui/common/cards.dart';
 import 'package:android/ui/common/filter_chip.dart';
-import 'package:android/ui/common/scenario_menu.dart';
 import 'package:android/ui/common/state_views.dart';
-import 'package:android/ui/transactions/add_transaction_sheet.dart';
+import 'package:android/ui/common/segmented_toggle.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
+import 'package:android/ui/transactions/calendar_tab.dart';
+import 'package:android/ui/transactions/photo_journal_screen.dart';
 
 class TransactionsTab extends ConsumerStatefulWidget {
   const TransactionsTab({super.key});
@@ -22,19 +23,63 @@ class TransactionsTab extends ConsumerStatefulWidget {
 class _TransactionsTabState extends ConsumerState<TransactionsTab> {
   TransactionType? _filter;
 
+  /// 0 = danh sách, 1 = lịch, 2 = sổ ảnh. Ba chế độ chứ không thêm tab thứ
+  /// năm: `NavigationBar` M3 phải đúng bốn tab.
+  int _mode = 0;
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(transactionsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.tabTransactions),
-        actions: const [ScenarioMenu()],
+        // Đổi tiêu đề theo chế độ: đang xem lịch mà vẫn đề "Giao dịch" thì
+        // người dùng không biết màn này là sổ ảnh hay danh sách.
+        // `Text` phải nằm trong `Flexible`/`ellipsis` mặc định của AppBar;
+        // chỗ này chỉ cần đảm bảo không đòi bề ngang lớn hơn phần còn lại khi
+        // cỡ chữ hệ thống tăng.
+        title: Text(
+          switch (_mode) {
+            1 => AppStrings.calendarTitle,
+            2 => AppStrings.photoAllTitle,
+            _ => AppStrings.tabTransactions,
+          },
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          // Nút ba chế độ chiếm tối đa một nửa AppBar: rộng hơn nữa là tiêu
+          // đề bị ép về 0 ký tự ở màn hẹp.
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(context).width * 0.52,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(right: AppSpace.md),
+              child: SegmentedToggle(
+                value: _mode,
+                segments: const [
+                  AppStrings.viewList,
+                  AppStrings.viewCalendar,
+                  AppStrings.viewPhotos,
+                ],
+                onChanged: (value) => setState(() => _mode = value),
+              ),
+            ),
+          ),
+        ],
       ),
-      body: async.when(
+      // Lịch tự quản lý trạng thái tải của nó và không dùng bộ lọc chi/thu,
+      // nên tách hẳn nhánh thay vì nhét điều kiện vào giữa `when`.
+      body: _mode == 1
+          ? const CalendarView()
+          : _mode == 2
+          ? const PhotoJournalScreen()
+          : async.when(
         loading: () => const LoadingView(),
         error: (error, _) => ErrorView(
           message: error.toString(),
           onRetry: () => ref.invalidate(transactionsProvider),
+          onSignOut: () => ref.read(authControllerProvider.notifier).signOut(),
         ),
         data: (items) {
           if (items.isEmpty) {
@@ -48,7 +93,7 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
               AppSpace.lg,
               AppSpace.sm,
               AppSpace.lg,
-              AppSpace.xxl,
+              AppSpace.xl,
             ),
             children: [
               SingleChildScrollView(
@@ -97,12 +142,6 @@ class _TransactionsTabState extends ConsumerState<TransactionsTab> {
             ],
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showAddTransactionSheet(context),
-        tooltip: AppStrings.addTransaction,
-        icon: const Icon(LucideIcons.plus, size: 20),
-        label: const Text(AppStrings.addTransaction),
       ),
     );
   }

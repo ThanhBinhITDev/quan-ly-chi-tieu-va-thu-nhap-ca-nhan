@@ -14,9 +14,15 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Cần bật để flavor đặt tên app riêng (`app_name`) cho từng bản.
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.studentfinance.android"
+        manifestPlaceholders["appName"] = "Student Finance"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26
@@ -27,6 +33,25 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }
+
+    // Hai bản cài song song trên cùng máy:
+    //  - `prod`: bản thật, trỏ API + Supabase test qua HTTPS
+    //  - `dev` : bản phát triển, trỏ API local (10.0.2.2:3000) và gọi HTTP
+    // Khác applicationId nên Android coi là hai app riêng, không ghi đè nhau.
+    flavorDimensions += "env"
+    productFlavors {
+        create("prod") {
+            dimension = "env"
+            resValue("string", "app_name", "Student Finance")
+            manifestPlaceholders["appName"] = "Student Finance"
+        }
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            resValue("string", "app_name", "Student Finance Dev")
+            manifestPlaceholders["appName"] = "Student Finance Dev"
+        }
     }
 
     buildTypes {

@@ -1,14 +1,19 @@
 enum TransactionType { expense, income, transfer }
 
-enum DemoScenario { ready, empty, error, offline }
-
 enum SyncStatus { synced, syncing, offline }
 
 class CategoryItem {
-  const CategoryItem({required this.id, required this.name});
+  const CategoryItem({
+    required this.id,
+    required this.name,
+    this.type = 'expense',
+  });
 
   final String id;
   final String name;
+
+  /// 'expense' | 'income' — lưới danh mục lọc theo loại đang ghi.
+  final String type;
 }
 
 class TransactionItem {
@@ -20,6 +25,13 @@ class TransactionItem {
     required this.wallet,
     required this.note,
     required this.dayLabel,
+    required this.rev,
+    this.occurredAt,
+    this.paymentMethod,
+    this.incomeSource,
+    this.receiptMime,
+    this.receiptBase64,
+    this.hasReceiptFlag = false,
     this.pending = false,
   });
 
@@ -30,7 +42,22 @@ class TransactionItem {
   final String wallet;
   final String note;
   final String dayLabel;
+  final int rev;
+  final DateTime? occurredAt;
+  final String? paymentMethod;
+  final String? incomeSource;
+  final String? receiptMime;
+  final String? receiptBase64;
+  /// Danh sách chỉ biết "có ảnh hay không"; bytes ảnh chỉ có khi tải chi tiết.
+  final bool hasReceiptFlag;
   final bool pending;
+
+  bool get hasReceipt =>
+      hasReceiptFlag ||
+      (receiptBase64 != null &&
+          receiptBase64!.isNotEmpty &&
+          receiptMime != null &&
+          receiptMime!.isNotEmpty);
 }
 
 class BudgetItem {
@@ -73,6 +100,44 @@ class MonthSummary {
   final int spent;
 }
 
+/// Một tấm ảnh kèm ghi chú, thuộc về một khoản chi/thu.
+///
+/// Ảnh không đứng một mình: luôn có [transactionId]. Nhưng khoản chi thì
+/// không bắt buộc có ảnh — chiều này mới là tuỳ chọn.
+class PhotoNote {
+  const PhotoNote({
+    required this.id,
+    required this.transactionId,
+    required this.takenAt,
+    required this.rev,
+    this.caption,
+    this.photoMime,
+    this.photoBase64,
+    this.hasPhotoFlag = false,
+  });
+
+  final String id;
+  final String transactionId;
+  final DateTime takenAt;
+  final int rev;
+  final String? caption;
+  final String? photoMime;
+
+  /// Chỉ có khi tải chi tiết; danh sách để trống cho nhẹ.
+  final String? photoBase64;
+  final bool hasPhotoFlag;
+
+  bool get hasPhoto => hasPhotoFlag || (photoBase64?.isNotEmpty ?? false);
+
+  /// Nhãn thay thế khi ảnh chưa có ghi chú. Đặt ở tầng domain để màn sổ ảnh
+  /// và chi tiết giao dịch dùng chung một chuỗi, không lệch nhau.
+  static const noCaption = 'Chưa viết ghi chú';
+
+  /// Ghi chú để hiện: không có thì nói rõ là chưa viết, đừng để ô trống.
+  String get displayCaption =>
+      (caption == null || caption!.trim().isEmpty) ? noCaption : caption!.trim();
+}
+
 class DashboardData {
   const DashboardData({
     required this.summary,
@@ -113,13 +178,21 @@ class StatsData {
     required this.categories,
     required this.daily,
     required this.totalExpense,
-    required this.comparisonPercent,
+    this.comparisonPercent,
+    this.previousExpense,
     this.isEmpty = false,
   });
 
   final List<CategoryTotal> categories;
   final List<DayTotal> daily;
   final int totalExpense;
-  final int comparisonPercent;
+
+  /// Mức tăng/giảm so với kỳ trước, tính theo %. `null` khi không có mốc
+  /// để so sánh (chưa chi gì ở kỳ trước) — khác hẳn với 0% (không đổi).
+  final int? comparisonPercent;
+
+  /// Chi tiêu kỳ trước, dùng cho phần chú thích dưới thẻ so sánh.
+  final int? previousExpense;
+
   final bool isEmpty;
 }

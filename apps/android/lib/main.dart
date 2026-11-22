@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:android/app.dart';
+import 'package:android/ui/auth/auth_gate.dart';
 import 'package:android/ui/strings.dart';
 import 'package:android/ui/theme.dart';
 
@@ -19,7 +19,7 @@ class StudentFinanceApp extends StatelessWidget {
         title: AppStrings.appTitle,
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
-        home: const AppShell(),
+        home: const AuthGate(),
       ),
     );
   }

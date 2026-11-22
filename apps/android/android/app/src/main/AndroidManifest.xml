@@ -1,6 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- App gọi API Student Finance qua HTTPS (và HTTP tới 10.0.2.2 khi dev). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Không khai báo android.permission.CAMERA: image_picker chụp ảnh qua
+         intent ACTION_IMAGE_CAPTURE của app camera hệ thống, nên app không
+         cần quyền camera trực tiếp. Khai báo thừa sẽ khiến Android bắt xin
+         quyền vô ích ngay cả khi người dùng chỉ muốn chọn ảnh từ thư viện. -->
+    <!-- Không khai báo android:usesCleartextTraffic ở đây: bản release chỉ gọi
+         HTTPS. Bản debug bật lại trong src/debug/AndroidManifest.xml để gọi
+         http://10.0.2.2:3000 của máy dev. -->
     <application
-        android:label="Student Finance"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -37,6 +46,16 @@
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
+        <!-- Android 11+ giới hạn package visibility: thiếu hai khai báo này
+             thì image_picker không thấy app camera/thư viện ảnh và báo lỗi
+             dù máy có camera. -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT"/>
+            <data android:mimeType="image/*"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
