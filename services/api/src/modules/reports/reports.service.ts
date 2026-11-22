@@ -16,8 +16,9 @@ export interface MonthSummary {
   remaining: number;
   daily_limit: number;
   budget: { total: number; used_pct: number };
+  previous: { expense: number; delta_pct: number | null };
   by_category: Array<{
-    id: string;
+    id: string | null;
     name: string;
     total: number;
     pct: number;
@@ -72,6 +73,26 @@ export class ReportsService {
     const budgetTotal = Number(budget?.amount ?? 0);
     const remaining = budgetTotal - expense;
 
+    // Chi tiêu tháng trước để tính mức tăng/giảm thật. Không có dữ liệu
+    // tháng trước thì trả null thay vì 0 — 0% sẽ bị hiểu là "không đổi".
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+    const prevRange = vietnamMonthRange(prevYear, prevMonth);
+    const prevTotals = await this.db.one<{ expense: string }>(
+      `SELECT COALESCE(SUM(amount), 0)::text AS expense
+         FROM transactions
+        WHERE user_id = $1
+          AND deleted_at IS NULL
+          AND type = 'expense'
+          AND occurred_on BETWEEN $2::date AND $3::date`,
+      [userId, prevRange.start, prevRange.end],
+    );
+    const prevExpense = Number(prevTotals?.expense ?? 0);
+    const deltaPct =
+      prevExpense === 0
+        ? null
+        : Math.round(((expense - prevExpense) / prevExpense) * 100);
+
     // today lấy theo giờ Việt Nam để days_left đúng với người dùng.
     const today = new Date(
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }),
@@ -80,19 +101,26 @@ export class ReportsService {
     const periodStart = new Date(`${start}T00:00:00Z`);
     const daysLeft = daysLeftInPeriod(today, periodStart, periodEnd);
 
+    // LEFT JOIN để chi tiêu chưa gắn danh mục vẫn hiện thành một lát
+    // "Chưa phân loại". Bỏ những dòng này thì tổng các lát không khớp
+    // `expense` và người dùng thấy biểu đồ trống dù đã tiêu tiền.
     const byCategory = await this.db.query<{
-      id: string;
+      id: string | null;
       name: string;
       total: string;
     }>(
-      `SELECT c.id, c.name, SUM(t.amount)::text AS total
+      `SELECT c.id,
+              COALESCE(c.name, 'Chưa phân loại') AS name,
+              SUM(t.amount)::text AS total
          FROM transactions t
-         JOIN categories c ON c.id = t.category_id
+         LEFT JOIN categories c
+                ON c.id = t.category_id
+               AND c.deleted_at IS NULL
         WHERE t.user_id = $1
           AND t.deleted_at IS NULL
           AND t.type = 'expense'
           AND t.occurred_on BETWEEN $2::date AND $3::date
-        GROUP BY c.id, c.name
+        GROUP BY c.id, COALESCE(c.name, 'Chưa phân loại')
         ORDER BY SUM(t.amount) DESC`,
       [userId, start, end],
     );
@@ -116,6 +144,7 @@ export class ReportsService {
       remaining,
       daily_limit: dailyLimit(remaining, daysLeft),
       budget: { total: budgetTotal, used_pct: percent(expense, budgetTotal) },
+      previous: { expense: prevExpense, delta_pct: deltaPct },
       by_category: byCategory.map((row) => ({
         id: row.id,
         name: row.name,

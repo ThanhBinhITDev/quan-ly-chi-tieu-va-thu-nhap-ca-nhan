@@ -112,18 +112,58 @@ POST /auth/v1/token?grant_type=refresh_token
 GET /v1/wallets
 ```
 
+**Tham số (tuỳ chọn):**
+
+| Tên | Kiểu | Ý nghĩa |
+|---|---|---|
+| `include_deleted` | `true`\|`false` | Trả cả ví đã xoá mềm (đồng bộ offline). Mặc định `false`. |
+
 **Trả về 200:**
 
 ```json
 [
   { "id": "w1...", "name": "Tiền mặt", "type": "cash",
-    "initial_balance": 500000, "color": "#4CAF50", "icon": "wallet",
-    "is_archived": false },
+    "initial_balance": 500000, "balance": 1700000,
+    "color": "#4CAF50", "icon": "wallet",
+    "is_archived": false, "rev": 2, "deleted_at": null },
   { "id": "w2...", "name": "MoMo", "type": "ewallet",
-    "initial_balance": 120000, "color": "#E91E63", "icon": "phone",
-    "is_archived": false }
+    "initial_balance": 120000, "balance": 120000,
+    "color": "#E91E63", "icon": "phone",
+    "is_archived": false, "rev": 1, "deleted_at": null }
 ]
 ```
+
+**`balance` là số dư hiện tại, server luôn tính, client không gửi lên:**
+
+```
+balance = initial_balance + SUM(income) - SUM(expense)
+        + SUM(transfer vào ví) - SUM(transfer ra khỏi ví)
+```
+
+Giao dịch đã xoá mềm không được tính. Không lưu cột `balance` trong DB
+(Q1: `transactions` là nguồn sự thật duy nhất).
+
+### 4.1.1. Tổng hợp số dư theo ví
+
+```http
+GET /v1/wallets/summary
+```
+
+**Trả về 200:**
+
+```json
+{
+  "wallets": [
+    { "id": "w1...", "name": "Tiền mặt", "type": "cash",
+      "is_archived": false, "balance": 1700000 }
+  ],
+  "total_balance": 295000,
+  "by_type": { "cash": -135000, "bank": 430000 },
+  "computed_at": "2026-11-19T18:35:58.218Z"
+}
+```
+
+Ví đã xoá mềm không được cộng vào `total_balance` lẫn `by_type`.
 
 ### 4.2. Tạo ví
 
@@ -164,6 +204,25 @@ PATCH /v1/wallets/<wallet_id>
 
 **Quy tắc `rev`:** client gửi `rev` hiện tại + 1. Server kiểm tra `rev` client gửi phải bằng `rev` hiện tại + 1; nếu không, trả `SYNC_CONFLICT` kèm bản ghi mới nhất.
 
+### 4.4. Xoá ví (mềm)
+
+```http
+DELETE /v1/wallets/<wallet_id>?rev=<rev hiện tại + 1>
+```
+
+**Trả về 200:** chính bản ghi đã xoá.
+
+```json
+{ "id": "w1...", "name": "Tiền mặt", "balance": 0,
+  "rev": 3, "deleted_at": "2026-11-19T18:36:34.845Z" }
+```
+
+- Chỉ set `deleted_at`, **không xoá dòng** — giao dịch cũ vẫn tham chiếu được
+  và client offline biết ví đã bị xoá.
+- `rev` (tuỳ chọn) sai thì trả `SYNC_CONFLICT` kèm `server_rev`/`server_data`.
+- Xoá lần hai trả `NOT_FOUND`.
+- Không xoá được ví của người khác (`NOT_FOUND`).
+
 ---
 
 ## 5. Giao dịch
@@ -182,9 +241,27 @@ Tham số `occurred_at=lt.<mốc>` là cursor: lấy 50 bản ghi trước mốc
 [
   { "id": "t1...", "wallet_id": "w1...", "category_id": "cat_food",
     "type": "expense", "amount": 35000, "note": "Cơm trưa",
-    "occurred_at": "2026-11-13T04:30:00Z", "source": "manual" }
+    "occurred_at": "2026-11-13T04:30:00Z", "occurred_on": "2026-11-13",
+    "source": "manual", "payment_method": "cash", "income_source": null,
+    "receipt_mime": null, "has_receipt": false, "receipt_base64": null,
+    "rev": 1 }
 ]
 ```
+
+Danh sách **không** trả bytes ảnh: chỉ `has_receipt` (và `receipt_mime`). 50 dòng
+kèm ảnh 512KB sẽ thành ~25MB mỗi lần mở tab Giao dịch. Ảnh lấy ở mục 5.2b khi
+người dùng mở chi tiết.
+
+### 5.2b. Chi tiết một giao dịch
+
+```http
+GET /v1/transactions/<tx_id>
+```
+
+**Trả về 200:** đúng bản ghi đó, kèm `receipt_base64` (base64 của ảnh, `null` nếu
+không có) và `has_receipt`. Đây là endpoint duy nhất trả bytes ảnh.
+
+**Mã lỗi:** `NOT_FOUND` khi id không tồn tại hoặc thuộc user khác.
 
 ### 5.2. Tạo giao dịch
 
@@ -201,13 +278,21 @@ POST /v1/transactions
   "amount": 35000,
   "note": "Cơm trưa",
   "occurred_at": "2026-11-13T04:30:00Z",
-  "source": "manual"
+  "source": "manual",
+  "payment_method": "cash",
+  "income_source": null,
+  "receipt_base64": null,
+  "receipt_mime": null
 }
 ```
 
-`occurred_on` không gửi lên — là generated column, server tự tính theo giờ VN.
+`occurred_on` không gửi lên — trigger DB tính theo giờ VN. `payment_method`: `cash|bank_transfer|card|ewallet|other`. `income_source` dùng cho thu nhập. Hóa đơn gửi `receipt_base64` + `receipt_mime` (`image/jpeg|png|webp`, <=512KB; server kiểm chữ ký tệp nên ảnh giả bị `RULE_VIOLATION`, và `receipt_mime` phải khớp ảnh thật); response trả `receipt_base64/receipt_mime/has_receipt`.
 
-**Trả về 201:** bản ghi đầy đủ kèm `occurred_on`, `rev`, `created_at`.
+`remove_receipt` chỉ có ở PATCH, gửi lúc tạo là `VALIDATION_FAILED`.
+
+Body JSON được nhận tới **2MB** (base64 phình ~33% so với 512KB nhị phân).
+
+**Trả về 201:** bản ghi đầy đủ kèm `occurred_on`, `rev`, `created_at`, `payment_method`, `income_source`, `receipt_base64`, `receipt_mime`.
 
 **Mã lỗi đặc thù:**
 
@@ -220,8 +305,28 @@ POST /v1/transactions
 
 ```http
 PATCH /v1/transactions/<tx_id>
-{ "amount": 40000, "rev": 2 }
+{
+  "wallet_id": "w2...",
+  "type": "expense",
+  "amount": 40000,
+  "payment_method": "bank_transfer",
+  "income_source": "Học bổng",
+  "receipt_base64": "...",
+  "receipt_mime": "image/jpeg",
+  "remove_receipt": false,
+  "rev": 2
+}
 ```
+
+`remove_receipt=true` xóa hóa đơn (không gửi cùng receipt mới).
+
+Sửa được cả `wallet_id`, `type`, `to_wallet_id`: ghi nhầm ví hoặc ghi Chi tiêu
+thành Thu nhập là chuyện có thật, bắt xóa rồi tạo lại sẽ mất `created_at`.
+`wallet_id`/`to_wallet_id` được kiểm quyền sở hữu như lúc tạo; đổi `type` khỏi
+`transfer` thì `to_wallet_id` tự về `null`.
+
+Gửi `payment_method: null` hoặc `income_source: null` để xóa trắng — bỏ hẳn khóa
+thì giữ nguyên giá trị cũ. Không gửi `id` (không có trong DTO).
 
 ### 5.4. Xóa giao dịch
 
@@ -251,11 +356,17 @@ GET /v1/reports/month-summary?year=2026&month=11
     "total": 3000000,
     "used_pct": 61.7
   },
+  "previous": {
+    "expense": 1150000,
+    "delta_pct": 61
+  },
   "by_category": [
     { "id": "cat_food", "name": "Ăn uống", "icon": "food",
       "color": "#FF9800", "total": 980000, "pct": 53.0 },
     { "id": "cat_travel", "name": "Đi lại", "icon": "bus",
-      "color": "#2196F3", "total": 320000, "pct": 17.3 }
+      "color": "#2196F3", "total": 320000, "pct": 17.3 },
+    { "id": null, "name": "Chưa phân loại",
+      "total": 50000, "pct": 2.7 }
   ],
   "by_day": [
     { "date": "2026-11-01", "total": 120000 },
@@ -265,9 +376,43 @@ GET /v1/reports/month-summary?year=2026&month=11
 }
 ```
 
+`previous` dùng cho thẻ "so với tháng trước": `delta_pct = null` khi tháng
+trước không có khoản chi nào — khác hẳn `0` (không đổi), vì client phải phân
+biệt được "chưa có mốc" với "không thay đổi".
+
+`by_category` **luôn** cộng lại đúng bằng `expense`: giao dịch chưa gắn danh
+mục được gộp vào một dòng `id: null`, `name: "Chưa phân loại"`. Nếu lọc bỏ
+những dòng này thì biểu đồ cơ cấu thiếu tiền và người dùng thấy biểu đồ trống
+dù đã chi tiêu.
+
 **Vì sao phải có endpoint tổng hợp thay vì để client tự tính:** chỉ số `daily_limit` là trung tâm của sản phẩm. Nếu client tự tính, mỗi nền tảng có thể cho kết quả khác nhau do làm tròn. Đưa lên server để **một công thức duy nhất**.
 
 Ngoại lệ: khi offline, client dùng chính công thức đó tính từ dữ liệu local. Công thức phải được viết một lần và dùng chung (xem mục 7).
+
+### 5.6. Danh mục
+
+```http
+GET    /v1/categories?type=<expense|income>&include_deleted=<true|false>
+POST   /v1/categories
+PATCH  /v1/categories/<category_id>
+DELETE /v1/categories/<category_id>?rev=<rev hiện tại + 1>
+```
+
+Danh mục hệ thống có `user_id = null` và `is_system = true`, dùng chung cho mọi
+người; danh mục người dùng tự tạo có `user_id` của họ. `GET` trả cả hai loại.
+
+**Trả về 200 (một phần tử):**
+
+```json
+{ "id": "cat_food", "user_id": null, "name": "Ăn uống", "type": "expense",
+  "icon": "food", "color": "#FF9800", "parent_id": null,
+  "is_system": true, "sort_order": 1, "rev": 1, "deleted_at": null }
+```
+
+**`DELETE` xoá mềm** (đặt `deleted_at`, tăng `rev`), trả chính bản ghi đã xoá.
+Danh mục hệ thống không xoá được (`FORBIDDEN`). `rev` sai trả `SYNC_CONFLICT`.
+Mặc định `GET` ẩn danh mục đã xoá; `include_deleted=true` trả cả bản đã xoá để
+đồng bộ offline.
 
 ---
 

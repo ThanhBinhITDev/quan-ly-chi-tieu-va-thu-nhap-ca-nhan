@@ -34,12 +34,20 @@ export class ApiExceptionFilter implements ExceptionFilter {
             ? 'FORBIDDEN'
             : status === 404
               ? 'NOT_FOUND'
-              : status === 400 || status === 422
-                ? 'VALIDATION_FAILED'
-                : 'INTERNAL';
-      response.status(status).json({
-        error: { code, message: exception.message },
-      });
+              : status === 429
+                ? 'RATE_LIMITED'
+                : status === 400 || status === 422
+                  ? 'VALIDATION_FAILED'
+                  : 'INTERNAL';
+      // Thông báo mặc định của Nest (`ThrottlerException: Too Many
+      // Requests`) là thông điệp kỹ thuật, không dành cho người dùng cuối.
+      const message =
+        status === 429
+          ? 'Bạn thao tác quá nhanh, vui lòng thử lại sau'
+          : status === 400 && exception.message === 'Bad Request Exception'
+            ? 'Dữ liệu gửi lên không hợp lệ'
+            : exception.message;
+      response.status(status).json({ error: { code, message } });
       return;
     }
 
