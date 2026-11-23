@@ -109,4 +109,135 @@ trùng bản Supabase đang chạy (17.12.0.000).
   PostgREST hoặc client Supabase JS.
 - Không có `storage`, `net`, `vault`, `realtime`. Migration hiện tại không
   dùng các schema này nên không ảnh hưởng.
-- Không có GoTrue phát JWT; API dev dùng `AUTH_ALLOW_UNVERIFIED=true`.
+- Không có GoTrue phát JWT; API dev tự xác thực bằng `SUPABASE_JWT_SECRET`
+  (HS256). Cờ `AUTH_ALLOW_UNVERIFIED` đã bị xoá khỏi code vì từng cho phép
+  token ký bằng secret bất kỳ đi qua.
+
+## 2026-11-20 — Hồ sơ người dùng: username + ảnh đại diện (chỉ local)
+
+**Không chạy SQL nào lên Supabase.** Project `ebbqcnnwqeasozmcqigu` trong
+suốt phiên này không được kết nối, chỉ đọc lại ghi chú cũ trong file này.
+
+### Đã làm
+
+- Thêm `infra/migrations/20261120020000_user_profile_username_avatar.sql`
+  và áp lên database local `student_finance` (PostgreSQL 17.12).
+- Thay đổi: 4 cột mới trên `users` (`username citext`, `avatar_mime text`,
+  `avatar_data bytea`, `avatar_updated_at timestamptz`), 4 CHECK
+  (`users_username_format`, `users_avatar_size`, `users_avatar_mime`,
+  `users_avatar_pair`) và 1 unique index bộ phận `users_username_active_key`.
+- Kiểm chứng lại bằng `\d users`: cột, index và cả 4 CHECK đều có mặt; dữ
+  liệu cũ không bị sửa (`username` để NULL).
+
+### Operation classification
+
+Additive only. Không `DROP`, `TRUNCATE`, `DELETE`, không rewrite migration
+đã áp, không đụng project Supabase nào.
+
+### Vì sao chưa áp lên Supabase
+
+Đây là thay đổi phục vụ màn hình hồ sơ trên nhánh `dev/android`, chưa có
+yêu cầu phát hành. Áp lên Supabase là thao tác riêng, cần duyệt tường minh;
+file migration đã sẵn sàng để áp khi được duyệt.
+
+### Việc còn lại khi áp lên Supabase
+
+1. Xác minh lại project ref `ebbqcnnwqeasozmcqigu` bằng URL trả về từ MCP
+   trước khi chạy bất kỳ DDL nào.
+2. Đọc schema live để chắc 4 cột/index/CHECK chưa tồn tại (migration đã có
+   `IF NOT EXISTS` / `DROP CONSTRAINT IF EXISTS` nên chạy lại an toàn, nhưng
+   vẫn phải kiểm trước theo quy tắc).
+3. Áp migration, rồi đọc lại `information_schema` + `pg_constraint` để đối
+   chiếu với local.
+4. Cập nhật mục này từ "chỉ local" thành "đã áp" kèm thời điểm.
+
+---
+
+## 2026-11-20 — Bảng `notifications`
+
+### Đã làm (local)
+
+- Thêm `infra/migrations/20261120030000_notifications.sql` và áp lên
+  database local `student_finance` (PostgreSQL 17.12), lúc 04:23 +07.
+- Tạo bảng `notifications` (8 cột) phục vụ hai việc: hộp thư trong app cho
+  icon chuông, và khoá chống gửi trùng cho các job đẩy tin.
+- Chỉ mục: `uq_notifications_dedupe` UNIQUE bộ phận trên
+  `(user_id, dedupe_key) WHERE dedupe_key IS NOT NULL`;
+  `idx_notifications_user_time` trên `(user_id, created_at DESC)`;
+  `idx_notifications_unread` trên `(user_id) WHERE read_at IS NULL`.
+- RLS bật, 2 policy: `p_notifications_read` (SELECT) và
+  `p_notifications_mark_read` (UPDATE), cả hai giới hạn `user_id = auth.uid()`.
+  Cố ý **không** có policy INSERT: thông báo do job phía server sinh ra, cho
+  client ghi là mở đường tự tạo tin giả.
+- Kiểm chứng bằng `\d notifications`: 8 cột, 3 chỉ mục, 2 policy, 1 CHECK
+  `type` và khoá ngoại `user_id → users` đều có mặt.
+
+### Kiểm chứng khoá chống trùng
+
+Chèn lại cùng `dedupe_key` cho cùng người dùng bị Postgres chặn đúng như
+thiết kế:
+
+```
+ERROR: duplicate key value violates unique constraint "uq_notifications_dedupe"
+DETAIL: Key (user_id, dedupe_key)=(5555..., budget:2026-11:total:90) already exists.
+```
+
+### Operation classification
+
+Additive only. Bảng mới, không sửa cột/bảng cũ, không `DROP`, không
+`TRUNCATE`, không rewrite migration đã áp.
+
+### Vì sao chưa áp lên Supabase
+
+Chưa có yêu cầu phát hành. Áp lên Supabase `ebbqcnnwqeasozmcqigu` là thao
+tác riêng cần duyệt tường minh; file đã sẵn sàng.
+
+Chặn kỹ thuật ghi nhận ngày 2026-11-20 04:49 +07: MCP `supabase`
+(`project_ref=ebbqcnnwqeasozmcqigu`, transport streamable-http) có trong
+`mcp.servers` và `openclaw mcp doctor` báo `ok`, nhưng phiên này **không**
+thấy bộ công cụ Supabase; `openclaw mcp probe` và `openclaw mcp login` bị
+từ chối với lý do "requires exclusive offline state ownership" trong khi
+Gateway đang chạy. `~/.openclaw/credentials` cũng không có token OAuth nào
+cho MCP này, nên lần chạy trước chắc chắn dùng một kênh khác.
+
+Bằng chứng đo được (2026-11-20 04:52 +07):
+
+```
+GET https://mcp.supabase.com/mcp?project_ref=ebbqcnnwqeasozmcqigu  → 401
+{"message":"No access token provided"}
+GET … (Authorization: Bearer sb_invalid)                          → 401
+{"message":"JWT could not be decoded"}
+```
+
+Endpoint sống và đúng project ref, chỉ thiếu token. Muốn áp: cấp lại kênh
+Supabase MCP (đăng nhập OAuth qua `openclaw mcp login supabase`, cần chạy
+khi Gateway nhả quyền state, hoặc đặt access token) rồi làm 4 bước dưới.
+
+### Việc còn lại khi áp lên Supabase
+
+1. Xác minh project ref `ebbqcnnwqeasozmcqigu` bằng URL trả về từ MCP.
+2. Đọc schema live xác nhận `public.notifications` chưa tồn tại.
+3. Áp migration, rồi đọc lại `information_schema.columns`,
+   `pg_indexes` và `pg_policies` để đối chiếu với local.
+4. Cập nhật mục này thành "đã áp" kèm thời điểm.
+
+## 2026-11-21 — Add transaction detail fields (payment method, income source, receipt attachment)
+
+### Pre-apply handoff
+
+- Date/time (Asia/Ho_Chi_Minh): 2026-11-21 14:56:00 +07 (prepared)
+- Repo/branch: `/Users/thanhbinh/Projects/quan-ly-chi-tieu-sinh-vien`, `dev/android`.
+- Verified Supabase project ref: `ebbqcnnwqeasozmcqigu`.
+- How verified: `supabase_get_project_url` returned `https://ebbqcnnwqeasozmcqigu.supabase.co`; `supabase_list_migrations` returned expected 2 migrations before apply.
+- Existing live schema inspected: `public.transactions` had 19 columns including `occurred_at`, `occurred_on`, `source`, `receipt_url`, `note`, `rev`; no `payment_method`, `income_source`, `receipt_mime`, `receipt_data`. 6 indexes, 2 triggers (`trg_occurred_on`, `trg_updated_at_transactions`), RLS policy `p_transactions_own` present.
+- Planned migration: `infra/migrations/20261121150000_add_transaction_detail_fields.sql`
+- Operation: additive only. No DROP/TRUNCATE/DELETE/data rewrite.
+
+### Apply
+
+- Status: APPLIED and verified.
+- Execution: `supabase_apply_migration` name `20261121150000_add_transaction_detail_fields`, project ref `ebbqcnnwqeasozmcqigu`, returned `{"success":true}`.
+- SQL: additive ALTER TABLE adding nullable `payment_method TEXT` CHECK in (`cash`,`bank_transfer`,`card`,`ewallet`,`other`), `income_source TEXT`, `receipt_mime TEXT` CHECK jpeg/png/webp or null, `receipt_data BYTEA` CHECK null or <=512KB, and `tx_receipt_pair` CHECK receipt mime/data both null or both present.
+- Post-change verification (live SQL): columns exist with expected types/nullability; constraints `transactions_payment_method_check`, `transactions_receipt_mime_check`, `tx_receipt_pair` present with expected definitions. No existing rows modified; no tables/indexes/policies/triggers dropped.
+- Risks/follow-up: `receipt_url` legacy column remains unused by new app flow; API and Android must be updated to read/write new fields; receipt stored in DB (512KB cap) like avatar - acceptable for MVP but may need Storage migration later.
+

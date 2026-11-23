@@ -182,7 +182,11 @@ CREATE TABLE transactions (
   source        TEXT NOT NULL DEFAULT 'manual'
                 CHECK (source IN ('manual','ocr','recurring','quick')),
 
-  receipt_url   TEXT,                                -- ảnh hóa đơn (Supabase Storage)
+  receipt_url   TEXT,                                -- legacy/Storage tương lai
+  payment_method TEXT CHECK (payment_method IN ('cash','bank_transfer','card','ewallet','other')),
+  income_source TEXT,                                -- nguồn thu (Lương/Học bổng...)
+  receipt_mime  TEXT CHECK (receipt_mime IS NULL OR receipt_mime IN ('image/jpeg','image/png','image/webp')),
+  receipt_data  BYTEA,                               -- ảnh hóa đơn nhỏ, <=512KB (MVP)
   ai_confidence REAL,                                -- 0..1, chỉ khi source = 'ocr'
 
   rev           INT NOT NULL DEFAULT 1,
@@ -193,7 +197,9 @@ CREATE TABLE transactions (
   CONSTRAINT tx_transfer_needs_target
     CHECK (type <> 'transfer' OR to_wallet_id IS NOT NULL),
   CONSTRAINT tx_transfer_distinct
-    CHECK (type <> 'transfer' OR to_wallet_id <> wallet_id)
+    CHECK (type <> 'transfer' OR to_wallet_id <> wallet_id),
+  CONSTRAINT tx_receipt_pair
+    CHECK ((receipt_data IS NULL) = (receipt_mime IS NULL))
 );
 ```
 
@@ -435,6 +441,55 @@ CREATE TABLE devices (
 ```
 
 Dùng để gửi push và để phát hiện sync bất thường.
+
+---
+
+## 11b. Bảng `photo_notes` — ảnh của khoản chi/thu
+
+Mỗi dòng là **một tấm ảnh kèm ghi chú của chính nó**, luôn thuộc về một khoản
+chi hoặc khoản thu. Ảnh không tồn tại độc lập. Chiều ngược lại mới tuỳ chọn:
+**một khoản chi không bắt buộc phải có ảnh**.
+
+```sql
+CREATE TABLE photo_notes (
+  id             UUID PRIMARY KEY,
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+  caption        TEXT,           -- ghi chú của tấm ảnh, <=500 ký tự
+  taken_at       TIMESTAMPTZ NOT NULL,
+  taken_on       DATE NOT NULL,  -- trigger sinh theo giờ VN
+  photo_mime     TEXT NOT NULL
+    CHECK (photo_mime IN ('image/jpeg','image/png','image/webp')),
+  photo_data     BYTEA NOT NULL
+    CHECK (octet_length(photo_data) <= 524288),
+  rev            INT NOT NULL DEFAULT 1,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at     TIMESTAMPTZ
+);
+```
+
+### Vì sao tách bảng thay vì thêm cột vào `transactions`
+
+1. Một giao dịch có thể có **nhiều** ảnh (ảnh món ăn + ảnh hoá đơn), mỗi ảnh
+   có ghi chú riêng — nhét vào cột thì phải lặp cột hoặc nhồi JSON.
+2. Ảnh có vòng đời riêng: ghi chú riêng, thời điểm riêng (`taken_at`), xoá
+   riêng mà không đụng số tiền.
+3. Xoá hẳn giao dịch thì ảnh đi theo (`ON DELETE CASCADE`) vì ảnh không có
+   chỗ đứng nào khác. Xoá thường ngày vẫn là xoá mềm qua `deleted_at`.
+
+`transactions.receipt_data` / `receipt_mime` giữ nguyên cho dữ liệu cũ; ảnh
+mới đi qua bảng này.
+
+### Index
+
+```sql
+CREATE INDEX idx_photo_user_time ON photo_notes(user_id, taken_at DESC)
+  WHERE deleted_at IS NULL;                    -- dòng thời gian sổ ảnh
+CREATE INDEX idx_photo_tx ON photo_notes(transaction_id)
+  WHERE deleted_at IS NULL;                    -- ảnh của 1 giao dịch
+CREATE INDEX idx_photo_sync ON photo_notes(user_id, updated_at);  -- đồng bộ
+```
 
 ---
 
